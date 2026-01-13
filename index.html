@@ -1453,6 +1453,9 @@ body {
       <button class="nav-btn" data-view="analysis">
         <i class="fas fa-chart-line"></i> Análisis Avanzado
       </button>
+      <button class="nav-btn" data-view="capture">
+        <i class="fas fa-camera"></i> Captura en Vivo
+      </button>
       <button class="nav-btn" data-view="zones">
         <i class="fas fa-map-marker-alt"></i> Zonas Estratégicas
       </button>
@@ -2506,8 +2509,6 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZG9ubmF6YXZhbGEiLCJhIjoiY21rMjRvOHA4MGRpZDNlc
 // Variables globales
 let salesData = [];
 let filteredData = [];
-window.salesData = salesData;
-window.filteredData = filteredData;
 let map = null;
 let markers = [];
 let routeLayer = null;
@@ -2699,19 +2700,19 @@ function exportAnalysisResults() {
  
 function onDataLoaded() {
   console.log('🔄 [onDataLoaded] Iniciando reinicialización de módulos...');
-  console.log('📊 window.salesData:', window.salesData?.length || 0, 'registros');
-  console.log('🔍 window.filteredData:', window.filteredData?.length || 0, 'registros');
+  console.log('📊 salesData:', salesData?.length || 0, 'registros');
+  console.log('🔍 filteredData:', filteredData?.length || 0, 'registros');
   
   // PASO 1: Validar estructura de datos
-  if (!window.salesData || window.salesData.length === 0) {
-    console.warn('❌ [onDataLoaded] No hay datos en window.salesData');
+  if (!salesData || salesData.length === 0) {
+    console.warn('❌ [onDataLoaded] No hay datos en salesData');
     showNotification('No hay datos cargados para analizar', 'warning');
     return;
   }
   
   // PASO 2: Validar propiedades requeridas
   const requiredFields = ['zona', 'timestamp', 'pitchType', 'result'];
-  const firstRecord = window.salesData[0];
+  const firstRecord = salesData[0];
   const missingFields = requiredFields.filter(field => !(field in firstRecord));
   
   if (missingFields.length > 0) {
@@ -3419,28 +3420,16 @@ function handleFiles(e) {
 
 function processData(rawData) {
   console.log('🔄 Procesando datos de ventas...');
-  
-  // Función para sanitizar UTF-8
+
   function sanitizeUTF8(str) {
     if (!str) return '';
     return String(str)
-      .replace(/Ã¡/g, 'á')
-      .replace(/Ã©/g, 'é')
-      .replace(/Ã­/g, 'í')
-      .replace(/Ã³/g, 'ó')
-      .replace(/Ã¹/g, 'ú')
-      .replace(/Ã/g, 'Á')
-      .replace(/Ã‰/g, 'É')
-      .replace(/Ã­/g, 'Í')
-      .replace(/Ã³/g, 'Ó')
-      .replace(/Ã/g, 'Ú')
-      .replace(/Ã±/g, 'ñ')
-      .replace(/Ã'/g, 'Ñ');
+      .replace(/Ã¡/g, 'á').replace(/Ã©/g, 'é').replace(/Ã­/g, 'í').replace(/Ã³/g, 'ó').replace(/Ã¹/g, 'ú')
+      .replace(/Ã/g, 'Á').replace(/Ã‰/g, 'É').replace(/Ã­/g, 'Í').replace(/Ã³/g, 'Ó').replace(/Ã/g, 'Ú')
+      .replace(/Ã±/g, 'ñ').replace(/Ã'/g, 'Ñ');
   }
-  
-  window.salesData.length = 0;
-  window.filteredData.length = 0;
 
+  const processedSales = [];
   rawData.forEach((row, index) => {
     try {
       const keys = Object.keys(row);
@@ -3465,102 +3454,69 @@ function processData(rawData) {
       if (amountKey && row[amountKey] !== undefined && row[amountKey] !== '') {
         monto = parseFloat(row[amountKey]);
       }
-      if (isNaN(monto)) {
-        monto = 0;
-      }
-
-      let fechaStr = row[dateKey] || new Date().toISOString().split('T')[0];
-      let zona = sanitizeUTF8(row[zoneKey] || 'sin_zona');
-      let pitchType = normalizePitch(sanitizeUTF8(row[pitchKey] || ''));
-      let result = normalizeResult(sanitizeUTF8(row[resultKey] || ''));
-      let clientOrigin = normalizeOrigin(sanitizeUTF8(row[clientOriginKey] || ''));
-      let cliente = sanitizeUTF8(row[clientKey] || `Cliente${index + 1}`);
+      if (isNaN(monto)) monto = 0;
 
       const venta = {
         lat,
         lng,
         monto,
-        fechaStr,
-        zona: zona.toLowerCase(),
-        pitchType,
-        result,
-        clientOrigin,
-        cliente,
+        fechaStr: row[dateKey] || new Date().toISOString().split('T')[0],
+        zona: sanitizeUTF8(row[zoneKey] || 'sin_zona').toLowerCase(),
+        pitchType: normalizePitch(sanitizeUTF8(row[pitchKey] || '')),
+        result: normalizeResult(sanitizeUTF8(row[resultKey] || '')),
+        clientOrigin: normalizeOrigin(sanitizeUTF8(row[clientOriginKey] || '')),
+        cliente: sanitizeUTF8(row[clientKey] || `Cliente${index + 1}`),
         id: index
       };
-      
-      salesData.push(venta);
+      processedSales.push(venta);
     } catch (e) {
       console.error(`Error procesando fila ${index}:`, e);
     }
   });
 
-  console.log(`✅ Datos procesados: ${salesData.length} registros válidos`);
-  
-  if (salesData.length === 0) {
+  console.log(`✅ Datos procesados: ${processedSales.length} registros válidos`);
+  if (processedSales.length === 0) {
     showNotification('No se encontraron datos válidos en el CSV.', 'warning');
     return;
   }
-  
-  // PASO: Validar y limpiar registros con "unknown"
-  const beforeClean = window.salesData.length;
-  
-  // DEBUG: Mostrar registros con "unknown" ANTES de limpiar
-  const unknownRecords = window.salesData.filter(record => {
-    const hasUnknown = Object.values(record).some(val => 
-      String(val).toLowerCase() === 'unknown' || String(val).toLowerCase() === 'sin_zona'
-    );
-    return hasUnknown;
-  });
-  
-  if (unknownRecords.length > 0) {
-    console.warn(`⚠️ ${unknownRecords.length} registros contienen valores "unknown":`);
-    unknownRecords.slice(0, 3).forEach((record, idx) => {
-      console.log(`   Registro ${idx + 1}:`, record);
-    });
-  }
-  
-  window.salesData = window.salesData.filter(record => {
+
+  const cleanedData = processedSales.filter(record => {
     const hasUnknown = Object.values(record).some(val => 
       String(val).toLowerCase() === 'unknown' || String(val).toLowerCase() === 'sin_zona'
     );
     return !hasUnknown;
   });
-  
-  const cleaned = beforeClean - window.salesData.length;
-  if (cleaned > 0) {
-    console.warn(`⚠️ ${cleaned} registros eliminados por contener valores "unknown"`);
+
+  const cleanedCount = processedSales.length - cleanedData.length;
+  if (cleanedCount > 0) {
+    console.warn(`⚠️ ${cleanedCount} registros eliminados por contener valores "unknown"`);
   }
   
-  if (window.salesData.length === 0) {
+  if (cleanedData.length === 0) {
     console.error('❌ Todos los registros fueron eliminados por contener "unknown"');
-    console.error('📋 Revisar logs arriba para ver qué campos tenían "unknown"');
     showNotification('Los datos contienen demasiados valores inválidos ("unknown"). Revisa el CSV.', 'error');
     return;
   }
 
-  // Copiar a filteredData para que se muestren en tablas y gráficos
-  window.filteredData = [...window.salesData];
-  
-  // DEBUG: Verificar estructura de primer registro
-  console.log('📋 [processData] Primer registro:', window.salesData[0]);
-  console.log('📊 [processData] Total registros procesados:', window.salesData.length);
-  console.log('✅ [processData] Validación completa. Registros limpios:', window.salesData.length);
+  // Reasignar variables locales y sincronizar con window
+  salesData = cleanedData;
+  filteredData = [...salesData];
+  window.salesData = salesData;
+  window.filteredData = filteredData;
+
+  console.log('📊 [processData] Total registros limpios:', salesData.length);
   
   // Actualizar UI
   updateStatistics();
   updateTable();
   updateCharts();
   
-  // Mostrar información del archivo
   document.getElementById('fileInfo').classList.remove('hidden');
-  document.getElementById('fileStatus').textContent = `${window.salesData.length} registros cargados`;
+  document.getElementById('fileStatus').textContent = `${salesData.length} registros cargados`;
   
-  // CONEXIÓN CRÍTICA: Disparar inicialización de módulos después de carga CSV
-  console.log('🔗 [processData] Conectando onDataLoaded()...');
   onDataLoaded();
   
-  showNotification(`${window.salesData.length} ventas cargadas correctamente`, 'success');
+  showNotification(`${salesData.length} ventas cargadas correctamente`, 'success');
 }
 
 function normalizePitch(text) {
@@ -4103,7 +4059,7 @@ function applyFilters() {
   const zonaFilter = document.getElementById('zoneFilter').value;
   const timeFilter = document.getElementById('timeFilter').value;
 
-  window.filteredData = window.salesData.filter(sale => {
+  filteredData = salesData.filter(sale => {
     // Filtro Fecha
     if (dateFrom && sale.fecha < dateFrom) return false;
     if (dateTo) {
@@ -4125,6 +4081,9 @@ function applyFilters() {
 
     return true;
   });
+
+  // Sincronizar con window
+  window.filteredData = filteredData;
 
   updateStatistics();
   updateTable();
@@ -4148,7 +4107,9 @@ function resetFilters() {
   document.getElementById('zoneFilter').value = '';
   document.getElementById('timeFilter').value = '';
   
-  window.filteredData = [...window.salesData];
+  filteredData = [...salesData];
+  window.filteredData = filteredData; // Sincronizar con window
+
   updateStatistics();
   updateTable();
   updateCharts();
@@ -6114,6 +6075,8 @@ function clearAllData() {
   if (confirm('¿Estás seguro de que quieres eliminar todos los datos? Esta acción no se puede deshacer.')) {
     salesData = [];
     filteredData = [];
+    window.salesData = salesData; // Sincronizar con window
+    window.filteredData = filteredData; // Sincronizar con window
     generatedReports = [];
     currentCalculatedRoute = null;
     
