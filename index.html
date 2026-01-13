@@ -2506,6 +2506,8 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZG9ubmF6YXZhbGEiLCJhIjoiY21rMjRvOHA4MGRpZDNlc
 // Variables globales
 let salesData = [];
 let filteredData = [];
+window.salesData = salesData;
+window.filteredData = filteredData;
 let map = null;
 let markers = [];
 let routeLayer = null;
@@ -3436,64 +3438,29 @@ function processData(rawData) {
       .replace(/Ã'/g, 'Ñ');
   }
   
-  window.salesData = [];
-  
+  window.salesData.length = 0;
+  window.filteredData.length = 0;
+
   rawData.forEach((row, index) => {
     try {
-      // Detectar columnas automáticamente
       const keys = Object.keys(row);
-      
-      // Detectar campos con mejor lógica
-      const amountKey = keys.find(k => {
-        const lower = k.toLowerCase();
-        return lower === 'amount' || lower === 'monto' || lower === 'valor' || 
-               lower === 'venta' || lower === 'price' || lower === 'precio';
-      });
-      
-      const zoneKey = keys.find(k => {
-        const lower = k.toLowerCase();
-        return lower === 'zone' || lower === 'zona' || lower === 'region' || lower === 'area';
-      });
-      
-      const pitchKey = keys.find(k => {
-        const lower = k.toLowerCase();
-        return lower === 'pitch_type' || lower === 'pitchtype' || lower === 'tipo_pitch' || 
-               lower === 'pitch' || lower === 'type' || lower === 'estrategia' || lower === 'disertacion';
-      });
-      
-      const resultKey = keys.find(k => {
-        const lower = k.toLowerCase();
-        return lower === 'result' || lower === 'resultado' || lower === 'status' || lower === 'estado' || lower === 'success';
-      });
-      
-      const clientOriginKey = keys.find(k => {
-        const lower = k.toLowerCase();
-        return lower === 'client_origin' || lower === 'origin' || lower === 'origen' || 
-               lower === 'clientorigin' || lower === 'procedencia';
-      });
-      
-      const dateKey = keys.find(k => {
-        const lower = k.toLowerCase();
-        return lower === 'timestamp' || lower === 'date' || lower === 'fecha' || lower === 'time';
-      });
-      
+      const amountKey = keys.find(k => ['amount', 'monto', 'valor', 'venta', 'price', 'precio'].includes(k.toLowerCase()));
+      const zoneKey = keys.find(k => ['zone', 'zona', 'region', 'area'].includes(k.toLowerCase()));
+      const pitchKey = keys.find(k => ['pitch_type', 'pitchtype', 'tipo_pitch', 'pitch', 'type', 'estrategia', 'disertacion'].includes(k.toLowerCase()));
+      const resultKey = keys.find(k => ['result', 'resultado', 'status', 'estado', 'success'].includes(k.toLowerCase()));
+      const clientOriginKey = keys.find(k => ['client_origin', 'origin', 'origen', 'clientorigin', 'procedencia'].includes(k.toLowerCase()));
+      const dateKey = keys.find(k => ['timestamp', 'date', 'fecha', 'time'].includes(k.toLowerCase()));
       const latKey = keys.find(k => k.toLowerCase().includes('lat'));
       const lngKey = keys.find(k => k.toLowerCase().includes('lon') || k.toLowerCase().includes('lng'));
-      const clientKey = keys.find(k => {
-        const lower = k.toLowerCase();
-        return lower === 'client' || lower === 'cliente' || lower === 'customer' || lower === 'client_name' || lower === 'nombre';
-      });
+      const clientKey = keys.find(k => ['client', 'cliente', 'customer', 'client_name', 'nombre'].includes(k.toLowerCase()));
 
-      // Parsear coordenadas
       let lat = parseFloat(row[latKey]);
       let lng = parseFloat(row[lngKey]);
-      
       if (isNaN(lat) || isNaN(lng)) {
         lat = 21.1619 + (Math.random() - 0.5) * 0.1;
         lng = -86.8515 + (Math.random() - 0.5) * 0.1;
       }
-      
-      // Parsear monto - SIN CONVERTIR 0 a random
+
       let monto = 0;
       if (amountKey && row[amountKey] !== undefined && row[amountKey] !== '') {
         monto = parseFloat(row[amountKey]);
@@ -3501,57 +3468,36 @@ function processData(rawData) {
       if (isNaN(monto)) {
         monto = 0;
       }
-      
-      // Parsear fecha
-      let fechaStr = '';
-      if (dateKey && row[dateKey]) {
-        fechaStr = row[dateKey];
-      } else {
-        fechaStr = new Date().toISOString().split('T')[0];
-      }
-      
-      // Normalizar zona
+
+      let fechaStr = row[dateKey] || new Date().toISOString().split('T')[0];
       let zona = sanitizeUTF8(row[zoneKey] || 'sin_zona');
-      
-      // Normalizar pitch_type
-      const pitchRaw = sanitizeUTF8(row[pitchKey] || '');
-      let pitchType = normalizePitch(pitchRaw);
-      
-      // Normalizar result
-      const resultRaw = sanitizeUTF8(row[resultKey] || '');
-      let result = normalizeResult(resultRaw);
-      
-      // Normalizar cliente origin
-      const originRaw = sanitizeUTF8(row[clientOriginKey] || '');
-      let clientOrigin = normalizeOrigin(originRaw);
-      
-      // Obtener cliente
+      let pitchType = normalizePitch(sanitizeUTF8(row[pitchKey] || ''));
+      let result = normalizeResult(sanitizeUTF8(row[resultKey] || ''));
+      let clientOrigin = normalizeOrigin(sanitizeUTF8(row[clientOriginKey] || ''));
       let cliente = sanitizeUTF8(row[clientKey] || `Cliente${index + 1}`);
-      
-      // Crear objeto de venta
+
       const venta = {
         lat,
         lng,
         monto,
         fechaStr,
         zona: zona.toLowerCase(),
-        pitchType: pitchType,
-        result: result,
-        clientOrigin: clientOrigin,
-        cliente: cliente,
+        pitchType,
+        result,
+        clientOrigin,
+        cliente,
         id: index
       };
       
-      window.salesData.push(venta);
-      
+      salesData.push(venta);
     } catch (e) {
       console.error(`Error procesando fila ${index}:`, e);
     }
   });
 
-  console.log(`✅ Datos procesados: ${window.salesData.length} registros válidos`);
+  console.log(`✅ Datos procesados: ${salesData.length} registros válidos`);
   
-  if (window.salesData.length === 0) {
+  if (salesData.length === 0) {
     showNotification('No se encontraron datos válidos en el CSV.', 'warning');
     return;
   }
@@ -4157,7 +4103,7 @@ function applyFilters() {
   const zonaFilter = document.getElementById('zoneFilter').value;
   const timeFilter = document.getElementById('timeFilter').value;
 
-  filteredData = salesData.filter(sale => {
+  window.filteredData = window.salesData.filter(sale => {
     // Filtro Fecha
     if (dateFrom && sale.fecha < dateFrom) return false;
     if (dateTo) {
@@ -4202,7 +4148,7 @@ function resetFilters() {
   document.getElementById('zoneFilter').value = '';
   document.getElementById('timeFilter').value = '';
   
-  filteredData = [...salesData];
+  window.filteredData = [...window.salesData];
   updateStatistics();
   updateTable();
   updateCharts();
