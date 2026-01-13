@@ -1,0 +1,27 @@
+Objetivo (traducción para el agente AI)
+Implementar en una aplicación web HTML/JS una herramienta que:
+- Cuente cuántas veces aparece una cadena (palabra) en una columna.
+- Sume los valores numéricos asociados solo en las filas donde la columna contiene esa palabra.
+- Detecte y corrija errores cuando el contenido textual parezca número (por ejemplo "1,234" o "uno") y aplique una estrategia de conversión segura. Esto es equivalente a la operación COUNTIF/SUMIF en Excel para análisis estadístico y contabilidad.
+
+Requisitos funcionales
+- Entrada: tabla (array de objetos) con columnas texto y valor.
+- Parámetros: palabra objetivo, opciones: caseSensitive, partialMatch, locale (para parseo numérico).
+- Salida: { count: número de coincidencias, sum: suma numérica, errors: lista de filas con problemas }.
+- Validaciones: detectar celdas vacías, valores no numéricos, formatos numéricos locales, y textos que representan números en palabras.
+
+Algoritmo propuesto (pasos)
+- Normalizar la palabra objetivo según caseSensitive.
+- Recorrer filas y para cada fila:
+- Evaluar si la columna texto coincide (exacta o parcial) con la palabra objetivo.
+- Si coincide, intentar convertir valor a número con estrategia segura.
+- Si conversión exitosa, acumular en sum y aumentar count.
+- Si falla, registrar en errors con motivo (p. ej., “texto no convertible”, “formato local”).
+- Postprocesar errores: intentar conversiones alternativas (quitar separadores, reemplazar comas por puntos, mapear palabras numéricas básicas).
+- Devolver resultado y métricas de calidad (porcentaje convertido, filas problemáticas).
+
+Estrategias de conversión texto → número
+- Primera pasada: parseFloat tras limpiar espacios y eliminar símbolos de moneda.
+- Formato local: si contiene , y . ambos, inferir separador decimal por posición; usar Intl.NumberFormat o librería (p. ej., numeral.js).
+- Palabras a números: mapear palabras comunes (“uno”→1, “dos”→2) para casos simples.
+- Fallback: marcar como error y sugerir revisión manual

@@ -1,0 +1,3423 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Geo-Suite Cancún: Plataforma Integral de Análisis Estratégico</title>
+
+<!-- Librerías principales -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+<!-- Mapbox GL JS -->
+<link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
+<script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
+
+<!-- Turf.js para cálculos geográficos -->
+<script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+
+<!-- Estadísticas -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jstat/1.9.4/jstat.min.js"></script>
+
+<!-- Lodash para utilidades -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
+
+<style>
+:root {
+  --primary: #0ea5e9;
+  --secondary: #6366f1;
+  --accent: #ec4899;
+  --dark: #0f172a;
+  --light: #f8fafc;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --glass: rgba(255, 255, 255, 0.95);
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  overflow: hidden;
+}
+
+.app-container {
+  display: flex;
+  height: 100vh;
+  max-width: 2000px;
+  margin: 0 auto;
+  background: white;
+  box-shadow: 0 0 40px rgba(0,0,0,0.3);
+}
+
+/* ========== SIDEBAR ========== */
+.sidebar {
+  width: 400px;
+  min-width: 350px;
+  background: var(--dark);
+  color: var(--light);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  z-index: 10;
+  border-right: 1px solid #334155;
+}
+
+.header {
+  padding: 1.5rem;
+  background: linear-gradient(135deg, var(--secondary), var(--primary));
+  color: white;
+}
+
+.header h1 {
+  margin: 0 0 5px 0;
+  font-size: 1.3rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header p {
+  margin: 0;
+  font-size: 0.85rem;
+  opacity: 0.9;
+}
+
+/* Controles */
+.control-group {
+  background: rgba(30, 41, 59, 0.8);
+  padding: 1.2rem;
+  margin: 10px;
+  border-radius: 10px;
+  backdrop-filter: blur(10px);
+  border: 1px solid #334155;
+}
+
+.control-group label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #cbd5e1;
+  margin-bottom: 8px;
+}
+
+input[type="text"], input[type="date"], input[type="number"], select {
+  width: 100%;
+  padding: 10px 12px;
+  background: #1e293b;
+  border: 1px solid #475569;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  color: white;
+  transition: all 0.2s;
+}
+
+input:focus, select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+}
+
+.btn {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 8px;
+  font-size: 0.9rem;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: white;
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(14, 165, 233, 0.4);
+}
+
+.btn-secondary {
+  background: #334155;
+  color: #e2e8f0;
+}
+.btn-secondary:hover {
+  background: #475569;
+}
+
+.btn-success {
+  background: var(--success);
+  color: white;
+}
+
+.btn-warning {
+  background: var(--warning);
+  color: white;
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: white;
+}
+
+.api-key-input {
+  position: relative;
+}
+
+.api-key-input i {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  cursor: pointer;
+}
+
+/* ========== TABS ========== */
+.tabs {
+  display: flex;
+  background: #1e293b;
+  border-bottom: 1px solid #334155;
+  overflow-x: auto;
+}
+
+.tab {
+  flex: 1;
+  padding: 15px;
+  text-align: center;
+  cursor: pointer;
+  color: #94a3b8;
+  font-weight: 600;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.8rem;
+  min-width: 80px;
+}
+
+.tab i {
+  font-size: 1.1rem;
+}
+
+.tab:hover {
+  color: var(--primary);
+  background: rgba(14, 165, 233, 0.1);
+}
+
+.tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+  background: rgba(14, 165, 233, 0.05);
+}
+
+/* ========== CONTENT AREAS ========== */
+.content-area {
+  flex: 1;
+  display: none;
+  padding: 1.5rem;
+  overflow-y: auto;
+  background: #f1f5f9;
+}
+.content-area.active {
+  display: block;
+}
+
+/* Dashboard Grid */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.kpi-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.kpi-info h3 {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.kpi-info p {
+  font-size: 1.8rem;
+  color: var(--dark);
+  margin: 5px 0 0 0;
+  font-weight: 700;
+}
+
+.kpi-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+.chart-container {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  margin-bottom: 20px;
+  height: 300px;
+  position: relative;
+}
+
+/* ========== MAP ========== */
+.map-container {
+  flex: 1;
+  position: relative;
+  background: #1e293b;
+}
+
+#map {
+  width: 100%;
+  height: 100%;
+}
+
+.map-overlay {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: var(--glass);
+  padding: 15px;
+  border-radius: 10px;
+  width: 280px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+  z-index: 10;
+}
+
+.layer-toggle {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.layer-toggle:hover {
+  background: rgba(0,0,0,0.05);
+}
+
+.layer-toggle input {
+  margin-right: 10px;
+}
+
+/* ========== ZONAS DE CANCÚN ========== */
+.zona-badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-right: 8px;
+  margin-bottom: 8px;
+}
+
+.zona-237 { background: #3b82f6; color: white; }
+.zona-233 { background: #10b981; color: white; }
+.zona-91 { background: #8b5cf6; color: white; }
+.zona-77 { background: #ef4444; color: white; }
+.zona-centro { background: #f59e0b; color: white; }
+.zona-hotelera { background: #ec4899; color: white; }
+
+/* ========== ANÁLISIS AVANZADO ========== */
+.analysis-box {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  margin-bottom: 20px;
+}
+
+.analysis-box h3 {
+  margin-top: 0;
+  color: var(--dark);
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 10px;
+}
+
+.montecarlo-result {
+  border-left: 4px solid var(--success);
+  background: #f0fdf4;
+  padding: 15px;
+  margin: 15px 0;
+  border-radius: 0 8px 8px 0;
+}
+
+.bayesian-result {
+  border-left: 4px solid var(--secondary);
+  background: #f5f3ff;
+  padding: 15px;
+  margin: 15px 0;
+  border-radius: 0 8px 8px 0;
+}
+
+.route-result {
+  border-left: 4px solid var(--accent);
+  background: #fdf2f8;
+  padding: 15px;
+  margin: 15px 0;
+  border-radius: 0 8px 8px 0;
+}
+
+/* ========== TABLA DE DATOS ========== */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.data-table th {
+  background: #f8fafc;
+  padding: 15px;
+  text-align: left;
+  color: #475569;
+  font-weight: 600;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.data-table td {
+  padding: 15px;
+  border-bottom: 1px solid #e2e8f0;
+  color: #334155;
+}
+
+.data-table tr:hover {
+  background: #f1f5f9;
+}
+
+/* ========== PITCH GENERATOR ========== */
+.pitch-container {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  margin-bottom: 20px;
+}
+
+.pitch-input {
+  width: 100%;
+  min-height: 120px;
+  padding: 15px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  margin-bottom: 15px;
+  resize: vertical;
+}
+
+.pitch-output {
+  background: #f8fafc;
+  padding: 20px;
+  border-radius: 8px;
+  border-left: 4px solid var(--primary);
+  margin-top: 20px;
+  white-space: pre-wrap;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.pitch-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+/* ========== REPORTS SECTION ========== */
+.reports-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.report-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  transition: transform 0.2s;
+}
+
+.report-card:hover {
+  transform: translateY(-5px);
+}
+
+.report-card h4 {
+  margin-top: 0;
+  color: var(--dark);
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 10px;
+}
+
+.report-date {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-bottom: 10px;
+}
+
+/* ========== RESPONSIVE ========== */
+@media (max-width: 1200px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .app-container {
+    flex-direction: column;
+  }
+  
+  .sidebar {
+    width: 100%;
+    height: auto;
+    max-height: 50vh;
+  }
+  
+  .tabs {
+    overflow-x: auto;
+  }
+  
+  .map-overlay {
+    position: relative;
+    width: 100%;
+    top: 0;
+    right: 0;
+    margin-bottom: 10px;
+  }
+  
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .pitch-actions {
+    flex-direction: column;
+  }
+}
+
+/* ========== ANIMACIONES ========== */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.pulse {
+  animation: pulse 2s infinite;
+}
+
+/* ========== MODAL MEJORADO ========== */
+.modal-content {
+  max-height: 70vh;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+.modal-section {
+  margin-bottom: 25px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.modal-section:last-child {
+  border-bottom: none;
+}
+
+.recommendation-box {
+  background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+  border-left: 4px solid #0ea5e9;
+  padding: 15px;
+  border-radius: 8px;
+  margin: 15px 0;
+}
+
+.insight-box {
+  background: linear-gradient(135deg, #faf5ff, #f3e8ff);
+  border-left: 4px solid #8b5cf6;
+  padding: 15px;
+  border-radius: 8px;
+  margin: 15px 0;
+}
+
+.warning-box {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border-left: 4px solid #f59e0b;
+  padding: 15px;
+  border-radius: 8px;
+  margin: 15px 0;
+}
+
+/* ========== LOADING ========== */
+.loading {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255,255,255,.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+</style>
+</head>
+<body>
+
+<div class="app-container">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="header">
+      <h1><i class="fas fa-satellite-dish"></i> Geo-Suite Cancún</h1>
+      <p>Plataforma Integral de Análisis Estratégico de Ventas</p>
+    </div>
+
+    <!-- Controles principales -->
+    <div class="control-group">
+      <label><i class="fas fa-key"></i> API Key para IA (Groq)</label>
+      <div class="api-key-input">
+        <input type="text" id="apiKey" placeholder="gsk_... (obtenla en console.groq.com)">
+        <i class="fas fa-info-circle" title="Obtén tu API Key en console.groq.com"></i>
+      </div>
+    </div>
+
+    <div class="control-group">
+      <label><i class="fas fa-file-csv"></i> Cargar Datos de Ventas (CSV)</label>
+      <div style="border: 2px dashed #475569; border-radius: 8px; padding: 30px; text-align: center; cursor: pointer; margin-bottom: 10px;" id="dropArea">
+        <i class="fas fa-cloud-upload-alt" style="font-size: 2rem; color: #94a3b8; margin-bottom: 10px;"></i>
+        <p style="margin: 0; color: #cbd5e1; font-size: 0.9rem;">Arrastra tu CSV aquí o haz clic para seleccionar</p>
+        <input type="file" id="csvFile" accept=".csv" style="display: none;">
+      </div>
+      <div id="fileInfo" style="font-size: 0.8rem; color: #94a3b8; display: none;">
+        <i class="fas fa-check-circle" style="color: #10b981;"></i> <span id="fileStatus">Archivo cargado</span>
+      </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="control-group">
+      <label><i class="fas fa-filter"></i> Filtros de Análisis</label>
+      
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+        <div>
+          <label style="font-size: 0.75rem;">Fecha Desde</label>
+          <input type="date" id="dateFrom">
+        </div>
+        <div>
+          <label style="font-size: 0.75rem;">Fecha Hasta</label>
+          <input type="date" id="dateTo">
+        </div>
+      </div>
+
+      <div style="margin-bottom: 10px;">
+        <label style="font-size: 0.75rem;">Zona de Cancún</label>
+        <select id="zonaFilter">
+          <option value="">Todas las zonas</option>
+          <option value="237">Región 237</option>
+          <option value="233">Región 233</option>
+          <option value="91">Supermanzana 91</option>
+          <option value="77">Supermanzana 77 (Corales)</option>
+          <option value="centro">Centro (Distrito 1)</option>
+          <option value="hotelera">Zona Hotelera</option>
+        </select>
+      </div>
+
+      <div style="margin-bottom: 15px;">
+        <label style="font-size: 0.75rem;">Franja Horaria</label>
+        <select id="timeFilter">
+          <option value="">Todo el día</option>
+          <option value="6-12">Mañana (6:00 - 12:00)</option>
+          <option value="12-18">Tarde (12:00 - 18:00)</option>
+          <option value="18-24">Noche (18:00 - 24:00)</option>
+        </select>
+      </div>
+
+      <button class="btn btn-primary" onclick="applyFilters()">
+        <i class="fas fa-sync-alt"></i> Aplicar Filtros
+      </button>
+    </div>
+
+    <!-- Botones de análisis -->
+    <div class="control-group">
+      <label><i class="fas fa-brain"></i> Análisis Avanzado</label>
+      <button class="btn btn-secondary" onclick="runMonteCarlo()">
+        <i class="fas fa-dice"></i> Simulación Monte Carlo
+      </button>
+      <button class="btn btn-secondary" onclick="runBayesianAnalysis()">
+        <i class="fas fa-chart-bar"></i> Análisis Bayesiano
+      </button>
+      <button class="btn btn-success" onclick="calculateOptimalRoute()">
+        <i class="fas fa-route"></i> Calcular Ruta Óptima
+      </button>
+      <button class="btn btn-warning" onclick="runStrategicAnalysis()">
+        <i class="fas fa-robot"></i> Análisis Estratégico IA
+      </button>
+      <button class="btn btn-primary" onclick="generatePitch()">
+        <i class="fas fa-bullhorn"></i> Generar Pitch de Ventas
+      </button>
+    </div>
+
+    <!-- Tabs de navegación -->
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('dashboard')">
+        <i class="fas fa-chart-pie"></i>
+        <span>Dashboard</span>
+      </div>
+      <div class="tab" onclick="switchTab('map')">
+        <i class="fas fa-map"></i>
+        <span>Mapa</span>
+      </div>
+      <div class="tab" onclick="switchTab('analysis')">
+        <i class="fas fa-chart-line"></i>
+        <span>Análisis</span>
+      </div>
+      <div class="tab" onclick="switchTab('data')">
+        <i class="fas fa-table"></i>
+        <span>Datos</span>
+      </div>
+      <div class="tab" onclick="switchTab('zones')">
+        <i class="fas fa-map-marked-alt"></i>
+        <span>Zonas</span>
+      </div>
+      <div class="tab" onclick="switchTab('pitch')">
+        <i class="fas fa-bullhorn"></i>
+        <span>Pitch</span>
+      </div>
+      <div class="tab" onclick="switchTab('reports')">
+        <i class="fas fa-file-alt"></i>
+        <span>Reportes</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <div class="map-container" id="main-content">
+    <!-- Mapa -->
+    <div id="map"></div>
+    
+    <!-- Dashboard (se muestra sobre el mapa) -->
+    <div id="dashboard-view" class="content-area active">
+      <div class="dashboard-grid">
+        <div class="kpi-card">
+          <div class="kpi-info">
+            <h3>Ventas Totales</h3>
+            <p id="kpiTotal">$0 MXN</p>
+          </div>
+          <div class="kpi-icon" style="background: #dbeafe; color: #1d4ed8;">
+            <i class="fas fa-dollar-sign"></i>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-info">
+            <h3>Transacciones</h3>
+            <p id="kpiCount">0</p>
+          </div>
+          <div class="kpi-icon" style="background: #dcfce7; color: #16a34a;">
+            <i class="fas fa-shopping-cart"></i>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-info">
+            <h3>Ticket Promedio</h3>
+            <p id="kpiAvg">$0 MXN</p>
+          </div>
+          <div class="kpi-icon" style="background: #fef3c7; color: #d97706;">
+            <i class="fas fa-calculator"></i>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-info">
+            <h3>Mejor Zona</h3>
+            <p id="kpiBestZone">-</p>
+          </div>
+          <div class="kpi-icon" style="background: #f3e8ff; color: #7c3aed;">
+            <i class="fas fa-map-marker-alt"></i>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-info">
+            <h3>Hora Pico</h3>
+            <p id="kpiBestTime">-</p>
+          </div>
+          <div class="kpi-icon" style="background: #fce7f3; color: #db2777;">
+            <i class="fas fa-clock"></i>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-info">
+            <h3>Eficiencia Ruta</h3>
+            <p id="kpiRouteEff">0%</p>
+          </div>
+          <div class="kpi-icon" style="background: #ecfdf5; color: #059669;">
+            <i class="fas fa-tachometer-alt"></i>
+          </div>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div class="chart-container">
+          <h3 style="margin-top: 0; color: var(--dark);">Ventas por Zona</h3>
+          <canvas id="zonesChart"></canvas>
+        </div>
+        <div class="chart-container">
+          <h3 style="margin-top: 0; color: var(--dark);">Tendencia por Hora</h3>
+          <canvas id="timeChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Análisis -->
+    <div id="analysis-view" class="content-area">
+      <div class="analysis-box">
+        <h3><i class="fas fa-dice"></i> Simulación Monte Carlo</h3>
+        <div id="montecarloResults" class="montecarlo-result">
+          <p>Ejecuta la simulación para ver proyecciones de ventas futuras.</p>
+        </div>
+      </div>
+
+      <div class="analysis-box">
+        <h3><i class="fas fa-chart-bar"></i> Análisis Bayesiano</h3>
+        <div id="bayesianResults" class="bayesian-result">
+          <p>Calcula probabilidades de venta por zona y hora.</p>
+        </div>
+      </div>
+
+      <div class="analysis-box">
+        <h3><i class="fas fa-route"></i> Ruta Óptima</h3>
+        <div id="routeResults" class="route-result">
+          <p>Genera la ruta más eficiente para maximizar ventas.</p>
+        </div>
+      </div>
+
+      <div class="analysis-box">
+        <h3><i class="fas fa-robot"></i> Análisis Estratégico IA</h3>
+        <div id="iaResults" style="padding: 15px; background: #f8fafc; border-radius: 8px;">
+          <p>Conecta con la API de Groq para obtener insights estratégicos basados en tus datos.</p>
+          <div class="api-key-prompt" style="display: none; background: #fef3c7; padding: 15px; border-radius: 8px; margin-top: 15px;">
+            <h4 style="margin-top:0; color:#92400e;">🔐 API Key Requerida</h4>
+            <p>Para usar el análisis estratégico con IA, necesitas una API Key de Groq:</p>
+            <ol style="margin: 10px 0 10px 20px;">
+              <li>Ve a <a href="https://console.groq.com" target="_blank" style="color: #0ea5e9;">console.groq.com</a></li>
+              <li>Crea una cuenta gratuita</li>
+              <li>Genera una API Key en "API Keys"</li>
+              <li>Copia la key (comienza con "gsk_...")</li>
+              <li>Pégala en el campo superior</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Datos -->
+    <div id="data-view" class="content-area">
+      <div style="background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+        <h3 style="margin-top: 0; color: var(--dark);">Datos de Ventas</h3>
+        <div style="overflow-x: auto; max-height: 500px;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Cliente</th>
+                <th>Monto (MXN)</th>
+                <th>Zona</th>
+                <th>Hora</th>
+                <th>Coordenadas</th>
+              </tr>
+            </thead>
+            <tbody id="dataTableBody">
+              <tr><td colspan="6" style="text-align: center; padding: 40px;">Carga un archivo CSV para ver los datos</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Zonas -->
+    <div id="zones-view" class="content-area">
+      <div class="analysis-box">
+        <h3><i class="fas fa-map-marked-alt"></i> Zonas Geoestadísticas de Cancún</h3>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; margin-top: 20px;">
+          <div style="background: #dbeafe; padding: 1.5rem; border-radius: 10px; border-left: 4px solid #3b82f6;">
+            <h4 style="margin-top: 0; color: #1e40af;">Región 237</h4>
+            <p><strong>Perfil:</strong> Zona norte, alta densidad poblacional, procesos de regularización.</p>
+            <p><strong>Segmento:</strong> Clase trabajadora, ingresos medios-bajos.</p>
+            <p><strong>Estrategia:</strong> Ventas de productos básicos, pagos flexibles.</p>
+            <span class="zona-badge zona-237">Zona 237</span>
+          </div>
+          
+          <div style="background: #dcfce7; padding: 1.5rem; border-radius: 10px; border-left: 4px solid #10b981;">
+            <h4 style="margin-top: 0; color: #166534;">Región 233</h4>
+            <p><strong>Perfil:</strong> Población joven, mejor conectividad, inversión pública reciente.</p>
+            <p><strong>Segmento:</strong> Familias jóvenes, estudiantes universitarios.</p>
+            <p><strong>Estrategia:</strong> Productos tecnológicos, financiamiento educativo.</p>
+            <span class="zona-badge zona-233">Zona 233</span>
+          </div>
+          
+          <div style="background: #f3e8ff; padding: 1.5rem; border-radius: 10px; border-left: 4px solid #8b5cf6;">
+            <h4 style="margin-top: 0; color: #5b21b6;">Supermanzana 91</h4>
+            <p><strong>Perfil:</strong> Zona céntrica en transición, propiedades en remate.</p>
+            <p><strong>Segmento:</strong> Clase media en transición, propietarios.</p>
+            <p><strong>Estrategia:</strong> Productos de renovación hogar, seguros.</p>
+            <span class="zona-badge zona-91">Zona 91</span>
+          </div>
+          
+          <div style="background: #fee2e2; padding: 1.5rem; border-radius: 10px; border-left: 4px solid #ef4444;">
+            <h4 style="margin-top: 0; color: #991b1b;">Supermanzana 77 (Corales)</h4>
+            <p><strong>Perfil:</strong> Crisis habitacional, alta vulnerabilidad, necesidades básicas.</p>
+            <p><strong>Segmento:</strong> Población en extrema necesidad.</p>
+            <p><strong>Estrategia:</strong> Productos esenciales, precios mínimos, ayuda social.</p>
+            <span class="zona-badge zona-77">Zona 77</span>
+          </div>
+          
+          <div style="background: #fef3c7; padding: 1.5rem; border-radius: 10px; border-left: 4px solid #f59e0b;">
+            <h4 style="margin-top: 0; color: #92400e;">Centro (Distrito 1)</h4>
+            <p><strong>Perfil:</strong> Renovación urbana, comercio consolidado, turismo local.</p>
+            <p><strong>Segmento:</strong> Comerciantes, turistas, residentes con poder adquisitivo.</p>
+            <p><strong>Estrategia:</strong> Productos premium, experiencias, servicios especializados.</p>
+            <span class="zona-badge zona-centro">Centro</span>
+          </div>
+          
+          <div style="background: #fce7f3; padding: 1.5rem; border-radius: 10px; border-left: 4px solid #ec4899;">
+            <h4 style="margin-top: 0; color: #9d174d;">Zona Hotelera</h4>
+            <p><strong>Perfil:</strong> Turismo internacional, alta rotación, precios premium.</p>
+            <p><strong>Segmento:</strong> Turistas internacionales, ejecutivos.</p>
+            <p><strong>Estrategia:</strong> Productos de lujo, souvenirs, servicios exclusivos.</p>
+            <span class="zona-badge zona-hotelera">Hotelera</span>
+          </div>
+        </div>
+        
+        <div style="margin-top: 30px; padding: 1.5rem; background: #f8fafc; border-radius: 10px;">
+          <h4 style="margin-top: 0;">Insights del Estudio Sociodemográfico</h4>
+          <ul style="line-height: 1.6;">
+            <li><strong>Dualidad Urbana:</strong> Cancún presenta una división marcada entre la ciudad turística y la ciudad de apoyo.</li>
+            <li><strong>Seguridad Social:</strong> 44.5% de la población carece de acceso a seguridad social (379,315 personas).</li>
+            <li><strong>Ingreso Laboral:</strong> Promedio de $11,247 MXN mensuales, insuficiente para el costo de vida turístico.</li>
+            <li><strong>Juventud:</strong> La región 233 tiene una población joven que representa un bono demográfico importante.</li>
+            <li><strong>Regularización:</strong> La región 237 está en proceso de regularización, lo que aumenta la seguridad jurídica.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pitch Generator -->
+    <div id="pitch-view" class="content-area">
+      <div class="pitch-container">
+        <h3><i class="fas fa-bullhorn"></i> Generador de Pitch de Ventas</h3>
+        <p>Describe tu producto o servicio para generar un pitch personalizado basado en las zonas de Cancún:</p>
+        
+        <textarea id="pitchInput" class="pitch-input" placeholder="Ejemplo: Vender paquetes de comida saludable a domicilio en Cancún"></textarea>
+        
+        <div class="pitch-actions">
+          <button class="btn btn-primary" onclick="generatePitch()">
+            <i class="fas fa-magic"></i> Generar Pitch
+          </button>
+          <button class="btn btn-secondary" onclick="clearPitch()">
+            <i class="fas fa-eraser"></i> Limpiar
+          </button>
+          <button class="btn btn-success" onclick="savePitch()">
+            <i class="fas fa-save"></i> Guardar
+          </button>
+        </div>
+        
+        <div id="pitchOutput" class="pitch-output" style="display: none;">
+          <h4>Pitch Generado:</h4>
+          <div id="pitchContent"></div>
+          <div class="pitch-actions" style="margin-top: 15px;">
+            <button class="btn btn-primary" onclick="copyPitch()">
+              <i class="fas fa-copy"></i> Copiar Pitch
+            </button>
+            <button class="btn btn-secondary" onclick="saveAsReport()">
+              <i class="fas fa-file-pdf"></i> Guardar como Reporte
+            </button>
+          </div>
+        </div>
+        
+        <div id="pitchLoading" style="display: none; text-align: center; padding: 20px;">
+          <div class="loading" style="margin: 0 auto;"></div>
+          <p>Generando pitch personalizado...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reportes -->
+    <div id="reports-view" class="content-area">
+      <div class="analysis-box">
+        <h3><i class="fas fa-file-alt"></i> Reportes Generados</h3>
+        
+        <div class="reports-grid" id="reportsContainer">
+          <!-- Los reportes se generan dinámicamente aquí -->
+          <div class="report-card">
+            <h4>Reporte de Demo</h4>
+            <div class="report-date">Fecha: 08/01/2024</div>
+            <p>Este es un reporte de ejemplo. Genera análisis con IA para ver reportes personalizados.</p>
+            <button class="btn btn-primary" style="margin-top: 10px; padding: 8px 12px; font-size: 0.8rem;">
+              <i class="fas fa-eye"></i> Ver Detalles
+            </button>
+          </div>
+        </div>
+        
+        <div style="margin-top: 20px; padding: 15px; background: #f8fafc; border-radius: 8px;">
+          <h4>Generar Nuevo Reporte</h4>
+          <p>Selecciona el tipo de reporte que deseas generar:</p>
+          <div style="display: flex; gap: 10px; margin-top: 10px;">
+            <button class="btn btn-primary" onclick="generateAISalesReport()">
+              <i class="fas fa-chart-line"></i> Reporte de Ventas
+            </button>
+            <button class="btn btn-success" onclick="generateAIStrategyReport()">
+              <i class="fas fa-chess"></i> Reporte Estratégico
+            </button>
+            <button class="btn btn-warning" onclick="generateAICompetitiveReport()">
+              <i class="fas fa-chart-bar"></i> Análisis Competitivo
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Overlay del mapa -->
+  <div class="map-overlay">
+    <h4 style="margin: 0 0 15px 0;">Capas del Mapa</h4>
+    
+    <label class="layer-toggle">
+      <input type="checkbox" id="layerPoints" checked onchange="toggleMapLayer('points')">
+      <i class="fas fa-map-marker-alt"></i> Puntos de Venta
+    </label>
+    
+    <label class="layer-toggle">
+      <input type="radio" name="heatmap" id="heatIntensity" onchange="toggleMapLayer('heat-intensity')">
+      <i class="fas fa-fire"></i> Heatmap por Monto
+    </label>
+    
+    <label class="layer-toggle">
+      <input type="radio" name="heatmap" id="heatDensity" onchange="toggleMapLayer('heat-density')">
+      <i class="fas fa-layer-group"></i> Heatmap por Densidad
+    </label>
+    
+    <label class="layer-toggle">
+      <input type="radio" name="heatmap" id="heatNone" checked onchange="toggleMapLayer('heat-none')">
+      <i class="fas fa-ban"></i> Sin Heatmap
+    </label>
+    
+    <hr style="margin: 15px 0; border-color: #e2e8f0;">
+    
+    <label class="layer-toggle">
+      <input type="checkbox" id="layerRoute" onchange="toggleMapLayer('route')">
+      <i class="fas fa-route"></i> Ruta Óptima
+    </label>
+    
+    <label class="layer-toggle">
+      <input type="checkbox" id="layerZones" onchange="toggleMapLayer('zones')">
+      <i class="fas fa-map-pin"></i> Zonas Geoestadísticas
+    </label>
+    
+    <hr style="margin: 15px 0; border-color: #e2e8f0;">
+    
+    <div style="font-size: 0.85rem; color: #64748b;">
+      <p style="margin: 5px 0;"><strong>Puntos:</strong> <span id="mapPointCount">0</span></p>
+      <p style="margin: 5px 0;"><strong>Zoom:</strong> <span id="mapZoom">14</span></p>
+      <p style="margin: 5px 0;"><strong>Ubicación:</strong> Cancún, Q.R.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Modal para resultados detallados -->
+<div id="resultsModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:1000; align-items:center; justify-content:center;">
+  <div style="background:white; padding:30px; border-radius:12px; max-width:800px; max-height:85vh; overflow-y:auto; width:90%;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+      <h3 id="modalTitle" style="margin:0; color:var(--dark);">Resultados</h3>
+      <button onclick="closeModal()" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:#64748b;">&times;</button>
+    </div>
+    <div id="modalContent" class="modal-content">
+      Contenido del modal
+    </div>
+    <button onclick="closeModal()" class="btn btn-primary" style="margin-top:20px;">Cerrar</button>
+  </div>
+</div>
+
+<script>
+// ============================================
+// BASE DE CONOCIMIENTO - knowledgeBase.js
+// ============================================
+const salesKnowledge = {
+  cancunDemographics: `
+    CANCÚN - PERFIL SOCIODEMOGRÁFICO:
+    
+    1. REGIÓN 237 (Zona Norte):
+       - Población: 45,000 habitantes aprox.
+       - Ingreso promedio: $8,000 - $12,000 MXN mensuales
+       - Características: Proceso de regularización, alta densidad poblacional
+       - Ocupación: Trabajadores de servicios, construcción, comercio informal
+       - Necesidades: Vivienda digna, servicios básicos, empleo estable
+       - Objeciones comunes: "No tengo dinero", "Es muy caro", "Tengo otras prioridades"
+    
+    2. REGIÓN 233 (Zona Norte Joven):
+       - Población: 38,000 habitantes aprox.
+       - Ingreso promedio: $10,000 - $15,000 MXN mensuales
+       - Características: Población joven (18-35 años), mejor conectividad
+       - Ocupación: Estudiantes universitarios, empleados de servicios turísticos
+       - Necesidades: Educación, tecnología, entretenimiento, transporte
+       - Objeciones comunes: "Lo pensaré", "No es prioridad", "Busco mejor precio"
+    
+    3. SUPERMANZANA 91 (Centro en Transición):
+       - Población: 25,000 habitantes aprox.
+       - Ingreso promedio: $12,000 - $18,000 MXN mensuales
+       - Características: Propiedades en remate, transición urbana
+       - Ocupación: Comerciantes, empleados de gobierno, propietarios
+       - Necesidades: Seguridad, renovación de vivienda, servicios financieros
+       - Objeciones comunes: "No confío", "Ya tengo proveedor", "Es riesgoso"
+    
+    4. SUPERMANZANA 77 (CORALES - Crisis Habitacional):
+       - Población: 15,000 habitantes aprox.
+       - Ingreso promedio: $5,000 - $8,000 MXN mensuales
+       - Características: Alta vulnerabilidad, edificios en riesgo
+       - Ocupación: Empleos informales, servicios básicos
+       - Necesidades: Alimentos, salud, vivienda segura, ayuda social
+       - Objeciones comunes: "No puedo pagar", "Es demasiado", "Necesito ayuda"
+    
+    5. CENTRO (Distrito 1 - Renovación Urbana):
+       - Población: 30,000 habitantes aprox.
+       - Ingreso promedio: $15,000 - $25,000 MXN mensuales
+       - Características: Comercio consolidado, turismo local
+       - Ocupación: Comerciantes, profesionales, empleados de servicios
+       - Necesidades: Productos premium, experiencias, servicios especializados
+       - Objeciones comunes: "Busco calidad", "Compararé opciones", "Necesito garantía"
+    
+    6. ZONA HOTELERA (Turismo Internacional):
+       - Población: 8,000 habitantes aprox. (alta rotación)
+       - Ingreso promedio: $20,000 - $50,000+ MXN mensuales
+       - Características: Turismo internacional, precios premium
+       - Ocupación: Ejecutivos, profesionales del turismo, expatriados
+       - Necesidades: Productos de lujo, servicios exclusivos, conveniencia
+       - Objeciones comunes: "Precio no es problema", "Necesito rapidez", "Quiero exclusividad"
+  `,
+  
+  salesTechniques: `
+    TÉCNICAS DE VENTAS PARA CANCÚN:
+    
+    1. PARA ZONAS DE BAJOS INGRESOS (237, 77):
+       - Enfoque en valor práctico y necesidad inmediata
+       - Pagos flexibles: semanales, quincenales
+       - Demostraciones gratuitas o muestras
+       - Lenguaje simple y directo
+       - Énfasis en solución de problemas urgentes
+    
+    2. PARA ZONAS DE INGRESOS MEDIOS (233, 91):
+       - Enfoque en beneficios a mediano/largo plazo
+       - Financiamiento accesible
+       - Pruebas de producto/servicio
+       - Testimonios de clientes similares
+       - Comparativas de valor vs. competencia
+    
+    3. PARA ZONAS DE ALTOS INGRESOS (Centro, Hotelera):
+       - Enfoque en exclusividad y personalización
+       - Atención premium 24/7
+       - Servicios adicionales y garantías extendidas
+       - Enfoque en ahorro de tiempo y conveniencia
+       - Presentación profesional y detallada
+    
+    OBJECIONES COMUNES Y RESPUESTAS:
+    
+    1. "No tengo dinero":
+       - "Entiendo perfectamente, por eso tenemos planes desde $XX semanales"
+       - "¿Le interesaría conocer nuestras opciones de pago flexibles?"
+       - "Imagine el dinero que ahorraría a largo plazo..."
+    
+    2. "Lo tengo que consultar":
+       - "Claro, ¿con quién necesita consultarlo?"
+       - "Mientras consulta, ¿puedo mostrarle algunos beneficios adicionales?"
+       - "¿Qué información específica necesita para tomar la decisión?"
+    
+    3. "No confío":
+       - "Entiendo su preocupación, aquí están nuestras certificaciones..."
+       - "Tenemos X años en Cancún sirviendo a clientes como usted"
+       - "¿Le gustaría hablar con alguno de nuestros clientes actuales?"
+    
+    4. "Es muy caro":
+       - "¿Comparado con qué exactamente?"
+       - "Vamos a desglosar el costo por día/semana para ver el valor real"
+       - "Considerando que soluciona X problema, ¿sigue pareciendo caro?"
+    
+    5. "Ya tengo proveedor":
+       - "Excelente, eso significa que valora este tipo de servicio"
+       - "¿Qué le gustaría mejorar de su proveedor actual?"
+       - "¿Me permitiría mostrarle nuestras ventajas diferenciales?"
+  `,
+  
+  productRecommendations: `
+    RECOMENDACIONES DE PRODUCTOS POR ZONA:
+    
+    1. REGIÓN 237:
+       - Productos básicos de consumo diario
+       - Servicios de reparación y mantenimiento
+       - Alimentos no perecederos a granel
+       - Ropa y calzado económico
+       - Planes de pagos semanales
+    
+    2. REGIÓN 233:
+       - Productos tecnológicos (smartphones, tablets)
+       - Cursos y capacitaciones
+       - Entretenimiento y deportes
+       - Alimentos saludables
+       - Servicios de delivery
+    
+    3. SUPERMANZANA 91:
+       - Materiales de construcción y renovación
+       - Seguros de hogar y auto
+       - Servicios financieros (créditos, inversiones)
+       - Electrodomésticos eficientes
+       - Mobiliario de hogar
+    
+    4. SUPERMANZANA 77:
+       - Productos de primera necesidad
+       - Servicios médicos básicos
+       - Ayuda alimentaria
+       - Ropa y calzado donado/economic
+       - Servicios comunitarios
+    
+    5. CENTRO:
+       - Productos gourmet y especializados
+       - Experiencias turísticas locales
+       - Servicios profesionales (contabilidad, legal)
+       - Productos de diseño y artesanía
+       - Suscripciones premium
+    
+    6. ZONA HOTELERA:
+       - Productos de lujo y exclusivos
+       - Servicios de concierge personalizado
+       - Experiencias VIP y tours privados
+       - Productos internacionales
+       - Servicios 24/7 con entrega inmediata
+  `,
+  
+  successStories: `
+    CASOS DE ÉXITO EN CANCÚN:
+    
+    1. "Distribución de agua purificada en Región 237":
+       - Estrategia: Pagos semanales de $50 MXN
+       - Resultado: 300 suscriptores en 6 meses
+       - Clave: Confianza mediante demostraciones gratuitas
+    
+    2. "Venta de cursos de inglés en Región 233":
+       - Estrategia: Becas parciales y horarios flexibles
+       - Resultado: 150 estudiantes en 3 meses
+       - Clave: Enfoque en empleabilidad y crecimiento
+    
+    3. "Renovación de fachadas en Supermanzana 91":
+       - Estrategia: Financiamiento a 12 meses sin intereses
+       - Resultado: 45 proyectos completados
+       - Clave: Mostrar mejoras en valor de propiedad
+    
+    4. "Programa de alimentos en Supermanzana 77":
+       - Estrategia: Donaciones corporativas + venta económica
+       - Resultado: 500 familias beneficiadas
+       - Clave: Enfoque comunitario y social
+    
+    5. "Tour gastronómico en Centro":
+       - Estrategia: Experiencias premium para turistas
+       - Resultado: 85% de recompra
+       - Clave: Personalización y exclusividad
+    
+    6. "Servicio de concierge en Zona Hotelera":
+       - Estrategia: Suscripción mensual con beneficios exclusivos
+       - Resultado: 120 clientes recurrentes
+       - Clave: Atención 24/7 y resolución inmediata
+  `
+};
+
+// ============================================
+// CONFIGURACIÓN Y VARIABLES GLOBALES
+// ============================================
+// Token de Mapbox incluido en el código (no se pide al usuario)
+mapboxgl.accessToken = 'pk.eyJ1IjoiZG9ubmF6YXZhbGEiLCJhIjoiY21rMjRvOHA4MGRpZDNlcHhidnp3MmFuaCJ9.EaxKYFP3unsYAeGT_8eK-A';
+
+let salesData = [];
+let filteredData = [];
+let map;
+let markers = [];
+let routeLayer = null;
+let zonesLayer = null;
+let currentMapView = 'points';
+let charts = {};
+let monteCarloResults = null;
+let bayesianResults = null;
+let optimalRoute = null;
+let generatedReports = [];
+
+// Zonas geoestadísticas de Cancún (basadas en el PDF)
+const cancunZones = {
+  '237': {
+    name: 'Región 237',
+    description: 'Zona norte en proceso de regularización. Alta densidad poblacional, población trabajadora.',
+    color: '#3b82f6',
+    bounds: [[-86.90, 21.13], [-86.85, 21.17]]
+  },
+  '233': {
+    name: 'Región 233',
+    description: 'Zona norte con población joven, mejor conectividad. Bono demográfico importante.',
+    color: '#10b981',
+    bounds: [[-86.88, 21.14], [-86.83, 21.18]]
+  },
+  '91': {
+    name: 'Supermanzana 91',
+    description: 'Zona céntrica en transición, propiedades en remate bancario.',
+    color: '#8b5cf6',
+    bounds: [[-86.87, 21.15], [-86.84, 21.17]]
+  },
+  '77': {
+    name: 'Supermanzana 77 (Corales)',
+    description: 'Crisis habitacional, edificios en riesgo de colapso. Alta vulnerabilidad.',
+    color: '#ef4444',
+    bounds: [[-86.86, 21.16], [-86.84, 21.18]]
+  },
+  'centro': {
+    name: 'Centro (Distrito 1)',
+    description: 'Zona de renovación urbana, comercio consolidado, turismo local.',
+    color: '#f59e0b',
+    bounds: [[-86.87, 21.15], [-86.82, 21.17]]
+  },
+  'hotelera': {
+    name: 'Zona Hotelera',
+    description: 'Turismo internacional, alta rotación, precios premium.',
+    color: '#ec4899',
+    bounds: [[-86.82, 21.12], [-86.75, 21.16]]
+  }
+};
+
+// ============================================
+// FUNCIONES DE PITCH GENERATION
+// ============================================
+async function generatePitch() {
+  const pitchInput = document.getElementById('pitchInput').value.trim();
+  const apiKey = document.getElementById('apiKey').value.trim();
+  
+  if (!pitchInput) {
+    showNotification('⚠️ Por favor describe tu producto o servicio', 'warning');
+    return;
+  }
+  
+  if (!apiKey) {
+    showNotification('🔑 Ingresa tu API Key de Groq primero', 'warning');
+    switchTab('pitch');
+    return;
+  }
+  
+  // Mostrar loading
+  document.getElementById('pitchLoading').style.display = 'block';
+  document.getElementById('pitchOutput').style.display = 'none';
+  
+  try {
+    // Construir prompt con base de conocimiento
+    const prompt = `
+    Eres un experto en ventas en Cancún, México. 
+    
+    BASE DE CONOCIMIENTO:
+    ${salesKnowledge.cancunDemographics}
+    ${salesKnowledge.salesTechniques}
+    ${salesKnowledge.productRecommendations}
+    ${salesKnowledge.successStories}
+    
+    CONTEXTO DEL CLIENTE:
+    Producto/Servicio: ${pitchInput}
+    Ubicación: Cancún, Quintana Roo
+    
+    TAREA:
+    Genera un pitch de ventas efectivo que incluya:
+    
+    1. TITULO ATRACTIVO
+    2. INTRODUCCIÓN que conecte con las necesidades de Cancún
+    3. PROPUESTA DE VALOR clara y específica
+    4. BENEFICIOS por zona (máximo 3 zonas más relevantes)
+    5. ESTRATEGIA DE PRECIOS adaptada a cada segmento
+    6. RESPUESTAS A OBJECIONES comunes en Cancún
+    7. LLAMADO A LA ACCIÓN claro
+    
+    Reglas:
+    - Usa lenguaje persuasivo pero auténtico
+    - Incluye datos específicos de Cancún cuando sea relevante
+    - Adapta el mensaje a la cultura local
+    - Sé práctico y accionable
+    - Formatea con encabezados claros
+    
+    Responde en español.
+    `;
+    
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: "llama-3.1-8b-instant",
+        messages: [
+          { 
+            role: "system", 
+            content: "Eres un experto en ventas en Cancún con conocimiento profundo de las zonas sociodemográficas. Genera pitches personalizados y efectivos." 
+          },
+          { role: "user", content: prompt }
+        ],
+        temperature: 0.7,
+        max_tokens: 2000
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.error?.message || "Error en la API");
+    }
+    
+    const pitchContent = data.choices[0].message.content;
+    
+    // Formatear el contenido para HTML
+    const formattedPitch = pitchContent
+      .replace(/# (.*?)(?=\n)/g, '<h4 style="margin-top: 15px; color: var(--dark);">$1</h4>')
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\n/g, '<br>')
+      .replace(/- (.*?)(?=<br>)/g, '<li>$1</li>')
+      .replace(/<li>/g, '<ul style="margin: 10px 0 10px 20px;"><li>')
+      .replace(/<\/li><br>/g, '</li></ul>');
+    
+    // Mostrar resultados
+    document.getElementById('pitchContent').innerHTML = formattedPitch;
+    document.getElementById('pitchOutput').style.display = 'block';
+    document.getElementById('pitchLoading').style.display = 'none';
+    
+    // Guardar en historial local
+    savePitchToHistory(pitchInput, pitchContent);
+    
+    showNotification('✅ Pitch generado exitosamente', 'success');
+    
+  } catch (error) {
+    console.error("Error generando pitch:", error);
+    document.getElementById('pitchLoading').style.display = 'none';
+    
+    // Mostrar pitch de respaldo
+    document.getElementById('pitchContent').innerHTML = `
+      <h4>🎯 Pitch para: ${pitchInput}</h4>
+      <p><strong>Zona recomendada para empezar:</strong> Región 233</p>
+      <p><strong>Estrategia recomendada:</strong></p>
+      <ul>
+        <li>Enfócate en beneficios prácticos y soluciones inmediatas</li>
+        <li>Ofrece planes de pago flexibles (semanales/quincenales)</li>
+        <li>Realiza demostraciones gratuitas en puntos estratégicos</li>
+        <li>Usa testimonios de clientes locales</li>
+        <li>Adapta tu mensaje al ingreso promedio de cada zona</li>
+      </ul>
+      <p><strong>Objeciones comunes y respuestas:</strong></p>
+      <ul>
+        <li><strong>"No tengo dinero":</strong> "Tenemos planes desde $50 semanales"</li>
+        <li><strong>"Lo pensaré":</strong> "¿Qué información necesita para decidir hoy?"</li>
+        <li><strong>"Es caro":</strong> "Vamos a calcular el costo por día/semana"</li>
+      </ul>
+      <p><em>Para un pitch más personalizado, verifica tu API Key y conexión a internet.</em></p>
+    `;
+    document.getElementById('pitchOutput').style.display = 'block';
+    
+    showNotification(`⚠️ Generando pitch local: ${error.message}`, 'warning');
+  }
+}
+
+function clearPitch() {
+  document.getElementById('pitchInput').value = '';
+  document.getElementById('pitchOutput').style.display = 'none';
+  showNotification('🗑️ Campo de pitch limpiado', 'info');
+}
+
+function savePitch() {
+  const pitchContent = document.getElementById('pitchContent').innerText;
+  const pitchInput = document.getElementById('pitchInput').value;
+  
+  if (!pitchContent) {
+    showNotification('⚠️ No hay pitch para guardar', 'warning');
+    return;
+  }
+  
+  const blob = new Blob([`Pitch para: ${pitchInput}\n\n${pitchContent}`], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `pitch-cancun-${new Date().toISOString().split('T')[0]}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  
+  showNotification('💾 Pitch guardado como archivo de texto', 'success');
+}
+
+function copyPitch() {
+  const pitchContent = document.getElementById('pitchContent').innerText;
+  
+  if (!pitchContent) {
+    showNotification('⚠️ No hay pitch para copiar', 'warning');
+    return;
+  }
+  
+  navigator.clipboard.writeText(pitchContent)
+    .then(() => {
+      showNotification('📋 Pitch copiado al portapapeles', 'success');
+    })
+    .catch(err => {
+      showNotification('❌ Error al copiar: ' + err.message, 'error');
+    });
+}
+
+function saveAsReport() {
+  const pitchContent = document.getElementById('pitchContent').innerText;
+  const pitchInput = document.getElementById('pitchInput').value;
+  
+  if (!pitchContent) {
+    showNotification('⚠️ No hay pitch para guardar como reporte', 'warning');
+    return;
+  }
+  
+  // Crear nuevo reporte
+  const newReport = {
+    id: Date.now(),
+    title: `Pitch: ${pitchInput.substring(0, 50)}${pitchInput.length > 50 ? '...' : ''}`,
+    content: pitchContent,
+    type: 'pitch',
+    date: new Date().toLocaleDateString('es-MX'),
+    timestamp: new Date().toISOString()
+  };
+  
+  // Agregar a reportes
+  generatedReports.push(newReport);
+  
+  // Actualizar UI de reportes
+  updateReportsUI();
+  
+  // Cambiar a pestaña de reportes
+  switchTab('reports');
+  
+  showNotification('📄 Pitch guardado como reporte en la sección de Reportes', 'success');
+}
+
+function savePitchToHistory(input, content) {
+  try {
+    const history = JSON.parse(localStorage.getItem('pitchHistory') || '[]');
+    history.unshift({
+      input,
+      content,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Mantener solo últimos 10
+    if (history.length > 10) history.length = 10;
+    
+    localStorage.setItem('pitchHistory', JSON.stringify(history));
+  } catch (e) {
+    console.error('Error guardando historial:', e);
+  }
+}
+
+// ============================================
+// FUNCIONES DE REPORTES AI
+// ============================================
+async function generateAISalesReport() {
+  const apiKey = document.getElementById('apiKey').value.trim();
+  
+  if (!apiKey) {
+    showNotification('🔑 Ingresa tu API Key de Groq primero', 'warning');
+    return;
+  }
+  
+  if (filteredData.length === 0) {
+    showNotification('📊 Carga datos primero para generar reporte', 'warning');
+    return;
+  }
+  
+  showNotification('📈 Generando reporte de ventas con IA...', 'info');
+  
+  // Preparar datos para el reporte
+  const reportData = {
+    totalSales: filteredData.reduce((sum, item) => sum + item.monto, 0),
+    totalTransactions: filteredData.length,
+    avgTicket: filteredData.reduce((sum, item) => sum + item.monto, 0) / filteredData.length,
+    dateRange: `${document.getElementById('dateFrom').value} a ${document.getElementById('dateTo').value}`,
+    zones: {},
+    hours: {}
+  };
+  
+  // Análisis por zona
+  filteredData.forEach(sale => {
+    reportData.zones[sale.zona] = reportData.zones[sale.zona] || { total: 0, count: 0 };
+    reportData.zones[sale.zona].total += sale.monto;
+    reportData.zones[sale.zona].count += 1;
+  });
+  
+  // Análisis por hora
+  filteredData.forEach(sale => {
+    const hour = parseInt(sale.hora.split(':')[0]) || 0;
+    reportData.hours[hour] = reportData.hours[hour] || { total: 0, count: 0 };
+    reportData.hours[hour].total += sale.monto;
+    reportData.hours[hour].count += 1;
+  });
+  
+  try {
+    const prompt = `
+    Eres un analista de ventas senior especializado en Cancún.
+    
+    DATOS A ANALIZAR:
+    - Total ventas: $${reportData.totalSales.toFixed(2)} MXN
+    - Transacciones: ${reportData.totalTransactions}
+    - Ticket promedio: $${reportData.avgTicket.toFixed(2)} MXN
+    - Periodo: ${reportData.dateRange}
+    
+    VENTAS POR ZONA:
+    ${Object.keys(reportData.zones).map(zone => {
+      const data = reportData.zones[zone];
+      const avg = data.total / data.count;
+      return `- ${zone}: ${data.count} ventas, $${data.total.toFixed(2)} MXN total, $${avg.toFixed(2)} MXN promedio`;
+    }).join('\n')}
+    
+    BASE DE CONOCIMIENTO DE CANCÚN:
+    ${salesKnowledge.cancunDemographics}
+    
+    GENERA UN REPORTE DE VENTAS QUE INCLUYA:
+    1. RESUMEN EJECUTIVO
+    2. ANÁLISIS DE DESEMPEÑO POR ZONA
+    3. RECOMENDACIONES ESPECÍFICAS POR ZONA
+    4. PROYECCIONES PARA EL PRÓXIMO MES
+    5. ACCIONES RECOMENDADAS
+    
+    Formato: Markdown con encabezados claros.
+    Sé específico, cuantitativo y accionable.
+    `;
+    
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: "llama-3.1-8b-instant",
+        messages: [
+          { 
+            role: "system", 
+            content: "Eres un analista de ventas experto en Cancún. Genera reportes detallados y accionables." 
+          },
+          { role: "user", content: prompt }
+        ],
+        temperature: 0.3,
+        max_tokens: 2000
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.error?.message || "Error en la API");
+    }
+    
+    const reportContent = data.choices[0].message.content;
+    
+    // Crear objeto de reporte
+    const newReport = {
+      id: Date.now(),
+      title: `Reporte de Ventas - ${new Date().toLocaleDateString('es-MX')}`,
+      content: reportContent,
+      type: 'sales',
+      date: new Date().toLocaleDateString('es-MX'),
+      timestamp: new Date().toISOString(),
+      dataSummary: {
+        totalSales: reportData.totalSales,
+        transactions: reportData.totalTransactions,
+        avgTicket: reportData.avgTicket
+      }
+    };
+    
+    // Agregar a reportes
+    generatedReports.push(newReport);
+    
+    // Actualizar UI
+    updateReportsUI();
+    
+    // Cambiar a pestaña de reportes
+    switchTab('reports');
+    
+    showNotification('✅ Reporte de ventas generado exitosamente', 'success');
+    
+  } catch (error) {
+    console.error("Error generando reporte:", error);
+    showNotification(`❌ Error generando reporte: ${error.message}`, 'error');
+  }
+}
+
+async function generateAIStrategyReport() {
+  const apiKey = document.getElementById('apiKey').value.trim();
+  
+  if (!apiKey) {
+    showNotification('🔑 Ingresa tu API Key de Groq primero', 'warning');
+    return;
+  }
+  
+  showNotification('🎯 Generando reporte estratégico con IA...', 'info');
+  
+  try {
+    const prompt = `
+    Eres un estratega comercial senior especializado en Cancún.
+    
+    BASE DE CONOCIMIENTO COMPLETA:
+    ${JSON.stringify(salesKnowledge, null, 2)}
+    
+    GENERA UN REPORTE ESTRATÉGICO PARA CANCÚN QUE INCLUYA:
+    
+    1. ANÁLISIS DEL MERCADO POR ZONA
+    2. OPORTUNIDADES NO EXPLOTADAS
+    3. ESTRATEGIAS DE PRECIOS POR SEGMENTO
+    4. CANALES DE DISTRIBUCIÓN ÓPTIMOS
+    5. PLAN DE ACCIÓN POR TRIMESTRE
+    6. MÉTRICAS DE SEGUIMIENTO
+    7. ANÁLISIS DE RIESGOS Y MITIGACIÓN
+    
+    Considera:
+    - La dualidad turística/residencial de Cancún
+    - Estacionalidad turística
+    - Factores socioeconómicos locales
+    - Tendencias del mercado post-pandemia
+    
+    Formato: Reporte ejecutivo con secciones claras.
+    Incluye tablas comparativas cuando sea relevante.
+    `;
+    
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: "llama-3.1-70b-versatile",
+        messages: [
+          { 
+            role: "system", 
+            content: "Eres un estratega comercial con 20 años de experiencia en Cancún. Genera reportes estratégicos profundos y accionables." 
+          },
+          { role: "user", content: prompt }
+        ],
+        temperature: 0.4,
+        max_tokens: 3000
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.error?.message || "Error en la API");
+    }
+    
+    const reportContent = data.choices[0].message.content;
+    
+    // Crear objeto de reporte
+    const newReport = {
+      id: Date.now(),
+      title: `Reporte Estratégico - ${new Date().toLocaleDateString('es-MX')}`,
+      content: reportContent,
+      type: 'strategy',
+      date: new Date().toLocaleDateString('es-MX'),
+      timestamp: new Date().toISOString()
+    };
+    
+    // Agregar a reportes
+    generatedReports.push(newReport);
+    
+    // Actualizar UI
+    updateReportsUI();
+    
+    // Cambiar a pestaña de reportes
+    switchTab('reports');
+    
+    showNotification('✅ Reporte estratégico generado exitosamente', 'success');
+    
+  } catch (error) {
+    console.error("Error generando reporte estratégico:", error);
+    showNotification(`❌ Error generando reporte: ${error.message}`, 'error');
+  }
+}
+
+async function generateAICompetitiveReport() {
+  const apiKey = document.getElementById('apiKey').value.trim();
+  
+  if (!apiKey) {
+    showNotification('🔑 Ingresa tu API Key de Groq primero', 'warning');
+    return;
+  }
+  
+  showNotification('🏆 Generando análisis competitivo con IA...', 'info');
+  
+  try {
+    const prompt = `
+    Eres un analista competitivo experto en el mercado de Cancún.
+    
+    BASE DE CONOCIMIENTO:
+    ${salesKnowledge.cancunDemographics}
+    ${salesKnowledge.successStories}
+    
+    REALIZA UN ANÁLISIS COMPETITIVO PARA CANCÚN QUE INCLUYA:
+    
+    1. MAPA DE COMPETENCIA POR ZONA
+    2. ANÁLISIS SWOT (Fortalezas, Debilidades, Oportunidades, Amenazas)
+    3. BENCHMARKING DE PRECIOS POR SEGMENTO
+    4. ANÁLISIS DE TENDENCIAS DEL CONSUMIDOR
+    5. ESTRATEGIAS DE DIFERENCIACIÓN
+    6. RECOMENDACIONES DE POSICIONAMIENTO
+    7. PLAN DE VENTAJAS COMPETITIVAS
+    
+    Considera las características únicas de Cancún:
+    - Mercado turístico internacional vs. mercado local
+    - Estacionalidad marcada
+    - Diversidad socioeconómica extrema
+    - Alta rotación de negocios
+    
+    Formato: Análisis profesional con insights accionables.
+    `;
+    
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: "llama-3.1-70b-versatile",
+        messages: [
+          { 
+            role: "system", 
+            content: "Eres un analista competitivo especializado en mercados turísticos como Cancún. Proporciona insights profundos y estratégicos." 
+          },
+          { role: "user", content: prompt }
+        ],
+        temperature: 0.5,
+        max_tokens: 2500
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.error?.message || "Error en la API");
+    }
+    
+    const reportContent = data.choices[0].message.content;
+    
+    // Crear objeto de reporte
+    const newReport = {
+      id: Date.now(),
+      title: `Análisis Competitivo - ${new Date().toLocaleDateString('es-MX')}`,
+      content: reportContent,
+      type: 'competitive',
+      date: new Date().toLocaleDateString('es-MX'),
+      timestamp: new Date().toISOString()
+    };
+    
+    // Agregar a reportes
+    generatedReports.push(newReport);
+    
+    // Actualizar UI
+    updateReportsUI();
+    
+    // Cambiar a pestaña de reportes
+    switchTab('reports');
+    
+    showNotification('✅ Análisis competitivo generado exitosamente', 'success');
+    
+  } catch (error) {
+    console.error("Error generando análisis competitivo:", error);
+    showNotification(`❌ Error generando análisis: ${error.message}`, 'error');
+  }
+}
+
+function updateReportsUI() {
+  const container = document.getElementById('reportsContainer');
+  
+  if (generatedReports.length === 0) {
+    container.innerHTML = `
+      <div class="report-card">
+        <h4>No hay reportes generados aún</h4>
+        <p>Genera tu primer reporte usando los botones de abajo.</p>
+      </div>
+    `;
+    return;
+  }
+  
+  // Ordenar por fecha (más reciente primero)
+  generatedReports.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  
+  container.innerHTML = generatedReports.map(report => `
+    <div class="report-card">
+      <h4>${report.title}</h4>
+      <div class="report-date">Fecha: ${report.date} | Tipo: ${report.type}</div>
+      <p>${report.content.substring(0, 150)}${report.content.length > 150 ? '...' : ''}</p>
+      <div style="display: flex; gap: 8px; margin-top: 15px;">
+        <button class="btn btn-primary" onclick="viewReport(${report.id})" style="padding: 8px 12px; font-size: 0.8rem;">
+          <i class="fas fa-eye"></i> Ver
+        </button>
+        <button class="btn btn-secondary" onclick="downloadReport(${report.id})" style="padding: 8px 12px; font-size: 0.8rem;">
+          <i class="fas fa-download"></i> Descargar
+        </button>
+        <button class="btn btn-danger" onclick="deleteReport(${report.id})" style="padding: 8px 12px; font-size: 0.8rem;">
+          <i class="fas fa-trash"></i> Eliminar
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function viewReport(reportId) {
+  const report = generatedReports.find(r => r.id === reportId);
+  if (!report) return;
+  
+  const formattedContent = report.content
+    .replace(/# (.*?)(?=\n)/g, '<h4 style="margin-top: 15px; color: var(--dark);">$1</h4>')
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n/g, '<br>')
+    .replace(/- (.*?)(?=<br>)/g, '<li>$1</li>')
+    .replace(/<li>/g, '<ul style="margin: 10px 0 10px 20px;"><li>')
+    .replace(/<\/li><br>/g, '</li></ul>');
+  
+  showModal(report.title, `
+    <div class="modal-content">
+      <div style="background: linear-gradient(135deg, #f0f9ff, #e0f2fe); padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+        <h4 style="margin-top: 0; color: var(--dark);">${report.title}</h4>
+        <p><strong>Fecha:</strong> ${report.date}</p>
+        <p><strong>Tipo:</strong> ${report.type}</p>
+        ${report.dataSummary ? `
+          <p><strong>Resumen de datos:</strong></p>
+          <ul>
+            <li>Ventas totales: $${report.dataSummary.totalSales.toFixed(2)} MXN</li>
+            <li>Transacciones: ${report.dataSummary.transactions}</li>
+            <li>Ticket promedio: $${report.dataSummary.avgTicket.toFixed(2)} MXN</li>
+          </ul>
+        ` : ''}
+      </div>
+      
+      <div style="max-height: 400px; overflow-y: auto; padding: 10px;">
+        ${formattedContent}
+      </div>
+      
+      <div style="display: flex; gap: 10px; margin-top: 20px;">
+        <button class="btn btn-primary" onclick="downloadReport(${report.id})">
+          <i class="fas fa-download"></i> Descargar Reporte
+        </button>
+        <button class="btn btn-secondary" onclick="printReport(${report.id})">
+          <i class="fas fa-print"></i> Imprimir
+        </button>
+      </div>
+    </div>
+  `);
+}
+
+function downloadReport(reportId) {
+  const report = generatedReports.find(r => r.id === reportId);
+  if (!report) return;
+  
+  const blob = new Blob([`${report.title}\n\nFecha: ${report.date}\nTipo: ${report.type}\n\n${report.content}`], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `reporte-${report.type}-${report.date.replace(/\//g, '-')}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  
+  showNotification('📥 Reporte descargado exitosamente', 'success');
+}
+
+function deleteReport(reportId) {
+  if (confirm('¿Estás seguro de que quieres eliminar este reporte?')) {
+    generatedReports = generatedReports.filter(r => r.id !== reportId);
+    updateReportsUI();
+    showNotification('🗑️ Reporte eliminado', 'success');
+  }
+}
+
+function printReport(reportId) {
+  const report = generatedReports.find(r => r.id === reportId);
+  if (!report) return;
+  
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>${report.title}</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 20px; }
+          h1 { color: #333; }
+          .header { background: #f0f9ff; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+          .content { line-height: 1.6; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>${report.title}</h1>
+          <p><strong>Fecha:</strong> ${report.date} | <strong>Tipo:</strong> ${report.type}</p>
+        </div>
+        <div class="content">
+          ${report.content.replace(/\n/g, '<br>')}
+        </div>
+      </body>
+    </html>
+  `);
+  printWindow.document.close();
+  printWindow.print();
+}
+
+// ============================================
+// INICIALIZACIÓN DEL MAPA
+// ============================================
+function initMap() {
+  console.log("🔧 Inicializando mapa de Cancún...");
+  
+  map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/dark-v11',
+    center: [-86.8515, 21.1619],
+    zoom: 14,
+    maxZoom: 18,
+    minZoom: 10
+  });
+
+  // Controles
+  map.addControl(new mapboxgl.NavigationControl(), 'top-right');
+  
+  // Actualizar info del mapa
+  map.on('move', function() {
+    document.getElementById('mapZoom').textContent = map.getZoom().toFixed(1);
+  });
+  
+  map.on('load', function() {
+    console.log("✅ Mapa cargado correctamente");
+    addZonesToMap();
+  });
+  
+  // Fechas por defecto
+  const today = new Date();
+  const lastMonth = new Date();
+  lastMonth.setDate(today.getDate() - 30);
+  
+  document.getElementById('dateFrom').valueAsDate = lastMonth;
+  document.getElementById('dateTo').valueAsDate = today;
+}
+
+// ============================================
+// ESTRATEGIA DE MAPBOX CON WAYPOINTS CHUNKS
+// ============================================
+function calculateOptimalRoute() {
+  if (filteredData.length < 2) {
+    showNotification('⚠️ Necesitas al menos 2 puntos para calcular una ruta', 'warning');
+    return;
+  }
+  
+  showNotification('🗺️ Calculando ruta óptima con chunks...', 'info');
+  
+  // Dividir puntos en chunks de máximo 23 waypoints (Mapbox límite 25, pero necesitamos inicio/fin)
+  const CHUNK_SIZE = 23;
+  const points = [...filteredData];
+  const chunks = [];
+  
+  for (let i = 0; i < points.length; i += CHUNK_SIZE) {
+    chunks.push(points.slice(i, i + CHUNK_SIZE));
+  }
+  
+  console.log(`Dividido en ${chunks.length} chunks`);
+  
+  // Para cada chunk, calcular ruta óptima
+  const allRoutes = [];
+  let totalDistance = 0;
+  let totalPotentialRevenue = 0;
+  
+  for (let chunkIndex = 0; chunkIndex < chunks.length; chunkIndex++) {
+    const chunk = chunks[chunkIndex];
+    
+    // Si es el primer chunk, ordenar desde el punto de inicio
+    if (chunkIndex === 0) {
+      const sortedChunk = optimizeChunkRoute(chunk, true);
+      allRoutes.push(sortedChunk);
+      totalDistance += calculateRouteDistance(sortedChunk);
+      totalPotentialRevenue += sortedChunk.reduce((sum, p) => sum + p.monto, 0);
+    } else {
+      // Para chunks siguientes, conectar con el último punto del chunk anterior
+      const lastPoint = allRoutes[chunkIndex - 1][allRoutes[chunkIndex - 1].length - 1];
+      const sortedChunk = optimizeChunkRoute(chunk, false, lastPoint);
+      allRoutes.push(sortedChunk);
+      totalDistance += calculateRouteDistance(sortedChunk);
+      totalPotentialRevenue += sortedChunk.reduce((sum, p) => sum + p.monto, 0);
+    }
+  }
+  
+  optimalRoute = allRoutes.flat();
+  
+  // Dibujar todas las rutas en el mapa
+  drawMultiRouteOnMap(allRoutes);
+  
+  const estimatedTime = totalDistance * 2; // 2 minutos por km
+  
+  // Mostrar resultados
+  const resultsDiv = document.getElementById('routeResults');
+  resultsDiv.innerHTML = `
+    <h4 style="margin-top:0; color:#9d174d;">Ruta Óptima (${chunks.length} segmentos)</h4>
+    <p><strong>Total puntos:</strong> ${optimalRoute.length} de ${filteredData.length}</p>
+    <p><strong>Segmentos:</strong> ${chunks.length} (límite Mapbox: 24 waypoints/segmento)</p>
+    <p><strong>Distancia total:</strong> ${totalDistance.toFixed(2)} km</p>
+    <p><strong>Tiempo estimado:</strong> ${Math.floor(estimatedTime)} minutos</p>
+    <p><strong>Ingreso potencial:</strong> $${totalPotentialRevenue.toFixed(2)} MXN</p>
+    <p><strong>Eficiencia:</strong> ${(totalPotentialRevenue / totalDistance).toFixed(2)} MXN/km</p>
+    <button class="btn btn-primary" onclick="showRouteDetails()" style="margin-top:10px;">
+      <i class="fas fa-info-circle"></i> Ver detalles por segmento
+    </button>
+  `;
+  
+  // Actualizar KPI
+  const efficiency = (totalPotentialRevenue / totalDistance) || 0;
+  document.getElementById('kpiRouteEff').textContent = `${efficiency.toFixed(1)} MXN/km`;
+}
+
+function optimizeChunkRoute(chunk, isFirstChunk, startPoint = null) {
+  const sortedChunk = [];
+  const visited = new Set();
+  
+  // Punto de inicio
+  let currentPoint;
+  if (isFirstChunk) {
+    // Primer chunk: comenzar con el punto de mayor monto
+    currentPoint = chunk.reduce((max, point) => 
+      point.monto > max.monto ? point : max
+    );
+  } else if (startPoint) {
+    // Chunk siguiente: comenzar desde el último punto del chunk anterior
+    currentPoint = startPoint;
+  } else {
+    currentPoint = chunk[0];
+  }
+  
+  if (!visited.has(currentPoint.id)) {
+    sortedChunk.push(currentPoint);
+    visited.add(currentPoint.id);
+  }
+  
+  // Algoritmo voraz para el resto del chunk
+  while (sortedChunk.length < chunk.length && sortedChunk.length < 23) {
+    const lastPoint = sortedChunk[sortedChunk.length - 1];
+    let nearestPoint = null;
+    let minDistance = Infinity;
+    
+    chunk.forEach(point => {
+      if (!visited.has(point.id)) {
+        const distance = Math.sqrt(
+          Math.pow(point.lat - lastPoint.lat, 2) + 
+          Math.pow(point.lng - lastPoint.lng, 2)
+        );
+        
+        // Ponderar por monto
+        const weightedDistance = distance / (point.monto / 100);
+        
+        if (weightedDistance < minDistance) {
+          minDistance = weightedDistance;
+          nearestPoint = point;
+        }
+      }
+    });
+    
+    if (nearestPoint) {
+      sortedChunk.push(nearestPoint);
+      visited.add(nearestPoint.id);
+    } else {
+      break;
+    }
+  }
+  
+  return sortedChunk;
+}
+
+function calculateRouteDistance(points) {
+  let totalDistance = 0;
+  for (let i = 0; i < points.length - 1; i++) {
+    const p1 = points[i];
+    const p2 = points[i + 1];
+    
+    // Distancia euclidiana simplificada (aproximación)
+    const distance = Math.sqrt(
+      Math.pow(p2.lat - p1.lat, 2) + 
+      Math.pow(p2.lng - p1.lng, 2)
+    ) * 111; // Aproximación a km (1 grado ≈ 111 km)
+    
+    totalDistance += distance;
+  }
+  return totalDistance;
+}
+
+function drawMultiRouteOnMap(routes) {
+  // Limpiar rutas anteriores
+  for (let i = 0; i < 10; i++) {
+    if (map.getLayer(`route-${i}-layer`)) {
+      map.removeLayer(`route-${i}-layer`);
+    }
+    if (map.getSource(`route-${i}`)) {
+      map.removeSource(`route-${i}`);
+    }
+  }
+  
+  // Crear todas las rutas
+  routes.forEach((route, index) => {
+    const routeCoordinates = route.map(p => [p.lng, p.lat]);
+    
+    map.addSource(`route-${index}`, {
+      type: 'geojson',
+      data: {
+        type: 'Feature',
+        geometry: {
+          type: 'LineString',
+          coordinates: routeCoordinates
+        }
+      }
+    });
+    
+    map.addLayer({
+      id: `route-${index}-layer`,
+      type: 'line',
+      source: `route-${index}`,
+      layout: {
+        'line-join': 'round',
+        'line-cap': 'round'
+      },
+      paint: {
+        'line-color': index % 2 === 0 ? '#ec4899' : '#8b5cf6',
+        'line-width': 4,
+        'line-opacity': 0.8,
+        'line-dasharray': index % 2 === 0 ? [0] : [2, 1]
+      }
+    });
+  });
+  
+  // Mostrar capa de ruta
+  document.getElementById('layerRoute').checked = true;
+}
+
+// ============================================
+// FUNCIONES ORIGINALES (MANTENIDAS)
+// ============================================
+// [Aquí van todas las funciones originales del archivo deepseek_html_20250108_fc3214.html
+// que no han sido modificadas: processData, applyFilters, updateStatistics,
+// updateMapData, runMonteCarlo, runBayesianAnalysis, runStrategicAnalysis,
+// addZonesToMap, toggleMapLayer, updateCharts, updateTable, switchTab,
+// showNotification, showModal, closeModal, etc.]
+
+// NOTA: Para mantener la longitud manejable, he omitido la repetición de estas funciones
+// ya que son idénticas a las del archivo original. Solo se han agregado las nuevas funciones
+// para Pitch, Reportes AI, y la estrategia de chunks para Mapbox.
+
+// ============================================
+// INICIALIZACIÓN COMPLETA
+// ============================================
+window.onload = function() {
+  console.log("🚀 Inicializando Geo-Suite Cancún Mejorado...");
+  initMap();
+  
+  // Establecer fechas por defecto
+  const today = new Date();
+  const lastWeek = new Date();
+  lastWeek.setDate(today.getDate() - 7);
+  
+  document.getElementById('dateFrom').valueAsDate = lastWeek;
+  document.getElementById('dateTo').valueAsDate = today;
+  
+  // Cargar reportes guardados
+  try {
+    const savedReports = localStorage.getItem('generatedReports');
+    if (savedReports) {
+      generatedReports = JSON.parse(savedReports);
+      updateReportsUI();
+    }
+  } catch (e) {
+    console.error('Error cargando reportes:', e);
+  }
+  
+  // Agregar capa de puntos al mapa
+  map.on('load', function() {
+    map.addSource('points', {
+      type: 'geojson',
+      data: {
+        type: 'FeatureCollection',
+        features: []
+      }
+    });
+    
+    map.addLayer({
+      id: 'points-layer',
+      type: 'circle',
+      source: 'points',
+      paint: {
+        'circle-radius': 8,
+        'circle-color': '#0ea5e9',
+        'circle-stroke-width': 2,
+        'circle-stroke-color': 'white'
+      }
+    });
+  });
+  
+  console.log("✅ Aplicación mejorada lista para Cancún");
+};
+
+// Guardar reportes al salir
+window.addEventListener('beforeunload', function() {
+  try {
+    localStorage.setItem('generatedReports', JSON.stringify(generatedReports));
+  } catch (e) {
+    console.error('Error guardando reportes:', e);
+  }
+});
+
+// Manejar clic fuera del modal
+window.addEventListener('click', function(event) {
+  const modal = document.getElementById('resultsModal');
+  if (event.target == modal) {
+    closeModal();
+  }
+});
+
+// ============================================
+// FUNCIONES DE NAVEGACIÓN Y UI
+// ============================================
+function switchTab(tabId) {
+  console.log(`Cambiando a pestaña: ${tabId}`);
+  
+  // Ocultar todas las áreas de contenido
+  document.querySelectorAll('.content-area').forEach(area => {
+    area.classList.remove('active');
+  });
+  
+  // Quitar clase active de todas las pestañas
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.classList.remove('active');
+  });
+  
+  // Mostrar el área de contenido correspondiente
+  const targetView = document.getElementById(`${tabId}-view`);
+  if (targetView) {
+    targetView.classList.add('active');
+    console.log(`Mostrando vista: ${tabId}-view`);
+  }
+  
+  // Activar la pestaña clickeada
+  const clickedTab = event.currentTarget;
+  clickedTab.classList.add('active');
+  
+  // Si es la pestaña del mapa, redimensionar
+  if (tabId === 'map' && map) {
+    setTimeout(() => {
+      map.resize();
+      console.log("Mapa redimensionado");
+    }, 100);
+  }
+  
+  // Si es dashboard, actualizar gráficos
+  if (tabId === 'dashboard' && filteredData.length > 0) {
+    setTimeout(updateCharts, 150);
+  }
+  
+  // Si es reportes, actualizar UI
+  if (tabId === 'reports') {
+    updateReportsUI();
+  }
+  
+  // Feedback visual
+  clickedTab.classList.add('pulse');
+  setTimeout(() => {
+    clickedTab.classList.remove('pulse');
+  }, 500);
+}
+
+function showNotification(message, type = 'info') {
+  // Crear notificación
+  const notification = document.createElement('div');
+  notification.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 20px;
+    background: ${type === 'error' ? '#ef4444' : type === 'warning' ? '#f59e0b' : type === 'success' ? '#10b981' : '#0ea5e9'};
+    color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 1000;
+    animation: fadeIn 0.3s;
+    max-width: 400px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  `;
+  
+  notification.innerHTML = `
+    <i class="fas fa-${type === 'error' ? 'exclamation-circle' : type === 'warning' ? 'exclamation-triangle' : type === 'success' ? 'check-circle' : 'info-circle'}"></i>
+    <span>${message}</span>
+  `;
+  
+  document.body.appendChild(notification);
+  
+  // Remover después de 5 segundos
+  setTimeout(() => {
+    notification.style.opacity = '0';
+    notification.style.transform = 'translateX(20px)';
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.parentNode.removeChild(notification);
+      }
+    }, 300);
+  }, 5000);
+}
+
+function showModal(title, content) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalContent').innerHTML = content;
+  document.getElementById('resultsModal').style.display = 'flex';
+}
+
+function closeModal() {
+  document.getElementById('resultsModal').style.display = 'none';
+}
+
+// ============================================
+// MANEJO DE ARCHIVOS CSV (ORIGINAL)
+// ============================================
+const dropArea = document.getElementById('dropArea');
+const fileInput = document.getElementById('csvFile');
+
+dropArea.addEventListener('click', () => fileInput.click());
+
+['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+  dropArea.addEventListener(eventName, preventDefaults, false);
+});
+
+function preventDefaults(e) {
+  e.preventDefault();
+  e.stopPropagation();
+}
+
+['dragenter', 'dragover'].forEach(eventName => {
+  dropArea.addEventListener(eventName, () => {
+    dropArea.style.borderColor = '#0ea5e9';
+    dropArea.style.backgroundColor = 'rgba(14, 165, 233, 0.1)';
+  }, false);
+});
+
+['dragleave', 'drop'].forEach(eventName => {
+  dropArea.addEventListener(eventName, () => {
+    dropArea.style.borderColor = '#475569';
+    dropArea.style.backgroundColor = 'transparent';
+  }, false);
+});
+
+dropArea.addEventListener('drop', handleDrop, false);
+fileInput.addEventListener('change', handleFiles, false);
+
+function handleDrop(e) {
+  const dt = e.dataTransfer;
+  const files = dt.files;
+  handleFiles({ target: { files: files } });
+}
+
+function handleFiles(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  if (file.type !== 'text/csv' && !file.name.endsWith('.csv')) {
+    showNotification('⚠️ Por favor sube un archivo CSV válido.', 'warning');
+    return;
+  }
+
+  Papa.parse(file, {
+    header: true,
+    skipEmptyLines: true,
+    complete: function(results) {
+      console.log(`📊 CSV parseado: ${results.data.length} filas`);
+      processData(results.data);
+    },
+    error: function(err) {
+      showNotification('❌ Error al leer el archivo: ' + err.message, 'error');
+    }
+  });
+}
+
+function processData(rawData) {
+  console.log("🔄 Procesando datos de ventas...");
+  
+  salesData = [];
+  
+  rawData.forEach((row, index) => {
+    try {
+      // Detectar columnas automáticamente
+      const keys = Object.keys(row);
+      const latKey = keys.find(k => k.toLowerCase().includes('lat'));
+      const lngKey = keys.find(k => 
+        k.toLowerCase().includes('lon') || 
+        k.toLowerCase().includes('lng') || 
+        k.toLowerCase().includes('longitud')
+      );
+      const amountKey = keys.find(k => 
+        k.toLowerCase().includes('monto') || 
+        k.toLowerCase().includes('precio') || 
+        k.toLowerCase().includes('valor') ||
+        k.toLowerCase().includes('amount') ||
+        k.toLowerCase().includes('venta')
+      );
+      const dateKey = keys.find(k => k.toLowerCase().includes('fecha') || k.toLowerCase().includes('date'));
+      const timeKey = keys.find(k => k.toLowerCase().includes('hora') || k.toLowerCase().includes('time'));
+      const clienteKey = keys.find(k => 
+        k.toLowerCase().includes('cliente') || 
+        k.toLowerCase().includes('customer') ||
+        k.toLowerCase().includes('client') ||
+        k.toLowerCase().includes('nombre')
+      );
+      const zonaKey = keys.find(k => k.toLowerCase().includes('zona') || k.toLowerCase().includes('region'));
+
+      // Parsear coordenadas
+      let lat = parseFloat(row[latKey]);
+      let lng = parseFloat(row[lngKey]);
+      
+      if (isNaN(lat) || isNaN(lng)) {
+        console.warn(`Fila ${index}: Coordenadas inválidas`);
+        return;
+      }
+      
+      // Parsear monto
+      let monto = parseFloat(row[amountKey]);
+      if (isNaN(monto) || monto <= 0) monto = 100;
+      
+      // Obtener otros datos
+      const fecha = row[dateKey] || new Date().toISOString().split('T')[0];
+      const hora = row[timeKey] || '12:00';
+      const cliente = row[clienteKey] || `Cliente${index + 1}`;
+      
+      // Determinar zona si no está en los datos
+      let zona = row[zonaKey] || determineZone(lat, lng);
+      
+      salesData.push({
+        lat,
+        lng,
+        monto,
+        fecha: new Date(fecha),
+        fechaStr: fecha,
+        hora,
+        cliente,
+        zona,
+        id: index
+      });
+      
+    } catch (e) {
+      console.error(`Error procesando fila ${index}:`, e);
+    }
+  });
+
+  console.log(`✅ Datos procesados: ${salesData.length} registros válidos`);
+  
+  if (salesData.length === 0) {
+    showNotification('⚠️ No se encontraron datos válidos en el CSV.', 'warning');
+    return;
+  }
+
+  filteredData = [...salesData];
+  
+  // Actualizar UI
+  updateStatistics();
+  updateMapData();
+  updateCharts();
+  updateTable();
+  
+  // Mostrar éxito
+  document.getElementById('fileInfo').style.display = 'block';
+  document.getElementById('fileStatus').textContent = `${salesData.length} registros cargados`;
+  
+  showNotification(`✅ ${salesData.length} ventas cargadas correctamente`, 'success');
+}
+
+function determineZone(lat, lng) {
+  // Simple determinación basada en rangos aproximados
+  if (lng > -86.82) return 'hotelera';
+  if (lat > 21.17 && lng < -86.86) return '233';
+  if (lat < 21.15 && lng < -86.88) return '237';
+  if (lat > 21.16 && lat < 21.17 && lng > -86.86 && lng < -86.84) return '77';
+  if (lat > 21.15 && lat < 21.16 && lng > -86.87 && lng < -86.85) return '91';
+  return 'centro';
+}
+
+function applyFilters() {
+  const dateFrom = document.getElementById('dateFrom').valueAsDate;
+  const dateTo = document.getElementById('dateTo').valueAsDate;
+  const zonaFilter = document.getElementById('zonaFilter').value;
+  const timeFilter = document.getElementById('timeFilter').value;
+
+  filteredData = salesData.filter(sale => {
+    // Filtro Fecha
+    if (dateFrom && sale.fecha < dateFrom) return false;
+    if (dateTo) {
+      const endOfDay = new Date(dateTo);
+      endOfDay.setHours(23,59,59);
+      if (sale.fecha > endOfDay) return false;
+    }
+
+    // Filtro Zona
+    if (zonaFilter) {
+      if (!sale.zona.includes(zonaFilter)) return false;
+    }
+
+    // Filtro Hora
+    if (timeFilter) {
+      const hour = parseInt(sale.hora.split(':')[0]);
+      if (timeFilter === '6-12' && (hour < 6 || hour >= 12)) return false;
+      if (timeFilter === '12-18' && (hour < 12 || hour >= 18)) return false;
+      if (timeFilter === '18-24' && hour < 18) return false;
+    }
+
+    return true;
+  });
+
+  updateStatistics();
+  updateMapData();
+  updateCharts();
+  updateTable();
+  
+  document.getElementById('mapPointCount').textContent = filteredData.length;
+  
+  showNotification(`✅ ${filteredData.length} registros después de filtrar`, 'info');
+}
+
+function updateStatistics() {
+  if (filteredData.length === 0) {
+    document.getElementById('kpiTotal').textContent = '$0 MXN';
+    document.getElementById('kpiCount').textContent = '0';
+    document.getElementById('kpiAvg').textContent = '$0 MXN';
+    document.getElementById('kpiBestZone').textContent = '-';
+    document.getElementById('kpiBestTime').textContent = '-';
+    document.getElementById('kpiRouteEff').textContent = '0%';
+    return;
+  }
+
+  // Ventas totales
+  const total = filteredData.reduce((sum, item) => sum + item.monto, 0);
+  document.getElementById('kpiTotal').textContent = `$${total.toLocaleString('es-MX')} MXN`;
+  
+  // Conteo
+  document.getElementById('kpiCount').textContent = filteredData.length;
+  
+  // Promedio
+  const avg = total / filteredData.length;
+  document.getElementById('kpiAvg').textContent = `$${avg.toFixed(2)} MXN`;
+  
+  // Mejor zona
+  const zones = {};
+  filteredData.forEach(item => {
+    zones[item.zona] = (zones[item.zona] || 0) + item.monto;
+  });
+  const bestZone = Object.keys(zones).reduce((a, b) => zones[a] > zones[b] ? a : b);
+  document.getElementById('kpiBestZone').textContent = bestZone;
+  
+  // Mejor hora
+  const hours = {};
+  filteredData.forEach(item => {
+    const h = parseInt(item.hora.split(':')[0]) || 0;
+    hours[h] = (hours[h] || 0) + item.monto;
+  });
+  if (Object.keys(hours).length > 0) {
+    const bestHour = Object.keys(hours).reduce((a, b) => hours[a] > hours[b] ? a : b);
+    document.getElementById('kpiBestTime').textContent = `${bestHour}:00 hrs`;
+  } else {
+    document.getElementById('kpiBestTime').textContent = '-';
+  }
+}
+
+function updateMapData() {
+  // Limpiar marcadores anteriores
+  markers.forEach(marker => marker.remove());
+  markers = [];
+  
+  if (filteredData.length === 0) return;
+  
+  // Crear marcadores
+  filteredData.forEach(sale => {
+    const el = document.createElement('div');
+    el.className = 'marker';
+    el.style.width = '12px';
+    el.style.height = '12px';
+    el.style.backgroundColor = getColorForAmount(sale.monto);
+    el.style.borderRadius = '50%';
+    el.style.border = '2px solid white';
+    el.style.boxShadow = '0 0 8px rgba(0,0,0,0.5)';
+    el.style.cursor = 'pointer';
+    
+    const marker = new mapboxgl.Marker(el)
+      .setLngLat([sale.lng, sale.lat])
+      .setPopup(new mapboxgl.Popup({ offset: 25 })
+        .setHTML(`
+          <div style="padding: 10px; max-width: 250px;">
+            <h4 style="margin:0 0 10px 0; color: #1e293b;">${sale.cliente}</h4>
+            <p style="margin:5px 0;"><strong>💰 Monto:</strong> $${sale.monto.toFixed(2)} MXN</p>
+            <p style="margin:5px 0;"><strong>📍 Zona:</strong> ${sale.zona}</p>
+            <p style="margin:5px 0;"><strong>🕐 Hora:</strong> ${sale.hora}</p>
+            <p style="margin:5px 0;"><strong>📅 Fecha:</strong> ${sale.fechaStr}</p>
+          </div>
+        `))
+      .addTo(map);
+    
+    markers.push(marker);
+  });
+  
+  // Ajustar vista
+  if (filteredData.length > 1) {
+    const bounds = new mapboxgl.LngLatBounds();
+    filteredData.forEach(sale => bounds.extend([sale.lng, sale.lat]));
+    map.fitBounds(bounds, { padding: 50, maxZoom: 16 });
+  }
+}
+
+function getColorForAmount(amount) {
+  if (amount > 1000) return '#ef4444'; // Rojo
+  if (amount > 500) return '#f59e0b'; // Naranja
+  if (amount > 200) return '#10b981'; // Verde
+  return '#3b82f6'; // Azul
+}
+
+function runMonteCarlo() {
+  if (filteredData.length === 0) {
+    showNotification('⚠️ Carga datos primero para ejecutar la simulación', 'warning');
+    return;
+  }
+  
+  showNotification('🎲 Ejecutando simulación Monte Carlo...', 'info');
+  
+  // Obtener montos históricos
+  const montos = filteredData.map(d => d.monto);
+  const mean = jStat.mean(montos);
+  const stdev = jStat.stdev(montos);
+  
+  // Simulación
+  const simulations = 10000;
+  const results = [];
+  
+  for (let i = 0; i < simulations; i++) {
+    // Generar venta aleatoria basada en distribución normal
+    let simulatedSale = jStat.normal.sample(mean, stdev);
+    
+    // Asegurar valores positivos
+    simulatedSale = Math.max(30, simulatedSale);
+    results.push(simulatedSale);
+  }
+  
+  // Calcular percentiles
+  const sortedResults = results.sort((a, b) => a - b);
+  const p25 = sortedResults[Math.floor(simulations * 0.25)];
+  const p50 = sortedResults[Math.floor(simulations * 0.50)];
+  const p75 = sortedResults[Math.floor(simulations * 0.75)];
+  const p90 = sortedResults[Math.floor(simulations * 0.90)];
+  
+  // Proyección mensual (asumiendo 20 días laborales)
+  const projectedMonthly = p50 * filteredData.length * 20 / filteredData.length;
+  
+  monteCarloResults = {
+    mean,
+    stdev,
+    p25,
+    p50,
+    p75,
+    p90,
+    projectedMonthly,
+    simulations
+  };
+  
+  // Mostrar resultados
+  const resultsDiv = document.getElementById('montecarloResults');
+  resultsDiv.innerHTML = `
+    <h4 style="margin-top:0; color:#065f46;">Resultados de Simulación</h4>
+    <p><strong>Monto promedio histórico:</strong> $${mean.toFixed(2)} MXN</p>
+    <p><strong>Desviación estándar:</strong> $${stdev.toFixed(2)} MXN</p>
+    <p><strong>Venta esperada (P50):</strong> $${p50.toFixed(2)} MXN por transacción</p>
+    <p><strong>Proyección mensual:</strong> $${projectedMonthly.toLocaleString('es-MX')} MXN</p>
+    <p><strong>Escenario optimista (P90):</strong> $${p90.toFixed(2)} MXN por transacción</p>
+    <p><strong>Simulaciones ejecutadas:</strong> ${simulations.toLocaleString('es-MX')}</p>
+    <button class="btn btn-primary" onclick="showMonteCarloDetails()" style="margin-top:10px; padding:8px 12px; font-size:0.8rem;">
+      <i class="fas fa-chart-line"></i> Ver análisis detallado
+    </button>
+  `;
+}
+
+function runBayesianAnalysis() {
+  if (filteredData.length === 0) {
+    showNotification('⚠️ Carga datos primero para ejecutar el análisis', 'warning');
+    return;
+  }
+  
+  showNotification('📊 Ejecutando análisis bayesiano...', 'info');
+  
+  // Calcular probabilidades por zona
+  const zoneSales = {};
+  const zoneCounts = {};
+  
+  filteredData.forEach(sale => {
+    const zona = sale.zona;
+    zoneSales[zona] = (zoneSales[zona] || 0) + sale.monto;
+    zoneCounts[zona] = (zoneCounts[zona] || 0) + 1;
+  });
+  
+  // Calcular probabilidades por hora
+  const hourSales = {};
+  const hourCounts = {};
+  
+  filteredData.forEach(sale => {
+    const hour = parseInt(sale.hora.split(':')[0]) || 0;
+    hourSales[hour] = (hourSales[hour] || 0) + sale.monto;
+    hourCounts[hour] = (hourCounts[hour] || 0) + 1;
+  });
+  
+  // Calcular probabilidades condicionales
+  const totalSales = filteredData.reduce((sum, item) => sum + item.monto, 0);
+  const totalCount = filteredData.length;
+  
+  const zoneProbabilities = {};
+  Object.keys(zoneSales).forEach(zona => {
+    zoneProbabilities[zona] = {
+      probability: zoneCounts[zona] / totalCount,
+      avgSale: zoneSales[zona] / zoneCounts[zona],
+      totalSales: zoneSales[zona],
+      count: zoneCounts[zona]
+    };
+  });
+  
+  const hourProbabilities = {};
+  Object.keys(hourSales).forEach(hour => {
+    hourProbabilities[hour] = {
+      probability: hourCounts[hour] / totalCount,
+      avgSale: hourSales[hour] / hourCounts[hour],
+      totalSales: hourSales[hour],
+      count: hourCounts[hour]
+    };
+  });
+  
+  bayesianResults = {
+    zoneProbabilities,
+    hourProbabilities,
+    totalSales,
+    totalCount
+  };
+  
+  // Encontrar mejor zona y hora
+  const bestZone = Object.keys(zoneProbabilities).reduce((a, b) => 
+    zoneProbabilities[a].avgSale > zoneProbabilities[b].avgSale ? a : b
+  );
+  
+  const bestHour = Object.keys(hourProbabilities).reduce((a, b) => 
+    hourProbabilities[a].avgSale > hourProbabilities[b].avgSale ? a : b
+  );
+  
+  // Mostrar resultados
+  const resultsDiv = document.getElementById('bayesianResults');
+  resultsDiv.innerHTML = `
+    <h4 style="margin-top:0; color:#3730a3;">Análisis Bayesiano</h4>
+    <p><strong>Mejor zona para vender:</strong> ${bestZone} ($${zoneProbabilities[bestZone]?.avgSale?.toFixed(2) || 0} MXN promedio)</p>
+    <p><strong>Mejor hora para vender:</strong> ${bestHour}:00 hrs ($${hourProbabilities[bestHour]?.avgSale?.toFixed(2) || 0} MXN promedio)</p>
+    <p><strong>Total de transacciones analizadas:</strong> ${totalCount}</p>
+    <button class="btn btn-primary" onclick="showBayesianDetails()" style="margin-top:10px; padding:8px 12px; font-size:0.8rem;">
+      <i class="fas fa-chart-bar"></i> Ver análisis completo
+    </button>
+  `;
+}
+
+async function runStrategicAnalysis() {
+  const apiKey = document.getElementById('apiKey').value.trim();
+  
+  if (!apiKey) {
+    showNotification('🔑 Ingresa tu API Key de Groq primero', 'warning');
+    document.getElementById('iaResults').innerHTML = `
+      <h4 style="margin-top:0; color:var(--dark);">🤖 Análisis Estratégico IA</h4>
+      <div class="api-key-prompt">
+        <h4 style="margin-top:0; color:#92400e;">🔐 API Key Requerida</h4>
+        <p>Para usar el análisis estratégico con IA, necesitas una API Key de Groq:</p>
+        <ol style="margin: 10px 0 10px 20px;">
+          <li>Ve a <a href="https://console.groq.com" target="_blank" style="color: #0ea5e9; text-decoration: none;">console.groq.com</a></li>
+          <li>Crea una cuenta gratuita (no requiere tarjeta)</li>
+          <li>Genera una API Key en la sección "API Keys"</li>
+          <li>Copia la key (comienza con "gsk_...")</li>
+          <li>Pégala en el campo de arriba y haz clic nuevamente en "Análisis Estratégico IA"</li>
+        </ol>
+        <p><small>✅ La API Key se almacena solo en tu navegador, no se envía a nuestros servidores.</small></p>
+      </div>
+    `;
+    return;
+  }
+  
+  if (filteredData.length === 0) {
+    showNotification('📊 Carga datos primero para el análisis', 'warning');
+    return;
+  }
+  
+  showNotification('🤖 Conectando con IA para análisis estratégico...', 'info');
+  
+  // Preparar datos para la IA
+  const summaryData = {
+    totalSales: filteredData.reduce((sum, item) => sum + item.monto, 0),
+    totalTransactions: filteredData.length,
+    avgTicket: filteredData.reduce((sum, item) => sum + item.monto, 0) / filteredData.length,
+    
+    zones: {},
+    hours: {},
+    bestZone: '',
+    bestHour: ''
+  };
+  
+  // Análisis por zona
+  filteredData.forEach(sale => {
+    summaryData.zones[sale.zona] = summaryData.zones[sale.zona] || { total: 0, count: 0 };
+    summaryData.zones[sale.zona].total += sale.monto;
+    summaryData.zones[sale.zona].count += 1;
+  });
+  
+  // Análisis por hora
+  filteredData.forEach(sale => {
+    const hour = parseInt(sale.hora.split(':')[0]) || 0;
+    summaryData.hours[hour] = summaryData.hours[hour] || { total: 0, count: 0 };
+    summaryData.hours[hour].total += sale.monto;
+    summaryData.hours[hour].count += 1;
+  });
+  
+  // Determinar mejor zona y hora
+  let maxZoneAvg = 0;
+  for (const zone in summaryData.zones) {
+    const avg = summaryData.zones[zone].total / summaryData.zones[zone].count;
+    if (avg > maxZoneAvg) {
+      maxZoneAvg = avg;
+      summaryData.bestZone = zone;
+    }
+  }
+  
+  let maxHourAvg = 0;
+  for (const hour in summaryData.hours) {
+    const avg = summaryData.hours[hour].total / summaryData.hours[hour].count;
+    if (avg > maxHourAvg) {
+      maxHourAvg = avg;
+      summaryData.bestHour = hour;
+    }
+  }
+  
+  // Construir prompt para la IA
+  const prompt = `
+Eres un analista estratégico senior especializado en ventas y distribución en Cancún, México.
+
+ANÁLISIS DE DATOS DE VENTAS:
+- Ventas totales: $${summaryData.totalSales.toFixed(2)} MXN
+- Transacciones totales: ${summaryData.totalTransactions}
+- Ticket promedio: $${summaryData.avgTicket.toFixed(2)} MXN
+
+DISTRIBUCIÓN POR ZONAS (basado en estudio sociodemográfico de Cancún):
+${Object.keys(summaryData.zones).map(zone => {
+  const zoneData = summaryData.zones[zone];
+  const avg = zoneData.total / zoneData.count;
+  return `- ${zone}: ${zoneData.count} ventas, $${zoneData.total.toFixed(2)} MXN total, $${avg.toFixed(2)} MXN promedio`;
+}).join('\n')}
+
+DISTRIBUCIÓN POR HORA:
+${Object.keys(summaryData.hours).map(hour => {
+  const hourData = summaryData.hours[hour];
+  const avg = hourData.total / hourData.count;
+  return `- ${hour}:00: ${hourData.count} ventas, $${hourData.total.toFixed(2)} MXN total, $${avg.toFixed(2)} MXN promedio`;
+}).join('\n')}
+
+CONTEXTO GEOESTADÍSTICO DE CANCÚN (basado en informe oficial):
+1. Región 237: Zona norte en proceso de regularización, alta densidad, población trabajadora
+2. Región 233: Población joven, mejor conectividad, bono demográfico
+3. Supermanzana 91: Zona céntrica en transición, propiedades en remate
+4. Supermanzana 77 (Corales): Crisis habitacional, alta vulnerabilidad
+5. Centro (Distrito 1): Renovación urbana, comercio consolidado
+6. Zona Hotelera: Turismo internacional, precios premium
+
+TAREAS:
+1. Analiza patrones de ventas específicos por zona considerando el contexto sociodemográfico
+2. Genera recomendaciones estratégicas de rutas optimizadas considerando:
+   - Perfil socioeconómico de cada zona
+   - Horarios de mayor actividad comercial
+   - Distancias y conectividad entre zonas
+3. Propón estrategias de venta diferenciadas por zona
+4. Sugiere productos o servicios específicos para cada segmento
+5. Calcula proyecciones realistas basadas en los datos
+6. Identifica riesgos y oportunidades específicas para Cancún
+
+Responde en español, sé específico y accionable. Incluye números concretos cuando sea posible.
+Formato tu respuesta con encabezados claros: ## Análisis, ## Recomendaciones, ## Proyecciones, ## Riesgos y Oportunidades.
+`;
+
+  try {
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: "llama-3.1-8b-instant",
+        messages: [
+          { 
+            role: "system", 
+            content: "Eres un experto en análisis de ventas y estrategia comercial para Cancún, México. Proporciona recomendaciones prácticas basadas en datos y contexto sociodemográfico. Usa formato markdown con encabezados claros." 
+          },
+          { role: "user", content: prompt }
+        ],
+        temperature: 0.3,
+        max_tokens: 2000
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error?.message || "Error en la API");
+    }
+
+    const analysis = data.choices[0].message.content;
+    
+    // Formatear el análisis para HTML
+    const formattedAnalysis = analysis
+      .replace(/## (.*?)(?=\n)/g, '<h4 style="margin-top: 20px; color: var(--dark); border-bottom: 2px solid #e2e8f0; padding-bottom: 5px;">$1</h4>')
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\n/g, '<br>')
+      .replace(/- (.*?)(?=<br>)/g, '<li>$1</li>')
+      .replace(/<li>/g, '<ul style="margin: 10px 0 10px 20px;"><li>')
+      .replace(/<\/li><br>/g, '</li></ul>');
+    
+    // Mostrar resultados
+    document.getElementById('iaResults').innerHTML = `
+      <h4 style="margin-top:0; color:var(--dark);">🤖 Análisis Estratégico IA</h4>
+      <div style="max-height: 400px; overflow-y: auto; padding: 15px; background: white; border-radius: 8px; border: 1px solid #e2e8f0; margin-top: 10px;">
+        ${formattedAnalysis}
+      </div>
+      <div style="display: flex; gap: 10px; margin-top: 15px;">
+        <button class="btn btn-primary" onclick="showAIReport('${analysis.replace(/'/g, "\\'")}')">
+          <i class="fas fa-file-pdf"></i> Ver Reporte Completo
+        </button>
+        <button class="btn btn-secondary" onclick="exportAnalysis()">
+          <i class="fas fa-download"></i> Exportar Análisis
+        </button>
+      </div>
+    `;
+    
+    showNotification('✅ Análisis estratégico completado', 'success');
+    
+  } catch (error) {
+    console.error("Error en análisis IA:", error);
+    showNotification(`❌ Error en análisis IA: ${error.message}`, 'error');
+    
+    // Mostrar análisis de respaldo
+    document.getElementById('iaResults').innerHTML = `
+      <h4 style="margin-top:0; color:var(--dark);">📊 Análisis Estratégico (Modo Local)</h4>
+      <div class="warning-box">
+        <p><strong>⚠️ API no disponible - Mostrando análisis local:</strong></p>
+        <p><strong>Mejor zona identificada:</strong> ${summaryData.bestZone}</p>
+        <p><strong>Mejor hora identificada:</strong> ${summaryData.bestHour}:00</p>
+        <p><strong>Recomendaciones:</strong></p>
+        <ul>
+          <li>Enfoca esfuerzos en ${summaryData.bestZone} durante las horas pico</li>
+          <li>Considera el perfil socioeconómico de cada zona para ajustar productos</li>
+          <li>Programa rutas que combinen zonas de alto potencial</li>
+          <li>Utiliza la función "Ruta Óptima" para planificar recorridos eficientes</li>
+        </ul>
+        <p><em>Para análisis más detallado con IA, verifica tu API Key y conexión a internet.</em></p>
+      </div>
+    `;
+  }
+}
+
+function addZonesToMap() {
+  if (!map.getSource('zones')) {
+    // Crear polígonos de zonas
+    const zoneFeatures = Object.keys(cancunZones).map(zoneId => {
+      const zone = cancunZones[zoneId];
+      return {
+        type: 'Feature',
+        properties: {
+          id: zoneId,
+          name: zone.name,
+          description: zone.description,
+          color: zone.color
+        },
+        geometry: {
+          type: 'Polygon',
+          coordinates: [[
+            [zone.bounds[0][0], zone.bounds[0][1]],
+            [zone.bounds[1][0], zone.bounds[0][1]],
+            [zone.bounds[1][0], zone.bounds[1][1]],
+            [zone.bounds[0][0], zone.bounds[1][1]],
+            [zone.bounds[0][0], zone.bounds[0][1]]
+          ]]
+        }
+      };
+    });
+
+    map.addSource('zones', {
+      type: 'geojson',
+      data: {
+        type: 'FeatureCollection',
+        features: zoneFeatures
+      }
+    });
+
+    map.addLayer({
+      id: 'zones-layer',
+      type: 'fill',
+      source: 'zones',
+      paint: {
+        'fill-color': ['get', 'color'],
+        'fill-opacity': 0.1,
+        'fill-outline-color': ['get', 'color']
+      }
+    });
+
+    map.addLayer({
+      id: 'zones-labels',
+      type: 'symbol',
+      source: 'zones',
+      layout: {
+        'text-field': ['get', 'name'],
+        'text-size': 12,
+        'text-anchor': 'center'
+      },
+      paint: {
+        'text-color': '#1e293b',
+        'text-halo-color': 'white',
+        'text-halo-width': 2
+      }
+    });
+
+    zonesLayer = 'zones-layer';
+    
+    // Ocultar por defecto
+    map.setLayoutProperty('zones-layer', 'visibility', 'none');
+    map.setLayoutProperty('zones-labels', 'visibility', 'none');
+  }
+}
+
+function toggleMapLayer(layerType) {
+  switch(layerType) {
+    case 'points':
+      const pointsVisible = map.getLayoutProperty('points-layer', 'visibility') !== 'none';
+      markers.forEach(marker => {
+        if (pointsVisible) marker.remove();
+        else marker.addTo(map);
+      });
+      break;
+      
+    case 'heat-intensity':
+      // Remover otras capas de heatmap
+      if (map.getLayer('heat-intensity')) map.removeLayer('heat-intensity');
+      if (map.getSource('heat-intensity')) map.removeSource('heat-intensity');
+      
+      // Crear heatmap por intensidad (monto)
+      if (filteredData.length > 0) {
+        const heatData = filteredData.map(p => ({
+          type: 'Feature',
+          geometry: { type: 'Point', coordinates: [p.lng, p.lat] },
+          properties: { weight: p.monto / 100 }
+        }));
+        
+        map.addSource('heat-intensity', {
+          type: 'geojson',
+          data: { type: 'FeatureCollection', features: heatData }
+        });
+        
+        map.addLayer({
+          id: 'heat-intensity',
+          type: 'heatmap',
+          source: 'heat-intensity',
+          paint: {
+            'heatmap-weight': ['interpolate', ['linear'], ['get', 'weight'], 0, 0, 10, 1],
+            'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 0, 1, 9, 3],
+            'heatmap-color': [
+              'interpolate', ['linear'], ['heatmap-density'],
+              0, 'rgba(33, 102, 172, 0)',
+              0.2, 'rgb(103, 169, 207)',
+              0.4, 'rgb(209, 229, 240)',
+              0.6, 'rgb(253, 219, 199)',
+              0.8, 'rgb(239, 138, 98)',
+              1, 'rgb(178, 24, 43)'
+            ],
+            'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 0, 2, 9, 20],
+            'heatmap-opacity': 0.8
+          }
+        });
+      }
+      break;
+      
+    case 'heat-density':
+      // Remover otras capas de heatmap
+      if (map.getLayer('heat-density')) map.removeLayer('heat-density');
+      if (map.getSource('heat-density')) map.removeSource('heat-density');
+      
+      // Crear heatmap por densidad
+      if (filteredData.length > 0) {
+        const heatData = filteredData.map(p => ({
+          type: 'Feature',
+          geometry: { type: 'Point', coordinates: [p.lng, p.lat] }
+        }));
+        
+        map.addSource('heat-density', {
+          type: 'geojson',
+          data: { type: 'FeatureCollection', features: heatData }
+        });
+        
+        map.addLayer({
+          id: 'heat-density',
+          type: 'heatmap',
+          source: 'heat-density',
+          paint: {
+            'heatmap-weight': 1,
+            'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 0, 1, 9, 3],
+            'heatmap-color': [
+              'interpolate', ['linear'], ['heatmap-density'],
+              0, 'rgba(0, 0, 0, 0)',
+              0.2, 'purple',
+              0.4, 'blue',
+              0.6, 'green',
+              0.8, 'yellow',
+              1, 'red'
+            ],
+            'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 0, 2, 9, 20],
+            'heatmap-opacity': 0.7
+          }
+        });
+      }
+      break;
+      
+    case 'heat-none':
+      // Remover todas las capas de heatmap
+      if (map.getLayer('heat-intensity')) map.removeLayer('heat-intensity');
+      if (map.getSource('heat-intensity')) map.removeSource('heat-intensity');
+      if (map.getLayer('heat-density')) map.removeLayer('heat-density');
+      if (map.getSource('heat-density')) map.removeSource('heat-density');
+      break;
+      
+    case 'route':
+      const routeVisible = map.getLayoutProperty('route-0-layer', 'visibility') === 'visible';
+      // Toggle todas las capas de ruta
+      for (let i = 0; i < 10; i++) {
+        if (map.getLayer(`route-${i}-layer`)) {
+          map.setLayoutProperty(`route-${i}-layer`, 'visibility', routeVisible ? 'none' : 'visible');
+        }
+      }
+      break;
+      
+    case 'zones':
+      const zonesVisible = map.getLayoutProperty('zones-layer', 'visibility') === 'visible';
+      map.setLayoutProperty('zones-layer', 'visibility', zonesVisible ? 'none' : 'visible');
+      map.setLayoutProperty('zones-labels', 'visibility', zonesVisible ? 'none' : 'visible');
+      break;
+  }
+}
+
+function updateCharts() {
+  if (filteredData.length === 0) return;
+  
+  // Destruir gráficos anteriores
+  if (charts.zones) charts.zones.destroy();
+  if (charts.time) charts.time.destroy();
+  
+  // Gráfico de ventas por zona
+  const zoneData = {};
+  filteredData.forEach(sale => {
+    zoneData[sale.zona] = (zoneData[sale.zona] || 0) + sale.monto;
+  });
+  
+  const zoneLabels = Object.keys(zoneData);
+  const zoneValues = Object.values(zoneData);
+  
+  const zonesCtx = document.getElementById('zonesChart').getContext('2d');
+  charts.zones = new Chart(zonesCtx, {
+    type: 'bar',
+    data: {
+      labels: zoneLabels,
+      datasets: [{
+        label: 'Ventas por Zona ($ MXN)',
+        data: zoneValues,
+        backgroundColor: zoneLabels.map(z => {
+          if (z.includes('237')) return '#3b82f6';
+          if (z.includes('233')) return '#10b981';
+          if (z.includes('91')) return '#8b5cf6';
+          if (z.includes('77')) return '#ef4444';
+          if (z.includes('centro')) return '#f59e0b';
+          if (z.includes('hotelera')) return '#ec4899';
+          return '#94a3b8';
+        }),
+        borderColor: 'white',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: function(value) {
+              return '$' + value.toLocaleString('es-MX');
+            }
+          }
+        }
+      }
+    }
+  });
+  
+  // Gráfico de tendencia por hora
+  const hourData = new Array(24).fill(0);
+  filteredData.forEach(sale => {
+    const hour = parseInt(sale.hora.split(':')[0]) || 0;
+    if (hour >= 0 && hour < 24) {
+      hourData[hour] += sale.monto;
+    }
+  });
+  
+  const timeCtx = document.getElementById('timeChart').getContext('2d');
+  charts.time = new Chart(timeCtx, {
+    type: 'line',
+    data: {
+      labels: Array.from({length: 24}, (_, i) => `${i}:00`),
+      datasets: [{
+        label: 'Ventas por Hora ($ MXN)',
+        data: hourData,
+        borderColor: '#0ea5e9',
+        backgroundColor: 'rgba(14, 165, 233, 0.1)',
+        tension: 0.4,
+        fill: true,
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: function(value) {
+              return '$' + value.toLocaleString('es-MX');
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+function updateTable() {
+  const tbody = document.getElementById('dataTableBody');
+  tbody.innerHTML = '';
+  
+  if (filteredData.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="6" style="text-align: center; padding: 40px; color: #64748b;">
+          <i class="fas fa-database" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
+          Carga un archivo CSV para ver los datos
+        </td>
+      </tr>
+    `;
+    return;
+  }
+  
+  // Mostrar máximo 50 filas
+  const displayData = filteredData.slice(0, 50);
+  
+  displayData.forEach(sale => {
+    const tr = document.createElement('tr');
+    
+    // Determinar clase de zona para el badge
+    let zonaClass = '';
+    if (sale.zona.includes('237')) zonaClass = 'zona-237';
+    else if (sale.zona.includes('233')) zonaClass = 'zona-233';
+    else if (sale.zona.includes('91')) zonaClass = 'zona-91';
+    else if (sale.zona.includes('77')) zonaClass = 'zona-77';
+    else if (sale.zona.includes('centro')) zonaClass = 'zona-centro';
+    else if (sale.zona.includes('hotelera')) zonaClass = 'zona-hotelera';
+    
+    tr.innerHTML = `
+      <td>${sale.fecha.toLocaleDateString('es-MX')}</td>
+      <td><strong>${sale.cliente}</strong></td>
+      <td style="font-weight: bold; color: #1e293b;">$${sale.monto.toFixed(2)} MXN</td>
+      <td><span class="zona-badge ${zonaClass}">${sale.zona}</span></td>
+      <td>${sale.hora}</td>
+      <td style="font-size: 0.85rem; color: #64748b;">${sale.lat.toFixed(4)}, ${sale.lng.toFixed(4)}</td>
+    `;
+    
+    tbody.appendChild(tr);
+  });
+  
+  if (filteredData.length > 50) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td colspan="6" style="text-align: center; padding: 15px; color: #64748b; font-style: italic;">
+        Mostrando 50 de ${filteredData.length} registros. Usa los filtros para refinar los resultados.
+      </td>
+    `;
+    tbody.appendChild(tr);
+  }
+}
+</script>
+</body>
+</html>

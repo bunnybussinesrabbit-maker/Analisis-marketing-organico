@@ -1,0 +1,19 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "PWA-Chrome",
+      "request": "launch",
+      "type": "chrome",
+      "url": "http://localhost:8080",
+      "webRoot": "${workspaceFolder}"
+    },
+    {
+      "type": "pwa-chrome",
+      "request": "attach",
+      "name": "ATTACH Analisis Marketing",
+      "port": 9222,
+      "webRoot": "${workspaceFolder}"
+    }
+  ]
+}

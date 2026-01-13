@@ -1,0 +1,6 @@
+zona,timestamp,client_name,origin,age_group,occupation,income,pitch_type,result,amount,latitude,longitude
+zona_hotelera,2026-01-10T14:30:00.000Z,Juan García,CDMX,36-45,profesional,alto,autoridad,successful,450,-86.745,21.135
+centro,2026-01-10T10:15:00.000Z,María López,Cancun_Local,26-35,vendedor,medio,nostalgia,failed,0,-86.851,21.161
+region_237,2026-01-10T16:45:00.000Z,Carlos Ruiz,Quintana_Roo,46-55,empresario,alto,escasez,successful,800,-86.923,21.089
+sm_77,2026-01-10T09:00:00.000Z,Ana Martínez,Local,25,artesano,bajo,comunidad,successful,150,-86.812,21.148
+sm_91,2026-01-10T18:20:00.000Z,Roberto Díaz,Internacional,55,turista,medio_alto,autoridad,successful,600,-86.789,21.156

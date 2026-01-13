@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test: Debug Flow CSV → Análisis</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    h1 {
+      color: #0ea5e9;
+      border-bottom: 3px solid #0ea5e9;
+      padding-bottom: 10px;
+    }
+    h2 {
+      color: #0284c7;
+      margin-top: 20px;
+    }
+    .button-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin: 15px 0;
+    }
+    button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.3s;
+    }
+    .btn-primary {
+      background: #0ea5e9;
+      color: white;
+    }
+    .btn-primary:hover {
+      background: #0284c7;
+    }
+    .btn-success {
+      background: #10b981;
+      color: white;
+    }
+    .btn-success:hover {
+      background: #059669;
+    }
+    .btn-danger {
+      background: #ef4444;
+      color: white;
+    }
+    .btn-danger:hover {
+      background: #dc2626;
+    }
+    .btn-info {
+      background: #6366f1;
+      color: white;
+    }
+    .btn-info:hover {
+      background: #4f46e5;
+    }
+    .output {
+      background: #1e1e1e;
+      color: #00ff00;
+      padding: 15px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      max-height: 400px;
+      overflow-y: auto;
+      margin-top: 10px;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    .status {
+      padding: 15px;
+      border-radius: 4px;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    .status.success {
+      background: #d1fae5;
+      color: #065f46;
+      border-left: 4px solid #10b981;
+    }
+    .status.error {
+      background: #fee2e2;
+      color: #7f1d1d;
+      border-left: 4px solid #ef4444;
+    }
+    .status.warning {
+      background: #fef3c7;
+      color: #92400e;
+      border-left: 4px solid #f59e0b;
+    }
+    .status.info {
+      background: #dbeafe;
+      color: #0c2340;
+      border-left: 4px solid #0ea5e9;
+    }
+    .step {
+      background: #f9fafb;
+      padding: 15px;
+      border-left: 4px solid #0ea5e9;
+      margin: 10px 0;
+      border-radius: 4px;
+    }
+    .step.complete {
+      border-left-color: #10b981;
+    }
+    .step.error {
+      border-left-color: #ef4444;
+    }
+    code {
+      background: #f3f4f6;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: 'Courier New', monospace;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>🧪 Test: Debug Flow CSV → Análisis</h1>
+  <p>Esta página de test valida que el flujo de carga CSV funcione correctamente.</p>
+</div>
+
+<div class="container">
+  <h2>1️⃣ Paso 1: Carga de Datos Mock</h2>
+  <p>Simula carga de datos sin necesidad de archivo CSV</p>
+  <div class="button-group">
+    <button class="btn-success" onclick="loadMockData()">📂 Cargar Datos Mock</button>
+    <button class="btn-info" onclick="showData('salesData')">📊 Ver window.salesData</button>
+    <button class="btn-info" onclick="showData('filteredData')">🔍 Ver window.filteredData</button>
+  </div>
+  <div id="output1" class="output" style="display:none;"></div>
+</div>
+
+<div class="container">
+  <h2>2️⃣ Paso 2: Ejecución de onDataLoaded()</h2>
+  <p>Valida estructura de datos e inicializa módulos</p>
+  <div class="button-group">
+    <button class="btn-primary" onclick="runOnDataLoaded()">🔄 Ejecutar onDataLoaded()</button>
+    <button class="btn-info" onclick="checkOrchestrator()">🔍 Ver Orquestador</button>
+  </div>
+  <div id="output2" class="output" style="display:none;"></div>
+</div>
+
+<div class="container">
+  <h2>3️⃣ Paso 3: Validación Completa</h2>
+  <p>Ejecuta el checklist completo de debug</p>
+  <div class="button-group">
+    <button class="btn-primary" onclick="runDebugStatus()">📋 Debug Status</button>
+    <button class="btn-primary" onclick="runDebugFlow()">🔄 Debug Flow</button>
+    <button class="btn-primary" onclick="runDebugModules()">📚 Debug Modules</button>
+  </div>
+  <div id="output3" class="output" style="display:none;"></div>
+</div>
+
+<div class="container">
+  <h2>4️⃣ Paso 4: Reset y Re-test</h2>
+  <p>Limpia datos y permite re-testear el flujo</p>
+  <div class="button-group">
+    <button class="btn-danger" onclick="clearAllData()">🧹 Limpiar Todos los Datos</button>
+    <button class="btn-info" onclick="checkStatus()">⚡ Estado Actual</button>
+  </div>
+  <div id="output4" class="output" style="display:none;"></div>
+</div>
+
+<div class="container">
+  <h2>📖 Instrucciones de Uso</h2>
+  <div class="step">
+    <strong>Paso 1:</strong> Click en "Cargar Datos Mock" para simular un CSV cargado
+  </div>
+  <div class="step">
+    <strong>Paso 2:</strong> Click en "Ejecutar onDataLoaded()" para inicializar módulos
+  </div>
+  <div class="step">
+    <strong>Paso 3:</strong> Click en "Debug Flow" para validar que todo está conectado
+  </div>
+  <div class="step">
+    <strong>Resultado esperado:</strong> 
+    <div style="margin-top: 10px;">
+      ✅ 5/5 pasos completados
+      <ul>
+        <li>✅ Datos en window.salesData</li>
+        <li>✅ Datos en window.filteredData</li>
+        <li>✅ Estructura de datos válida</li>
+        <li>✅ AnalyticsOrchestrator instanciado</li>
+        <li>✅ Módulos de análisis cargados</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script>
+// Configuración de salida
+function setOutput(elementId, content, type = 'info') {
+  const elem = document.getElementById(elementId);
+  elem.textContent = content;
+  elem.style.display = 'block';
+  
+  // Auto-scroll
+  setTimeout(() => elem.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
+}
+
+function appendOutput(elementId, content) {
+  const elem = document.getElementById(elementId);
+  elem.textContent += '\n' + content;
+  elem.style.display = 'block';
+}
+
+// TEST 1: Cargar datos mock
+function loadMockData() {
+  console.log('🎭 [TEST] Cargando datos mock...');
+  
+  window.salesData = [
+    {
+      lat: 21.16, lng: -86.85, monto: 250,
+      fechaStr: '2026-01-12', zona: 'zona_hotelera',
+      pitchType: 'authority', result: 'successful',
+      clientOrigin: 'CDMX', cliente: 'Cliente1', id: 0,
+      timestamp: new Date('2026-01-12T14:30:00').toISOString()
+    },
+    {
+      lat: 21.17, lng: -86.84, monto: 150,
+      fechaStr: '2026-01-12', zona: 'centro',
+      pitchType: 'nostalgia', result: 'failed',
+      clientOrigin: 'Cancun', cliente: 'Cliente2', id: 1,
+      timestamp: new Date('2026-01-12T15:45:00').toISOString()
+    },
+    {
+      lat: 21.15, lng: -86.86, monto: 300,
+      fechaStr: '2026-01-12', zona: 'sm_77',
+      pitchType: 'scarcity', result: 'successful',
+      clientOrigin: 'CDMX', cliente: 'Cliente3', id: 2,
+      timestamp: new Date('2026-01-12T16:20:00').toISOString()
+    }
+  ];
+  
+  window.filteredData = [...window.salesData];
+  
+  setOutput('output1', 
+    '✅ Datos mock cargados\n' +
+    `📊 Registros: ${window.salesData.length}\n` +
+    `✅ window.salesData: LISTO\n` +
+    `✅ window.filteredData: LISTO\n` +
+    `\n📋 Primer registro:\n` +
+    JSON.stringify(window.salesData[0], null, 2)
+  );
+}
+
+// TEST 2: Mostrar datos
+function showData(varName) {
+  const data = window[varName];
+  setOutput('output1',
+    `📊 Variable: ${varName}\n` +
+    `Tipo: ${typeof data}\n` +
+    `Longitud: ${data?.length || 'N/A'}\n\n` +
+    JSON.stringify(data, null, 2)
+  );
+}
+
+// TEST 3: Ejecutar onDataLoaded
+function runOnDataLoaded() {
+  setOutput('output2', '⏳ Ejecutando onDataLoaded()...\n');
+  
+  // Capturar logs
+  const originalLog = console.log;
+  const originalError = console.error;
+  const originalWarn = console.warn;
+  
+  let captured = '';
+  
+  console.log = function(...args) {
+    captured += args.map(a => typeof a === 'string' ? a : JSON.stringify(a)).join(' ') + '\n';
+    originalLog.apply(console, args);
+  };
+  
+  console.error = function(...args) {
+    captured += '❌ ERROR: ' + args.map(a => typeof a === 'string' ? a : JSON.stringify(a)).join(' ') + '\n';
+    originalError.apply(console, args);
+  };
+  
+  console.warn = function(...args) {
+    captured += '⚠️ WARN: ' + args.map(a => typeof a === 'string' ? a : JSON.stringify(a)).join(' ') + '\n';
+    originalWarn.apply(console, args);
+  };
+  
+  try {
+    // Simular onDataLoaded (ya que es función global)
+    if (typeof onDataLoaded === 'function') {
+      onDataLoaded();
+      captured += '\n✅ onDataLoaded() ejecutada correctamente';
+    } else {
+      captured += '\n❌ onDataLoaded() no es función global\n';
+      captured += 'Esto significa que el script index.html no se ha cargado\n';
+      captured += 'Este test debe ejecutarse DENTRO de la aplicación\n';
+    }
+  } catch (error) {
+    captured += `\n❌ Error: ${error.message}\n${error.stack}`;
+  }
+  
+  // Restaurar console
+  console.log = originalLog;
+  console.error = originalError;
+  console.warn = originalWarn;
+  
+  setOutput('output2', captured);
+}
+
+// TEST 4: Revisar orquestador
+function checkOrchestrator() {
+  let output = '🔍 Estado del Orquestador\n\n';
+  
+  if (!window.analyticsOrchestrator) {
+    output += '❌ window.analyticsOrchestrator: NO CARGADO\n';
+    output += '   Posible causa: onDataLoaded() aún no se ejecutó\n';
+  } else {
+    output += '✅ window.analyticsOrchestrator: CARGADO\n';
+    output += `   Datos: ${window.analyticsOrchestrator.data?.length || 0} registros\n`;
+    output += `   Módulos: ${Object.keys(window.analyticsOrchestrator.modules || {}).length}\n\n`;
+    
+    if (window.analyticsOrchestrator.modules) {
+      output += '📚 Módulos cargados:\n';
+      Object.keys(window.analyticsOrchestrator.modules).forEach(name => {
+        output += `   ✅ ${name}\n`;
+      });
+    }
+  }
+  
+  setOutput('output2', output);
+}
+
+// TEST 5: Debug Status
+function runDebugStatus() {
+  if (typeof debugStatus === 'function') {
+    // Capturar console.log
+    const logs = [];
+    const originalLog = console.log;
+    console.log = function(...args) {
+      logs.push(args.map(a => typeof a === 'string' ? a : JSON.stringify(a)).join(' '));
+      originalLog.apply(console, args);
+    };
+    
+    debugStatus();
+    
+    console.log = originalLog;
+    setOutput('output3', logs.join('\n'));
+  } else {
+    setOutput('output3', '❌ debugStatus() no está disponible\nAsegúrate de que DEBUG_HELPER.js está cargado');
+  }
+}
+
+// TEST 6: Debug Flow
+function runDebugFlow() {
+  if (typeof debugDataFlow === 'function') {
+    const logs = [];
+    const originalLog = console.log;
+    console.log = function(...args) {
+      logs.push(args.map(a => typeof a === 'string' ? a : JSON.stringify(a)).join(' '));
+      originalLog.apply(console, args);
+    };
+    
+    const result = debugDataFlow();
+    
+    console.log = originalLog;
+    setOutput('output3', logs.join('\n'));
+  } else {
+    setOutput('output3', '❌ debugDataFlow() no está disponible');
+  }
+}
+
+// TEST 7: Debug Modules
+function runDebugModules() {
+  if (typeof debugModules === 'function') {
+    const logs = [];
+    const originalLog = console.log;
+    console.log = function(...args) {
+      logs.push(args.map(a => typeof a === 'string' ? a : JSON.stringify(a)).join(' '));
+      originalLog.apply(console, args);
+    };
+    
+    debugModules();
+    
+    console.log = originalLog;
+    setOutput('output3', logs.join('\n'));
+  } else {
+    setOutput('output3', '❌ debugModules() no está disponible');
+  }
+}
+
+// TEST 8: Limpiar datos
+function clearAllData() {
+  window.salesData = [];
+  window.filteredData = [];
+  window.analyticsOrchestrator = null;
+  
+  setOutput('output4',
+    '✅ Datos limpiados\n\n' +
+    '🔄 Estados:\n' +
+    `   window.salesData: ${window.salesData.length} registros\n` +
+    `   window.filteredData: ${window.filteredData.length} registros\n` +
+    `   window.analyticsOrchestrator: ${window.analyticsOrchestrator}\n\n` +
+    '💡 Puedes volver a cargar datos mock para re-testear'
+  );
+}
+
+// TEST 9: Estado actual
+function checkStatus() {
+  let output = '⚡ Estado Actual del Sistema\n\n';
+  
+  output += `window.salesData: ${window.salesData?.length || 0} registros\n`;
+  output += `window.filteredData: ${window.filteredData?.length || 0} registros\n`;
+  output += `window.analyticsOrchestrator: ${window.analyticsOrchestrator ? 'CARGADO' : 'NO CARGADO'}\n\n`;
+  
+  if (window.salesData?.length > 0) {
+    output += '✅ Hay datos cargados. Siguiente paso: Ejecutar onDataLoaded()';
+  } else {
+    output += '❌ Sin datos. Paso anterior: Cargar Datos Mock';
+  }
+  
+  setOutput('output4', output);
+}
+
+// Inicializar
+window.addEventListener('load', function() {
+  console.log('✅ Página de test cargada');
+  checkStatus();
+});
+</script>
+
+</body>
+</html>

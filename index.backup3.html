@@ -1,0 +1,3118 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Geo-Suite Cancún PRO - Plataforma Estratégica</title>
+
+<!-- Librerías -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+
+<!-- Mapbox -->
+<link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
+<script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
+
+<!-- Turf.js para cálculos geográficos -->
+<script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+
+<style>
+/* ============================================
+   VARIABLES Y RESET
+   ============================================ */
+:root {
+  --bg-dark: #020617;
+  --bg-panel: #0f172a;
+  --bg-card: #1e293b;
+  --accent-blue: #38bdf8;
+  --accent-green: #22c55e;
+  --accent-purple: #8b5cf6;
+  --accent-pink: #ec4899;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --border: #334155;
+  --success: #10b981;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--bg-dark);
+  color: var(--text-primary);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* ============================================
+   LAYOUT PRINCIPAL
+   ============================================ */
+.app-container {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  min-height: 100vh;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+/* ============================================
+   SIDEBAR / PANEL LATERAL
+   ============================================ */
+.sidebar {
+  background: var(--bg-panel);
+  border-right: 1px solid var(--border);
+  padding: 20px 15px;
+  overflow-y: auto;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+
+.header {
+  padding-bottom: 20px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.header h1 {
+  font-size: 1.4rem;
+  color: var(--accent-blue);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 5px;
+}
+
+.header p {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+/* ============================================
+   NAVEGACIÓN
+   ============================================ */
+.nav-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-secondary);
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  text-align: left;
+  width: 100%;
+}
+
+.nav-btn:hover {
+  background: rgba(56, 189, 248, 0.1);
+  color: var(--accent-blue);
+  border-color: var(--accent-blue);
+}
+
+.nav-btn.active {
+  background: rgba(56, 189, 248, 0.15);
+  color: var(--accent-blue);
+  border-color: var(--accent-blue);
+  font-weight: 600;
+}
+
+.nav-btn i {
+  width: 20px;
+  font-size: 1.1rem;
+}
+
+/* ============================================
+   CONTENIDO PRINCIPAL
+   ============================================ */
+.main-content {
+  padding: 20px;
+  overflow-y: auto;
+  max-width: 100%;
+}
+
+.view-section {
+  display: none;
+  animation: fadeIn 0.3s ease;
+}
+
+.view-section.active {
+  display: block;
+}
+
+/* ============================================
+   KPI CARDS
+   ============================================ */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.kpi-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  transition: transform 0.3s ease;
+}
+
+.kpi-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.4);
+}
+
+.kpi-card h3 {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.kpi-card .value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.kpi-card .change {
+  font-size: 0.85rem;
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.change.positive {
+  color: var(--accent-green);
+}
+
+.change.negative {
+  color: var(--danger);
+}
+
+/* ============================================
+   CHART CONTAINERS
+   ============================================ */
+.chart-container {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.chart-container h3 {
+  margin-bottom: 20px;
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.chart-wrapper {
+  position: relative;
+  height: 300px;
+  width: 100%;
+}
+
+/* ============================================
+   FORM CONTROLS
+   ============================================ */
+.control-group {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.control-group h3 {
+  margin-bottom: 16px;
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.form-control {
+  width: 100%;
+  padding: 12px 16px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
+}
+
+.file-drop-area {
+  border: 2px dashed var(--border);
+  border-radius: 10px;
+  padding: 40px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: var(--bg-panel);
+}
+
+.file-drop-area:hover {
+  border-color: var(--accent-blue);
+  background: rgba(56, 189, 248, 0.05);
+}
+
+.file-drop-area i {
+  font-size: 2.5rem;
+  color: var(--text-secondary);
+  margin-bottom: 15px;
+}
+
+/* ============================================
+   BUTTONS
+   ============================================ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 24px;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+  width: 100%;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent-blue), #0ea5e9);
+  color: white;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(56, 189, 248, 0.3);
+}
+
+.btn-success {
+  background: linear-gradient(135deg, var(--accent-green), #10b981);
+  color: white;
+}
+
+.btn-warning {
+  background: linear-gradient(135deg, var(--warning), #f59e0b);
+  color: white;
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, var(--danger), #ef4444);
+  color: white;
+}
+
+.btn-secondary {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+}
+
+.btn-group {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+/* ============================================
+   TABLAS
+   ============================================ */
+.data-table-container {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+  overflow-x: auto;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 600px;
+}
+
+.data-table th {
+  background: var(--bg-panel);
+  padding: 16px;
+  text-align: left;
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 0.9rem;
+  border-bottom: 2px solid var(--border);
+}
+
+.data-table td {
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-primary);
+}
+
+.data-table tr:hover {
+  background: rgba(56, 189, 248, 0.05);
+}
+
+/* ============================================
+   MAPA
+   ============================================ */
+.map-container {
+  height: 500px;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  margin-bottom: 24px;
+}
+
+.map-overlay {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  width: 280px;
+  backdrop-filter: blur(10px);
+  z-index: 1;
+}
+
+/* ============================================
+   ZONAS BADGES
+   ============================================ */
+.zone-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-right: 8px;
+  margin-bottom: 8px;
+}
+
+.zone-237 { background: #3b82f6; color: white; }
+.zone-233 { background: #10b981; color: white; }
+.zone-91 { background: #8b5cf6; color: white; }
+.zone-77 { background: #ef4444; color: white; }
+.zone-centro { background: #f59e0b; color: white; }
+.zone-hotelera { background: #ec4899; color: white; }
+
+/* ============================================
+   PITCH GENERATOR
+   ============================================ */
+.pitch-input {
+  width: 100%;
+  min-height: 150px;
+  padding: 16px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text-primary);
+  font-size: 1rem;
+  resize: vertical;
+  margin-bottom: 16px;
+}
+
+.pitch-output {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+  margin-top: 20px;
+  white-space: pre-wrap;
+  max-height: 400px;
+  overflow-y: auto;
+  border-left: 4px solid var(--accent-blue);
+}
+
+/* ============================================
+   REPORTES
+   ============================================ */
+.reports-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.report-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+  transition: transform 0.3s ease;
+}
+
+.report-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+/* ============================================
+   NOTIFICACIONES
+   ============================================ */
+.notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 16px 20px;
+  border-radius: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transform: translateX(400px);
+  transition: transform 0.3s ease;
+  max-width: 400px;
+}
+
+.notification.show {
+  transform: translateX(0);
+}
+
+.notification.success {
+  border-left: 4px solid var(--accent-green);
+}
+
+.notification.warning {
+  border-left: 4px solid var(--warning);
+}
+
+.notification.error {
+  border-left: 4px solid var(--danger);
+}
+
+/* ============================================
+   NAVEGACIÓN MÓVIL
+   ============================================ */
+.mobile-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--bg-panel);
+  border-top: 1px solid var(--border);
+  padding: 12px 0;
+  z-index: 100;
+  backdrop-filter: blur(10px);
+}
+
+.mobile-nav-buttons {
+  display: flex;
+  justify-content: space-around;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.mobile-nav-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  padding: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex: 1;
+  max-width: 80px;
+}
+
+.mobile-nav-btn.active {
+  color: var(--accent-blue);
+  background: rgba(56, 189, 248, 0.1);
+}
+
+.mobile-nav-btn i {
+  font-size: 1.2rem;
+}
+
+.mobile-nav-btn span {
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+@media (max-width: 1024px) {
+  .app-container {
+    grid-template-columns: 1fr;
+  }
+  
+  .sidebar {
+    display: none;
+  }
+  
+  .mobile-nav {
+    display: block;
+  }
+  
+  .main-content {
+    padding-bottom: 80px;
+  }
+}
+
+@media (max-width: 768px) {
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .btn-group {
+    grid-template-columns: 1fr;
+  }
+  
+  .reports-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .chart-wrapper {
+    height: 250px;
+  }
+  
+  .map-container {
+    height: 400px;
+  }
+  
+  .map-overlay {
+    position: relative;
+    top: 0;
+    right: 0;
+    width: 100%;
+    margin-bottom: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .main-content {
+    padding: 16px;
+  }
+  
+  .kpi-card .value {
+    font-size: 1.8rem;
+  }
+  
+  .mobile-nav-btn span {
+    font-size: 0.7rem;
+  }
+}
+
+/* ============================================
+   ANIMACIONES
+   ============================================ */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.pulse {
+  animation: pulse 2s infinite;
+}
+
+/* ============================================
+   LOADING STATES
+   ============================================ */
+.loading {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(2, 6, 23, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  backdrop-filter: blur(5px);
+}
+
+.loading-content {
+  background: var(--bg-card);
+  padding: 30px;
+  border-radius: 16px;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+.hidden {
+  display: none !important;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-success {
+  color: var(--accent-green);
+}
+
+.text-danger {
+  color: var(--danger);
+}
+
+.text-warning {
+  color: var(--warning);
+}
+
+.mt-20 {
+  margin-top: 20px;
+}
+
+.mb-20 {
+  margin-bottom: 20px;
+}
+
+.mb-30 {
+  margin-bottom: 30px;
+}
+</style>
+</head>
+<body>
+
+<!-- NOTIFICACIONES -->
+<div id="notification" class="notification">
+  <i id="notification-icon"></i>
+  <span id="notification-text"></span>
+</div>
+
+<!-- LOADING OVERLAY -->
+<div id="loadingOverlay" class="loading-overlay hidden">
+  <div class="loading-content">
+    <div class="loading" style="margin: 0 auto 20px;"></div>
+    <p id="loadingText">Procesando...</p>
+  </div>
+</div>
+
+<div class="app-container">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="header">
+      <h1><i class="fas fa-satellite-dish"></i> Geo-Suite Cancún</h1>
+      <p>Plataforma Estratégica Inteligente</p>
+    </div>
+
+    <!-- Navegación -->
+    <nav class="nav-menu">
+      <button class="nav-btn active" data-view="dashboard">
+        <i class="fas fa-chart-pie"></i> Dashboard
+      </button>
+      <button class="nav-btn" data-view="map">
+        <i class="fas fa-map"></i> Mapa Interactivo
+      </button>
+      <button class="nav-btn" data-view="data">
+        <i class="fas fa-database"></i> Datos y CSV
+      </button>
+      <button class="nav-btn" data-view="analysis">
+        <i class="fas fa-chart-line"></i> Análisis Avanzado
+      </button>
+      <button class="nav-btn" data-view="zones">
+        <i class="fas fa-map-marker-alt"></i> Zonas Estratégicas
+      </button>
+      <button class="nav-btn" data-view="pitch">
+        <i class="fas fa-bullhorn"></i> Generador de Pitch
+      </button>
+      <button class="nav-btn" data-view="routes">
+        <i class="fas fa-route"></i> Optimización de Rutas
+      </button>
+      <button class="nav-btn" data-view="reports">
+        <i class="fas fa-file-alt"></i> Reportes
+      </button>
+      <button class="nav-btn" data-view="settings">
+        <i class="fas fa-cog"></i> Configuración
+      </button>
+    </nav>
+
+    <!-- Estado del sistema -->
+    <div class="control-group mt-20">
+      <h3><i class="fas fa-info-circle"></i> Estado</h3>
+      <div class="form-group">
+        <label>Datos Cargados:</label>
+        <div id="dataStatus" class="text-warning">Sin datos</div>
+      </div>
+      <div class="form-group">
+        <label>Knowledgebase:</label>
+        <div id="kbStatus" class="text-success">Disponible</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <main class="main-content">
+    
+    <!-- ================= DASHBOARD ================= -->
+    <section id="dashboard" class="view-section active">
+      <h2 class="mb-30"><i class="fas fa-chart-pie"></i> Dashboard Principal</h2>
+      
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <h3>Ventas Totales</h3>
+          <div class="value" id="kpiSalesTotal">$0.00</div>
+          <div class="change positive">
+            <i class="fas fa-arrow-up"></i> <span>0% vs último mes</span>
+          </div>
+        </div>
+        
+        <div class="kpi-card">
+          <h3>Transacciones</h3>
+          <div class="value" id="kpiTransactions">0</div>
+          <div class="change negative">
+            <i class="fas fa-arrow-down"></i> <span>0%</span>
+          </div>
+        </div>
+        
+        <div class="kpi-card">
+          <h3>Ticket Promedio</h3>
+          <div class="value" id="kpiAvgTicket">$0.00</div>
+          <div class="change positive">
+            <i class="fas fa-arrow-up"></i> <span>0%</span>
+          </div>
+        </div>
+        
+        <div class="kpi-card">
+          <h3>Mejor Zona</h3>
+          <div class="value" id="kpiBestZone">—</div>
+          <div class="change">
+            <span id="kpiZonePerformance">—</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="chart-container">
+        <h3><i class="fas fa-chart-bar"></i> Ventas por Zona</h3>
+        <div class="chart-wrapper">
+          <canvas id="zonesChart"></canvas>
+        </div>
+      </div>
+      
+      <div class="chart-container">
+        <h3><i class="fas fa-chart-line"></i> Tendencia por Hora</h3>
+        <div class="chart-wrapper">
+          <canvas id="hoursChart"></canvas>
+        </div>
+      </div>
+    </section>
+    
+    <!-- ================= MAPA INTERACTIVO ================= -->
+    <section id="map" class="view-section">
+      <h2 class="mb-30"><i class="fas fa-map"></i> Mapa de Distribución</h2>
+      
+      <div class="map-container" id="mapContainer">
+        <div id="map"></div>
+        <div class="map-overlay">
+          <h4><i class="fas fa-layer-group"></i> Capas</h4>
+          <div class="form-group">
+            <label>
+              <input type="checkbox" id="layerPoints" checked> Puntos de Venta
+            </label>
+          </div>
+          <div class="form-group">
+            <label>
+              <input type="radio" name="heatmap" id="heatIntensity"> Heatmap por Monto
+            </label>
+          </div>
+          <div class="form-group">
+            <label>
+              <input type="radio" name="heatmap" id="heatDensity"> Heatmap por Densidad
+            </label>
+          </div>
+          <div class="form-group">
+            <label>
+              <input type="radio" name="heatmap" id="heatNone" checked> Sin Heatmap
+            </label>
+          </div>
+        </div>
+      </div>
+      
+      <div class="control-group">
+        <h3><i class="fas fa-map-marked-alt"></i> Zonas Geoestadísticas</h3>
+        <div id="zonesInfo">
+          <!-- Info de zonas se cargará dinámicamente -->
+        </div>
+      </div>
+    </section>
+    
+    <!-- ================= DATOS Y CSV ================= -->
+    <section id="data" class="view-section">
+      <h2 class="mb-30"><i class="fas fa-database"></i> Carga y Gestión de Datos</h2>
+      
+      <div class="control-group">
+        <h3><i class="fas fa-file-upload"></i> Cargar Archivo CSV</h3>
+        <p>Carga tus datos de ventas en formato CSV. El sistema detectará automáticamente las columnas.</p>
+        
+        <div class="file-drop-area" id="dropArea">
+          <i class="fas fa-cloud-upload-alt"></i>
+          <h4>Arrastra tu archivo CSV aquí</h4>
+          <p>o haz clic para seleccionar</p>
+          <input type="file" id="csvFile" accept=".csv" class="hidden">
+        </div>
+        
+        <div id="fileInfo" class="text-center mt-20 hidden">
+          <p><i class="fas fa-check-circle text-success"></i> <span id="fileStatus">Archivo cargado</span></p>
+        </div>
+      </div>
+      
+      <div class="control-group">
+        <h3><i class="fas fa-filter"></i> Filtros de Datos</h3>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Fecha Desde:</label>
+            <input type="date" id="dateFrom" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Fecha Hasta:</label>
+            <input type="date" id="dateTo" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>Zona:</label>
+            <select id="zoneFilter" class="form-control">
+              <option value="">Todas las zonas</option>
+              <option value="237">Región 237</option>
+              <option value="233">Región 233</option>
+              <option value="91">Supermanzana 91</option>
+              <option value="77">Supermanzana 77 (Corales)</option>
+              <option value="centro">Centro</option>
+              <option value="hotelera">Zona Hotelera</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Rango Horario:</label>
+            <select id="timeFilter" class="form-control">
+              <option value="">Todo el día</option>
+              <option value="6-12">Mañana (6:00-12:00)</option>
+              <option value="12-18">Tarde (12:00-18:00)</option>
+              <option value="18-24">Noche (18:00-24:00)</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="applyFilters()">
+            <i class="fas fa-filter"></i> Aplicar Filtros
+          </button>
+          <button class="btn btn-secondary" onclick="resetFilters()">
+            <i class="fas fa-redo"></i> Restablecer
+          </button>
+        </div>
+      </div>
+      
+      <div class="data-table-container">
+        <h3><i class="fas fa-table"></i> Datos de Ventas</h3>
+        <div style="overflow-x: auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Cliente</th>
+                <th>Monto</th>
+                <th>Zona</th>
+                <th>Hora</th>
+                <th>Coordenadas</th>
+              </tr>
+            </thead>
+            <tbody id="dataTableBody">
+              <tr>
+                <td colspan="6" class="text-center" style="padding: 40px;">
+                  <i class="fas fa-database fa-2x mb-20" style="display: block; color: var(--text-secondary);"></i>
+                  Carga un archivo CSV para ver los datos
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+    
+    <!-- ================= ANÁLISIS AVANZADO ================= -->
+    <section id="analysis" class="view-section">
+      <h2 class="mb-30"><i class="fas fa-chart-line"></i> Análisis Avanzado</h2>
+      
+      <div class="control-group">
+        <h3><i class="fas fa-brain"></i> Herramientas de Análisis</h3>
+        <p>Utiliza las funciones avanzadas del knowledgebase para análisis estratégicos.</p>
+        
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="runMonteCarlo()">
+            <i class="fas fa-dice"></i> Simulación Monte Carlo
+          </button>
+          <button class="btn btn-success" onclick="calculateOptimalRoute()">
+            <i class="fas fa-route"></i> Ruta Óptima
+          </button>
+          <button class="btn btn-warning" onclick="calculateLogisticRisk()">
+            <i class="fas fa-exclamation-triangle"></i> Análisis de Riesgo
+          </button>
+          <button class="btn btn-secondary" onclick="runSeasonalAnalysis()">
+            <i class="fas fa-calendar-alt"></i> Análisis Estacional
+          </button>
+        </div>
+      </div>
+      
+      <div id="analysisResults" class="control-group hidden">
+        <h3><i class="fas fa-clipboard-check"></i> Resultados del Análisis</h3>
+        <div id="analysisOutput">
+          <!-- Los resultados se mostrarán aquí -->
+        </div>
+      </div>
+      
+      <div class="control-group">
+        <h3><i class="fas fa-robot"></i> Análisis con IA</h3>
+        <div class="form-group">
+          <label>API Key de Groq (opcional):</label>
+          <input type="text" id="apiKey" class="form-control" placeholder="gsk_...">
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="runStrategicAI()">
+            <i class="fas fa-robot"></i> Análisis Estratégico IA
+          </button>
+        </div>
+      </div>
+    </section>
+    
+    <!-- ================= ZONAS ESTRATÉGICAS ================= -->
+    <section id="zones" class="view-section">
+      <h2 class="mb-30"><i class="fas fa-map-marker-alt"></i> Zonas Geoestadísticas de Cancún</h2>
+      
+      <div class="reports-grid">
+        <div class="report-card">
+          <h4><span class="zone-badge zone-237">Región 237</span></h4>
+          <p><strong>Perfil:</strong> Zona norte, alta densidad poblacional, procesos de regularización.</p>
+          <p><strong>Segmento:</strong> Clase trabajadora, ingresos medios-bajos.</p>
+          <p><strong>Estrategia:</strong> Ventas de productos básicos, pagos flexibles.</p>
+        </div>
+        
+        <div class="report-card">
+          <h4><span class="zone-badge zone-233">Región 233</span></h4>
+          <p><strong>Perfil:</strong> Población joven, mejor conectividad, inversión pública reciente.</p>
+          <p><strong>Segmento:</strong> Familias jóvenes, estudiantes universitarios.</p>
+          <p><strong>Estrategia:</strong> Productos tecnológicos, financiamiento educativo.</p>
+        </div>
+        
+        <div class="report-card">
+          <h4><span class="zone-badge zone-91">Supermanzana 91</span></h4>
+          <p><strong>Perfil:</strong> Zona céntrica en transición, propiedades en remate.</p>
+          <p><strong>Segmento:</strong> Clase media en transición, propietarios.</p>
+          <p><strong>Estrategia:</strong> Productos de renovación hogar, seguros.</p>
+        </div>
+        
+        <div class="report-card">
+          <h4><span class="zone-badge zone-77">Supermanzana 77 (Corales)</span></h4>
+          <p><strong>Perfil:</strong> Crisis habitacional, alta vulnerabilidad, necesidades básicas.</p>
+          <p><strong>Segmento:</strong> Población en extrema necesidad.</p>
+          <p><strong>Estrategia:</strong> Productos esenciales, precios mínimos, ayuda social.</p>
+        </div>
+        
+        <div class="report-card">
+          <h4><span class="zone-badge zone-centro">Centro (Distrito 1)</span></h4>
+          <p><strong>Perfil:</strong> Renovación urbana, comercio consolidado, turismo local.</p>
+          <p><strong>Segmento:</strong> Comerciantes, turistas, residentes con poder adquisitivo.</p>
+          <p><strong>Estrategia:</strong> Productos premium, experiencias, servicios especializados.</p>
+        </div>
+        
+        <div class="report-card">
+          <h4><span class="zone-badge zone-hotelera">Zona Hotelera</span></h4>
+          <p><strong>Perfil:</strong> Turismo internacional, alta rotación, precios premium.</p>
+          <p><strong>Segmento:</strong> Turistas internacionales, ejecutivos.</p>
+          <p><strong>Estrategia:</strong> Productos de lujo, souvenirs, servicios exclusivos.</p>
+        </div>
+      </div>
+    </section>
+    
+    <!-- ================= GENERADOR DE PITCH ================= -->
+    <section id="pitch" class="view-section">
+      <h2 class="mb-30"><i class="fas fa-bullhorn"></i> Generador de Pitch Estratégico</h2>
+      
+      <div class="control-group">
+        <h3><i class="fas fa-magic"></i> Crea tu Pitch</h3>
+        <p>Describe tu producto o servicio para generar un pitch personalizado basado en las zonas de Cancún:</p>
+        
+        <textarea id="pitchInput" class="pitch-input" placeholder="Ejemplo: Vender paquetes de comida saludable a domicilio en Cancún"></textarea>
+        
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="generatePitch()">
+            <i class="fas fa-magic"></i> Generar Pitch
+          </button>
+          <button class="btn btn-secondary" onclick="clearPitch()">
+            <i class="fas fa-eraser"></i> Limpiar
+          </button>
+          <button class="btn btn-success" onclick="savePitch()">
+            <i class="fas fa-save"></i> Guardar
+          </button>
+        </div>
+      </div>
+      
+      <div id="pitchOutput" class="hidden">
+        <div class="control-group">
+          <h3><i class="fas fa-bullhorn"></i> Pitch Generado</h3>
+          <div class="pitch-output" id="pitchContent">
+            <!-- El pitch se mostrará aquí -->
+          </div>
+          <div class="btn-group mt-20">
+            <button class="btn btn-primary" onclick="copyPitch()">
+              <i class="fas fa-copy"></i> Copiar
+            </button>
+            <button class="btn btn-success" onclick="savePitchAsReport()">
+              <i class="fas fa-file-pdf"></i> Guardar como Reporte
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+    
+    <!-- ================= OPTIMIZACIÓN DE RUTAS ================= -->
+    <section id="routes" class="view-section">
+      <h2 class="mb-30"><i class="fas fa-route"></i> Optimización de Rutas</h2>
+      
+      <div class="control-group">
+        <h3><i class="fas fa-route"></i> Calculadora de Rutas Óptimas</h3>
+        <p>Utiliza el algoritmo de optimización del knowledgebase para calcular la ruta más eficiente.</p>
+        
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Punto de Inicio:</label>
+            <select id="routeStart" class="form-control">
+              <option value="centro">Centro</option>
+              <option value="hotel_zone">Zona Hotelera</option>
+              <option value="region_247">Región 247</option>
+              <option value="supermanzana">Supermanzana</option>
+              <option value="puerto_juares">Puerto Juárez</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Número de Paradas:</label>
+            <input type="number" id="routeStops" class="form-control" min="2" max="20" value="5">
+          </div>
+          <div class="form-group">
+            <label>Prioridad:</label>
+            <select id="routePriority" class="form-control">
+              <option value="distance">Distancia mínima</option>
+              <option value="revenue">Máximo ingreso</option>
+              <option value="efficiency">Eficiencia logística</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="calculateOptimalRoute()">
+            <i class="fas fa-calculator"></i> Calcular Ruta
+          </button>
+          <button class="btn btn-success" onclick="visualizeRoute()">
+            <i class="fas fa-map"></i> Visualizar en Mapa
+          </button>
+        </div>
+      </div>
+      
+      <div id="routeResults" class="control-group hidden">
+        <h3><i class="fas fa-clipboard-list"></i> Resultados de la Ruta</h3>
+        <div id="routeOutput">
+          <!-- Los resultados de la ruta se mostrarán aquí -->
+        </div>
+      </div>
+    </section>
+    
+    <!-- ================= REPORTES ================= -->
+    <section id="reports" class="view-section">
+      <h2 class="mb-30"><i class="fas fa-file-alt"></i> Reportes y Análisis</h2>
+      
+      <div class="control-group">
+        <h3><i class="fas fa-plus-circle"></i> Generar Nuevo Reporte</h3>
+        <p>Selecciona el tipo de reporte que deseas generar:</p>
+        
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="generateSalesReport()">
+            <i class="fas fa-chart-line"></i> Reporte de Ventas
+          </button>
+          <button class="btn btn-success" onclick="generateStrategicReport()">
+            <i class="fas fa-chess"></i> Reporte Estratégico
+          </button>
+          <button class="btn btn-warning" onclick="generateRiskReport()">
+            <i class="fas fa-exclamation-triangle"></i> Reporte de Riesgo
+          </button>
+        </div>
+      </div>
+      
+      <div class="control-group">
+        <h3><i class="fas fa-history"></i> Reportes Generados</h3>
+        <div id="reportsContainer" class="reports-grid">
+          <div class="report-card">
+            <h4>No hay reportes aún</h4>
+            <p>Genera tu primer reporte usando los botones de arriba.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+    
+    <!-- ================= CONFIGURACIÓN ================= -->
+    <section id="settings" class="view-section">
+      <h2 class="mb-30"><i class="fas fa-cog"></i> Configuración</h2>
+      
+      <div class="control-group">
+        <h3><i class="fas fa-key"></i> Configuración de API</h3>
+        <div class="form-group">
+          <label>API Key de Groq (para análisis con IA):</label>
+          <input type="password" id="apiKeyConfig" class="form-control" placeholder="gsk_...">
+          <small class="text-secondary">Obtenla en <a href="https://console.groq.com" target="_blank">console.groq.com</a></small>
+        </div>
+        <div class="form-group">
+          <label>Token de Mapbox:</label>
+          <input type="text" id="mapboxToken" class="form-control" value="pk.eyJ1IjoiZG9ubmF6YXZhbGEiLCJhIjoiY21rMjRvOHA4MGRpZDNlcHhidnp3MmFuaCJ9.EaxKYFP3unsYAeGT_8eK-A">
+          <small class="text-secondary">Token incluido para desarrollo</small>
+        </div>
+        <button class="btn btn-primary" onclick="saveSettings()">
+          <i class="fas fa-save"></i> Guardar Configuración
+        </button>
+      </div>
+      
+      <div class="control-group">
+        <h3><i class="fas fa-database"></i> Gestión de Datos</h3>
+        <div class="btn-group">
+          <button class="btn btn-secondary" onclick="exportData()">
+            <i class="fas fa-download"></i> Exportar Datos
+          </button>
+          <button class="btn btn-danger" onclick="clearAllData()">
+            <i class="fas fa-trash"></i> Limpiar Todos los Datos
+          </button>
+        </div>
+      </div>
+      
+      <div class="control-group">
+        <h3><i class="fas fa-info-circle"></i> Información del Sistema</h3>
+        <div class="form-group">
+          <label>Versión:</label>
+          <div>Geo-Suite Cancún PRO v2.0</div>
+        </div>
+        <div class="form-group">
+          <label>Knowledgebase:</label>
+          <div id="kbInfo">Cargando...</div>
+        </div>
+        <div class="form-group">
+          <label>Datos Cargados:</label>
+          <div id="dataInfo">0 registros</div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- NAVEGACIÓN MÓVIL -->
+<div class="mobile-nav">
+  <div class="mobile-nav-buttons">
+    <button class="mobile-nav-btn active" data-view="dashboard">
+      <i class="fas fa-chart-pie"></i>
+      <span>Dashboard</span>
+    </button>
+    <button class="mobile-nav-btn" data-view="map">
+      <i class="fas fa-map"></i>
+      <span>Mapa</span>
+    </button>
+    <button class="mobile-nav-btn" data-view="data">
+      <i class="fas fa-database"></i>
+      <span>Datos</span>
+    </button>
+    <button class="mobile-nav-btn" data-view="analysis">
+      <i class="fas fa-chart-line"></i>
+      <span>Análisis</span>
+    </button>
+    <button class="mobile-nav-btn" data-view="more">
+      <i class="fas fa-ellipsis-h"></i>
+      <span>Más</span>
+    </button>
+  </div>
+</div>
+
+<!-- MODAL PARA MÁS OPCIONES (MÓVIL) -->
+<div id="moreModal" class="hidden" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(2, 6, 23, 0.9); z-index: 101; display: flex; align-items: center; justify-content: center;">
+  <div style="background: var(--bg-card); border-radius: 20px; padding: 30px; width: 90%; max-width: 400px;">
+    <h3 style="margin-bottom: 20px;">Opciones</h3>
+    <div style="display: grid; gap: 10px;">
+      <button class="mobile-nav-btn" onclick="showView('zones'); closeMoreModal();">
+        <i class="fas fa-map-marker-alt"></i> Zonas
+      </button>
+      <button class="mobile-nav-btn" onclick="showView('pitch'); closeMoreModal();">
+        <i class="fas fa-bullhorn"></i> Pitch
+      </button>
+      <button class="mobile-nav-btn" onclick="showView('routes'); closeMoreModal();">
+        <i class="fas fa-route"></i> Rutas
+      </button>
+      <button class="mobile-nav-btn" onclick="showView('reports'); closeMoreModal();">
+        <i class="fas fa-file-alt"></i> Reportes
+      </button>
+      <button class="mobile-nav-btn" onclick="showView('settings'); closeMoreModal();">
+        <i class="fas fa-cog"></i> Configuración
+      </button>
+    </div>
+    <button class="btn btn-secondary mt-20" onclick="closeMoreModal()">
+      <i class="fas fa-times"></i> Cerrar
+    </button>
+  </div>
+</div>
+
+<script type="module">
+// ============================================
+// CONFIGURACIÓN INICIAL
+// ============================================
+// 1. Importas o defines tus funciones normalmente
+import { applyFilters, resetFilters } from './filtros.js'; 
+import { runMonteCarlo, calculateOptimalRoute } from './analisis.js';
+// Token de Mapbox (incluido)
+mapboxgl.accessToken = 'pk.eyJ1IjoiZG9ubmF6YXZhbGEiLCJhIjoiY21rMjRvOHA4MGRpZDNlcHhidnp3MmFuaCJ9.EaxKYFP3unsYAeGT_8eK-A';
+
+// Variables globales
+let salesData = [];
+let filteredData = [];
+let map = null;
+let markers = [];
+let routeLayer = null;
+let charts = {};
+let generatedReports = [];
+let knowledgeBase = null;
+
+// ============================================
+// IMPORTACIÓN DINÁMICA DEL KNOWLEDGEBASE
+// ============================================
+
+async function loadKnowledgeBase() {
+  try {
+    // Intentar cargar el knowledgebase como módulo ES6
+    const module = await import('./knowledgebase.js');
+    knowledgeBase = module;
+    
+    console.log('✅ Knowledgebase cargado correctamente');
+    document.getElementById('kbInfo').textContent = 'Cargado correctamente';
+    document.getElementById('kbInfo').className = 'text-success';
+    
+    // Mostrar ejemplo de uso
+    showNotification('Knowledgebase cargado. Funciones avanzadas disponibles.', 'success');
+    
+    // Probar funciones básicas
+    testKnowledgeBase();
+    
+  } catch (error) {
+    console.error('❌ Error cargando knowledgebase:', error);
+    document.getElementById('kbInfo').textContent = 'Error al cargar: ' + error.message;
+    document.getElementById('kbInfo').className = 'text-danger';
+    
+    // Crear un knowledgebase de respaldo
+    createFallbackKnowledgeBase();
+  }
+}
+
+function testKnowledgeBase() {
+  if (!knowledgeBase) return;
+  
+  try {
+    // Probar función de zonas óptimas
+    const zonas = knowledgeBase.CancunSpecificAnalytics?.getOptimalZonesByHour(14);
+    console.log('Zonas óptimas a las 14:00:', zonas);
+    
+    // Probar cálculo de riesgo
+    const riesgo = knowledgeBase.CancunSpecificAnalytics?.calculateLogisticRisk('centro', 18);
+    console.log('Riesgo en centro a las 18:00:', riesgo);
+    
+  } catch (error) {
+    console.error('Error probando knowledgebase:', error);
+  }
+}
+
+function createFallbackKnowledgeBase() {
+  // Knowledgebase de respaldo con funciones básicas
+  knowledgeBase = {
+    cancunKnowledgeBase: {
+      zonas: [
+        { id: 'centro', nombre: 'Centro', pesoComercial: 0.9 },
+        { id: 'hotel_zone', nombre: 'Zona Hotelera', pesoComercial: 0.8 },
+        { id: 'region_247', nombre: 'Región 247', pesoComercial: 0.7 },
+        { id: 'supermanzana', nombre: 'Supermanzana', pesoComercial: 0.6 },
+        { id: 'puerto_juares', nombre: 'Puerto Juárez', pesoComercial: 0.4 }
+      ]
+    },
+    
+    CancunSpecificAnalytics: {
+      getOptimalZonesByHour: function(hora) {
+        if (hora >= 8 && hora <= 12) return ['Centro', 'Zona Hotelera'];
+        if (hora >= 13 && hora <= 18) return ['Región 247', 'Supermanzana'];
+        return ['Centro', 'Puerto Juárez'];
+      },
+      
+      calculateLogisticRisk: function(zonaId, hora) {
+        return {
+          riskScore: hora >= 17 && hora <= 20 ? 7 : 3,
+          recommendation: hora >= 17 && hora <= 20 ? 
+            'Tráfico pesado. Considerar rutas alternativas.' : 
+            'Condiciones normales.'
+        };
+      },
+      
+      getSeasonFactor: function(mes) {
+        if ([12, 1, 2, 3].includes(mes)) return 1.5;
+        if ([7, 8].includes(mes)) return 1.3;
+        return 1.0;
+      }
+    },
+    
+    AdvancedAnalytics: {
+      monteCarloSimulation: function(datos) {
+        const media = datos.reduce((a, b) => a + b) / datos.length;
+        const desviacion = Math.sqrt(
+          datos.reduce((sq, n) => sq + Math.pow(n - media, 2), 0) / datos.length
+        );
+        
+        return {
+          media: media.toFixed(2),
+          desviacion: desviacion.toFixed(2),
+          confidenceInterval: {
+            lower: (media * 0.8).toFixed(2),
+            upper: (media * 1.2).toFixed(2)
+          },
+          forecast: media.toFixed(2)
+        };
+      }
+    },
+    
+    Utils: {
+      isValidZone: function(zoneId) {
+        return ['centro', 'hotel_zone', 'region_247', 'supermanzana', 'puerto_juares'].includes(zoneId);
+      }
+    }
+  };
+  
+  console.log('⚠️ Knowledgebase de respaldo cargado');
+}
+
+// ============================================
+// MANEJO DE INTERFAZ
+// ============================================
+
+// Navegación principal
+function showView(viewId) {
+  // Ocultar todas las secciones
+  document.querySelectorAll('.view-section').forEach(section => {
+    section.classList.remove('active');
+  });
+  
+  // Remover active de todos los botones
+  document.querySelectorAll('.nav-btn, .mobile-nav-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  
+  // Mostrar la sección solicitada
+  const targetSection = document.getElementById(viewId);
+  if (targetSection) {
+    targetSection.classList.add('active');
+  }
+  
+  // Activar botones correspondientes
+  const navBtn = document.querySelector(`.nav-btn[data-view="${viewId}"]`);
+  const mobileBtn = document.querySelector(`.mobile-nav-btn[data-view="${viewId}"]`);
+  
+  if (navBtn) navBtn.classList.add('active');
+  if (mobileBtn) mobileBtn.classList.add('active');
+  
+  // Si es la vista "more" en móvil, mostrar modal
+  if (viewId === 'more' && window.innerWidth <= 1024) {
+    document.getElementById('moreModal').classList.remove('hidden');
+  } else {
+    document.getElementById('moreModal').classList.add('hidden');
+  }
+  
+  // Si es el mapa, inicializarlo si no está hecho
+  if (viewId === 'map' && !map) {
+    setTimeout(initMap, 100);
+  }
+  
+  // Si es dashboard, actualizar gráficos
+  if (viewId === 'dashboard' && salesData.length > 0) {
+    setTimeout(updateCharts, 100);
+  }
+}
+
+function closeMoreModal() {
+  document.getElementById('moreModal').classList.add('hidden');
+}
+
+// Inicializar eventos de navegación
+document.querySelectorAll('.nav-btn, .mobile-nav-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    const viewId = this.getAttribute('data-view');
+    if (viewId) {
+      showView(viewId);
+    }
+  });
+});
+
+// Notificaciones
+function showNotification(message, type = 'info') {
+  const notification = document.getElementById('notification');
+  const icon = document.getElementById('notification-icon');
+  const text = document.getElementById('notification-text');
+  
+  // Configurar según tipo
+  const config = {
+    success: { icon: 'check-circle', color: '#10b981' },
+    warning: { icon: 'exclamation-triangle', color: '#f59e0b' },
+    error: { icon: 'times-circle', color: '#ef4444' },
+    info: { icon: 'info-circle', color: '#38bdf8' }
+  }[type] || config.info;
+  
+  // Actualizar contenido
+  icon.className = `fas fa-${config.icon}`;
+  icon.style.color = config.color;
+  text.textContent = message;
+  
+  // Mostrar
+  notification.classList.add('show', type);
+  
+  // Ocultar después de 5 segundos
+  setTimeout(() => {
+    notification.classList.remove('show');
+  }, 5000);
+}
+
+// Loading overlay
+function showLoading(message = 'Procesando...') {
+  document.getElementById('loadingText').textContent = message;
+  document.getElementById('loadingOverlay').classList.remove('hidden');
+}
+
+function hideLoading() {
+  document.getElementById('loadingOverlay').classList.add('hidden');
+}
+
+// ============================================
+// MANEJO DE DATOS CSV
+// ============================================
+
+// Configurar drop area para archivos
+const dropArea = document.getElementById('dropArea');
+const fileInput = document.getElementById('csvFile');
+
+dropArea.addEventListener('click', () => fileInput.click());
+
+['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+  dropArea.addEventListener(eventName, preventDefaults, false);
+  document.body.addEventListener(eventName, preventDefaults, false);
+});
+
+function preventDefaults(e) {
+  e.preventDefault();
+  e.stopPropagation();
+}
+
+['dragenter', 'dragover'].forEach(eventName => {
+  dropArea.addEventListener(eventName, () => {
+    dropArea.style.borderColor = 'var(--accent-blue)';
+    dropArea.style.backgroundColor = 'rgba(56, 189, 248, 0.1)';
+  }, false);
+});
+
+['dragleave', 'drop'].forEach(eventName => {
+  dropArea.addEventListener(eventName, () => {
+    dropArea.style.borderColor = 'var(--border)';
+    dropArea.style.backgroundColor = 'var(--bg-panel)';
+  }, false);
+});
+
+dropArea.addEventListener('drop', handleDrop, false);
+fileInput.addEventListener('change', handleFiles, false);
+
+function handleDrop(e) {
+  const dt = e.dataTransfer;
+  const files = dt.files;
+  handleFiles({ target: { files: files } });
+}
+
+function handleFiles(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  if (file.type !== 'text/csv' && !file.name.toLowerCase().endsWith('.csv')) {
+    showNotification('Por favor sube un archivo CSV válido.', 'warning');
+    return;
+  }
+
+  showLoading('Procesando archivo CSV...');
+  
+  Papa.parse(file, {
+    header: true,
+    skipEmptyLines: true,
+    complete: function(results) {
+      console.log(`📊 CSV parseado: ${results.data.length} filas`);
+      processData(results.data);
+      hideLoading();
+    },
+    error: function(err) {
+      showNotification('Error al leer el archivo: ' + err.message, 'error');
+      hideLoading();
+    }
+  });
+}
+
+function processData(rawData) {
+  console.log('🔄 Procesando datos de ventas...');
+  
+  salesData = [];
+  
+  rawData.forEach((row, index) => {
+    try {
+      // Detectar columnas automáticamente
+      const keys = Object.keys(row);
+      const latKey = keys.find(k => k.toLowerCase().includes('lat'));
+      const lngKey = keys.find(k => 
+        k.toLowerCase().includes('lon') || 
+        k.toLowerCase().includes('lng') || 
+        k.toLowerCase().includes('longitud')
+      );
+      const amountKey = keys.find(k => 
+        k.toLowerCase().includes('monto') || 
+        k.toLowerCase().includes('precio') || 
+        k.toLowerCase().includes('valor') ||
+        k.toLowerCase().includes('amount') ||
+        k.toLowerCase().includes('venta')
+      );
+      const dateKey = keys.find(k => k.toLowerCase().includes('fecha') || k.toLowerCase().includes('date'));
+      const timeKey = keys.find(k => k.toLowerCase().includes('hora') || k.toLowerCase().includes('time'));
+      const clienteKey = keys.find(k => 
+        k.toLowerCase().includes('cliente') || 
+        k.toLowerCase().includes('customer') ||
+        k.toLowerCase().includes('client') ||
+        k.toLowerCase().includes('nombre')
+      );
+      const zonaKey = keys.find(k => k.toLowerCase().includes('zona') || k.toLowerCase().includes('region'));
+
+      // Parsear coordenadas
+      let lat = parseFloat(row[latKey]);
+      let lng = parseFloat(row[lngKey]);
+      
+      if (isNaN(lat) || isNaN(lng)) {
+        // Generar coordenadas aleatorias para Cancún si no hay
+        lat = 21.1619 + (Math.random() - 0.5) * 0.1;
+        lng = -86.8515 + (Math.random() - 0.5) * 0.1;
+      }
+      
+      // Parsear monto
+      let monto = parseFloat(row[amountKey]);
+      if (isNaN(monto) || monto <= 0) {
+        monto = 100 + Math.random() * 900; // Valor aleatorio si no hay
+      }
+      
+      // Obtener otros datos
+      const fecha = row[dateKey] || new Date().toISOString().split('T')[0];
+      const hora = row[timeKey] || `${Math.floor(Math.random() * 24)}:${Math.floor(Math.random() * 60)}`;
+      const cliente = row[clienteKey] || `Cliente${index + 1}`;
+      
+      // Determinar zona
+      let zona = row[zonaKey] || determineZone(lat, lng);
+      
+      // Crear objeto de venta
+      const venta = {
+        lat,
+        lng,
+        monto,
+        fecha: new Date(fecha),
+        fechaStr: fecha,
+        hora,
+        cliente,
+        zona,
+        id: index
+      };
+      
+      salesData.push(venta);
+      
+    } catch (e) {
+      console.error(`Error procesando fila ${index}:`, e);
+    }
+  });
+
+  console.log(`✅ Datos procesados: ${salesData.length} registros válidos`);
+  
+  if (salesData.length === 0) {
+    showNotification('No se encontraron datos válidos en el CSV.', 'warning');
+    return;
+  }
+
+  filteredData = [...salesData];
+  
+  // Actualizar UI
+  updateStatistics();
+  updateTable();
+  updateCharts();
+  
+  // Actualizar estado
+  document.getElementById('dataStatus').textContent = `${salesData.length} registros`;
+  document.getElementById('dataStatus').className = 'text-success';
+  document.getElementById('dataInfo').textContent = `${salesData.length} registros cargados`;
+  
+  // Mostrar información del archivo
+  document.getElementById('fileInfo').classList.remove('hidden');
+  document.getElementById('fileStatus').textContent = `${salesData.length} registros cargados`;
+  
+  showNotification(`${salesData.length} ventas cargadas correctamente`, 'success');
+  
+  // Inicializar mapa si hay datos
+  if (map) {
+    updateMapData();
+  } else if (document.getElementById('map').classList.contains('active')) {
+    initMap();
+  }
+}
+
+function determineZone(lat, lng) {
+  // Zonas aproximadas de Cancún
+  if (lng > -86.82) return 'hotelera';
+  if (lat > 21.17 && lng < -86.86) return '233';
+  if (lat < 21.15 && lng < -86.88) return '237';
+  if (lat > 21.16 && lat < 21.17 && lng > -86.86 && lng < -86.84) return '77';
+  if (lat > 21.15 && lat < 21.16 && lng > -86.87 && lng < -86.85) return '91';
+  return 'centro';
+}
+
+// ============================================
+// FILTROS DE DATOS
+// ============================================
+
+function applyFilters() {
+  const dateFrom = document.getElementById('dateFrom').valueAsDate;
+  const dateTo = document.getElementById('dateTo').valueAsDate;
+  const zonaFilter = document.getElementById('zoneFilter').value;
+  const timeFilter = document.getElementById('timeFilter').value;
+
+  filteredData = salesData.filter(sale => {
+    // Filtro Fecha
+    if (dateFrom && sale.fecha < dateFrom) return false;
+    if (dateTo) {
+      const endOfDay = new Date(dateTo);
+      endOfDay.setHours(23, 59, 59);
+      if (sale.fecha > endOfDay) return false;
+    }
+
+    // Filtro Zona
+    if (zonaFilter && !sale.zona.includes(zonaFilter)) return false;
+
+    // Filtro Hora
+    if (timeFilter) {
+      const hour = parseInt(sale.hora.split(':')[0]);
+      if (timeFilter === '6-12' && (hour < 6 || hour >= 12)) return false;
+      if (timeFilter === '12-18' && (hour < 12 || hour >= 18)) return false;
+      if (timeFilter === '18-24' && hour < 18) return false;
+    }
+
+    return true;
+  });
+
+  updateStatistics();
+  updateTable();
+  updateCharts();
+  
+  if (map) {
+    updateMapData();
+  }
+  
+  showNotification(`${filteredData.length} registros después de filtrar`, 'info');
+}
+
+function resetFilters() {
+  document.getElementById('dateFrom').value = '';
+  document.getElementById('dateTo').value = '';
+  document.getElementById('zoneFilter').value = '';
+  document.getElementById('timeFilter').value = '';
+  
+  filteredData = [...salesData];
+  updateStatistics();
+  updateTable();
+  updateCharts();
+  
+  if (map) {
+    updateMapData();
+  }
+  
+  showNotification('Filtros restablecidos', 'success');
+}
+
+// ============================================
+// ACTUALIZACIÓN DE UI
+// ============================================
+
+function updateStatistics() {
+  if (filteredData.length === 0) {
+    document.getElementById('kpiSalesTotal').textContent = '$0.00';
+    document.getElementById('kpiTransactions').textContent = '0';
+    document.getElementById('kpiAvgTicket').textContent = '$0.00';
+    document.getElementById('kpiBestZone').textContent = '—';
+    document.getElementById('kpiZonePerformance').textContent = '—';
+    return;
+  }
+
+  // Ventas totales
+  const total = filteredData.reduce((sum, item) => sum + item.monto, 0);
+  document.getElementById('kpiSalesTotal').textContent = `$${total.toLocaleString('es-MX', {minimumFractionDigits: 2})}`;
+  
+  // Conteo de transacciones
+  document.getElementById('kpiTransactions').textContent = filteredData.length;
+  
+  // Ticket promedio
+  const avg = total / filteredData.length;
+  document.getElementById('kpiAvgTicket').textContent = `$${avg.toFixed(2)}`;
+  
+  // Mejor zona
+  const zones = {};
+  filteredData.forEach(item => {
+    zones[item.zona] = (zones[item.zona] || 0) + item.monto;
+  });
+  
+  if (Object.keys(zones).length > 0) {
+    const bestZone = Object.keys(zones).reduce((a, b) => zones[a] > zones[b] ? a : b);
+    document.getElementById('kpiBestZone').textContent = bestZone;
+    
+    // Calcular porcentaje del total
+    const zonePercentage = ((zones[bestZone] / total) * 100).toFixed(1);
+    document.getElementById('kpiZonePerformance').textContent = `${zonePercentage}% del total`;
+  }
+}
+
+function updateTable() {
+  const tbody = document.getElementById('dataTableBody');
+  tbody.innerHTML = '';
+  
+  if (filteredData.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="6" class="text-center" style="padding: 40px;">
+          <i class="fas fa-database fa-2x mb-20" style="display: block; color: var(--text-secondary);"></i>
+          Carga un archivo CSV para ver los datos
+        </td>
+      </tr>
+    `;
+    return;
+  }
+  
+  // Mostrar máximo 100 filas
+  const displayData = filteredData.slice(0, 100);
+  
+  displayData.forEach(sale => {
+    const tr = document.createElement('tr');
+    
+    // Determinar clase de zona
+    let zonaClass = '';
+    if (sale.zona.includes('237')) zonaClass = 'zone-237';
+    else if (sale.zona.includes('233')) zonaClass = 'zone-233';
+    else if (sale.zona.includes('91')) zonaClass = 'zone-91';
+    else if (sale.zona.includes('77')) zonaClass = 'zone-77';
+    else if (sale.zona.includes('centro')) zonaClass = 'zone-centro';
+    else if (sale.zona.includes('hotelera')) zonaClass = 'zone-hotelera';
+    
+    tr.innerHTML = `
+      <td>${sale.fecha.toLocaleDateString('es-MX')}</td>
+      <td><strong>${sale.cliente}</strong></td>
+      <td style="font-weight: bold; color: var(--accent-green);">$${sale.monto.toFixed(2)}</td>
+      <td><span class="zone-badge ${zonaClass}">${sale.zona}</span></td>
+      <td>${sale.hora}</td>
+      <td style="font-size: 0.85rem; color: var(--text-secondary);">${sale.lat.toFixed(4)}, ${sale.lng.toFixed(4)}</td>
+    `;
+    
+    tbody.appendChild(tr);
+  });
+  
+  if (filteredData.length > 100) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td colspan="6" class="text-center" style="padding: 20px; color: var(--text-secondary); font-style: italic;">
+        Mostrando 100 de ${filteredData.length} registros. Usa los filtros para refinar los resultados.
+      </td>
+    `;
+    tbody.appendChild(tr);
+  }
+}
+
+function updateCharts() {
+  if (filteredData.length === 0) return;
+  
+  // Destruir gráficos anteriores si existen
+  if (charts.zones) charts.zones.destroy();
+  if (charts.hours) charts.hours.destroy();
+  
+  // Gráfico de ventas por zona
+  const zoneData = {};
+  filteredData.forEach(sale => {
+    zoneData[sale.zona] = (zoneData[sale.zona] || 0) + sale.monto;
+  });
+  
+  const zoneLabels = Object.keys(zoneData);
+  const zoneValues = Object.values(zoneData);
+  
+  const zonesCtx = document.getElementById('zonesChart').getContext('2d');
+  charts.zones = new Chart(zonesCtx, {
+    type: 'bar',
+    data: {
+      labels: zoneLabels,
+      datasets: [{
+        label: 'Ventas por Zona ($ MXN)',
+        data: zoneValues,
+        backgroundColor: zoneLabels.map(z => {
+          if (z.includes('237')) return '#3b82f6';
+          if (z.includes('233')) return '#10b981';
+          if (z.includes('91')) return '#8b5cf6';
+          if (z.includes('77')) return '#ef4444';
+          if (z.includes('centro')) return '#f59e0b';
+          if (z.includes('hotelera')) return '#ec4899';
+          return '#94a3b8';
+        }),
+        borderColor: 'white',
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: function(value) {
+              return '$' + value.toLocaleString('es-MX');
+            }
+          }
+        }
+      }
+    }
+  });
+  
+  // Gráfico de tendencia por hora
+  const hourData = new Array(24).fill(0);
+  filteredData.forEach(sale => {
+    const hour = parseInt(sale.hora.split(':')[0]) || 0;
+    if (hour >= 0 && hour < 24) {
+      hourData[hour] += sale.monto;
+    }
+  });
+  
+  const hoursCtx = document.getElementById('hoursChart').getContext('2d');
+  charts.hours = new Chart(hoursCtx, {
+    type: 'line',
+    data: {
+      labels: Array.from({length: 24}, (_, i) => `${i}:00`),
+      datasets: [{
+        label: 'Ventas por Hora ($ MXN)',
+        data: hourData,
+        borderColor: 'var(--accent-blue)',
+        backgroundColor: 'rgba(56, 189, 248, 0.1)',
+        tension: 0.4,
+        fill: true,
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: function(value) {
+              return '$' + value.toLocaleString('es-MX');
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+// ============================================
+// MAPA INTERACTIVO
+// ============================================
+
+function initMap() {
+  console.log('🔧 Inicializando mapa de Cancún...');
+  
+  map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/dark-v11',
+    center: [-86.8515, 21.1619],
+    zoom: 14,
+    maxZoom: 18,
+    minZoom: 10
+  });
+
+  // Controles de navegación
+  map.addControl(new mapboxgl.NavigationControl(), 'top-right');
+  
+  // Cargar datos en el mapa
+  map.on('load', function() {
+    console.log('✅ Mapa cargado correctamente');
+    if (filteredData.length > 0) {
+      updateMapData();
+    }
+  });
+}
+
+function updateMapData() {
+  if (!map || filteredData.length === 0) return;
+  
+  // Limpiar marcadores anteriores
+  markers.forEach(marker => marker.remove());
+  markers = [];
+  
+  // Crear marcadores
+  filteredData.forEach(sale => {
+    const el = document.createElement('div');
+    el.className = 'marker';
+    el.style.width = '12px';
+    el.style.height = '12px';
+    el.style.backgroundColor = getColorForAmount(sale.monto);
+    el.style.borderRadius = '50%';
+    el.style.border = '2px solid white';
+    el.style.boxShadow = '0 0 8px rgba(0,0,0,0.5)';
+    el.style.cursor = 'pointer';
+    
+    const marker = new mapboxgl.Marker(el)
+      .setLngLat([sale.lng, sale.lat])
+      .setPopup(new mapboxgl.Popup({ offset: 25 })
+        .setHTML(`
+          <div style="padding: 10px; max-width: 250px;">
+            <h4 style="margin:0 0 10px 0; color: var(--text-primary);">${sale.cliente}</h4>
+            <p style="margin:5px 0;"><strong>💰 Monto:</strong> $${sale.monto.toFixed(2)} MXN</p>
+            <p style="margin:5px 0;"><strong>📍 Zona:</strong> ${sale.zona}</p>
+            <p style="margin:5px 0;"><strong>🕐 Hora:</strong> ${sale.hora}</p>
+            <p style="margin:5px 0;"><strong>📅 Fecha:</strong> ${sale.fechaStr}</p>
+          </div>
+        `))
+      .addTo(map);
+    
+    markers.push(marker);
+  });
+  
+  // Ajustar vista
+  if (filteredData.length > 1) {
+    const bounds = new mapboxgl.LngLatBounds();
+    filteredData.forEach(sale => bounds.extend([sale.lng, sale.lat]));
+    map.fitBounds(bounds, { padding: 50, maxZoom: 16 });
+  }
+}
+
+function getColorForAmount(amount) {
+  if (amount > 1000) return '#ef4444'; // Rojo
+  if (amount > 500) return '#f59e0b'; // Naranja
+  if (amount > 200) return '#10b981'; // Verde
+  return '#3b82f6'; // Azul
+}
+
+// ============================================
+// ANÁLISIS CON KNOWLEDGEBASE
+// ============================================
+
+function runMonteCarlo() {
+  if (filteredData.length === 0) {
+    showNotification('Carga datos primero para ejecutar la simulación', 'warning');
+    return;
+  }
+  
+  showLoading('Ejecutando simulación Monte Carlo...');
+  
+  setTimeout(() => {
+    const montos = filteredData.map(d => d.monto);
+    
+    try {
+      const simulation = knowledgeBase.AdvancedAnalytics.monteCarloSimulation(montos, 5000);
+      
+      const resultsDiv = document.getElementById('analysisOutput');
+      resultsDiv.innerHTML = `
+        <div class="control-group">
+          <h4><i class="fas fa-dice"></i> Simulación Monte Carlo</h4>
+          <p><strong>Media histórica:</strong> $${simulation.media} MXN</p>
+          <p><strong>Desviación estándar:</strong> $${simulation.desviacion} MXN</p>
+          <p><strong>Intervalo de confianza (95%):</strong> $${simulation.confidenceInterval.lower} - $${simulation.confidenceInterval.upper} MXN</p>
+          <p><strong>Pronóstico:</strong> $${simulation.forecast} MXN por transacción</p>
+          <p><strong>Proyección mensual (20 días):</strong> $${(simulation.forecast * filteredData.length * 20 / filteredData.length).toLocaleString('es-MX')} MXN</p>
+        </div>
+      `;
+      
+      document.getElementById('analysisResults').classList.remove('hidden');
+      hideLoading();
+      showNotification('Simulación Monte Carlo completada', 'success');
+      
+    } catch (error) {
+      console.error('Error en simulación:', error);
+      hideLoading();
+      showNotification('Error en simulación: ' + error.message, 'error');
+    }
+  }, 1000);
+}
+
+function calculateOptimalRoute() {
+  if (filteredData.length < 2) {
+    showNotification('Necesitas al menos 2 puntos para calcular una ruta', 'warning');
+    return;
+  }
+  
+  showLoading('Calculando ruta óptima...');
+  
+  setTimeout(() => {
+    try {
+      // Convertir datos a formato para el algoritmo
+      const puntos = filteredData.slice(0, 10).map((p, i) => ({
+        id: `punto${i + 1}`,
+        x: p.lng,
+        y: p.lat,
+        prioridad: p.monto / 100 // Prioridad basada en monto
+      }));
+      
+      const origen = { x: -86.8515, y: 21.1619 }; // Centro de Cancún
+      
+      const ruta = knowledgeBase.AdvancedAnalytics.optimizarRuta(puntos, origen);
+      
+      const resultsDiv = document.getElementById('routeOutput');
+      resultsDiv.innerHTML = `
+        <div class="control-group">
+          <h4><i class="fas fa-route"></i> Ruta Óptima Calculada</h4>
+          <p><strong>Puntos en ruta:</strong> ${ruta.length}</p>
+          <p><strong>Secuencia recomendada:</strong></p>
+          <ol>
+            ${ruta.map(p => `<li>${p}</li>`).join('')}
+          </ol>
+          <p><strong>Eficiencia estimada:</strong> ${knowledgeBase.AdvancedAnalytics.calcularEficiencia(50, 120, ruta.length)}/100</p>
+          <p><strong>Ingreso potencial:</strong> $${puntos.reduce((sum, p) => sum + p.prioridad * 100, 0).toFixed(2)} MXN</p>
+        </div>
+      `;
+      
+      document.getElementById('routeResults').classList.remove('hidden');
+      hideLoading();
+      showNotification('Ruta óptima calculada', 'success');
+      
+    } catch (error) {
+      console.error('Error calculando ruta:', error);
+      hideLoading();
+      showNotification('Error calculando ruta: ' + error.message, 'error');
+    }
+  }, 1000);
+}
+
+function calculateLogisticRisk() {
+  showLoading('Analizando riesgo logístico...');
+  
+  setTimeout(() => {
+    try {
+      const horaActual = new Date().getHours();
+      const zonas = ['centro', 'hotel_zone', 'region_247', 'supermanzana', 'puerto_juares'];
+      
+      let resultados = [];
+      zonas.forEach(zona => {
+        const riesgo = knowledgeBase.CancunSpecificAnalytics.calculateLogisticRisk(zona, horaActual);
+        resultados.push({ zona, riesgo });
+      });
+      
+      // Ordenar por riesgo
+      resultados.sort((a, b) => b.riesgo.riskScore - a.riesgo.riskScore);
+      
+      const resultsDiv = document.getElementById('analysisOutput');
+      resultsDiv.innerHTML = `
+        <div class="control-group">
+          <h4><i class="fas fa-exclamation-triangle"></i> Análisis de Riesgo Logístico</h4>
+          <p><strong>Hora del análisis:</strong> ${horaActual}:00</p>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Zona</th>
+                <th>Riesgo (0-10)</th>
+                <th>Recomendación</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${resultados.map(r => `
+                <tr>
+                  <td>${r.zona}</td>
+                  <td style="color: ${r.riesgo.riskScore > 7 ? 'var(--danger)' : r.riesgo.riskScore > 4 ? 'var(--warning)' : 'var(--accent-green)'}">
+                    ${r.riesgo.riskScore}/10
+                  </td>
+                  <td>${r.riesgo.recommendation}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+      
+      document.getElementById('analysisResults').classList.remove('hidden');
+      hideLoading();
+      showNotification('Análisis de riesgo completado', 'success');
+      
+    } catch (error) {
+      console.error('Error analizando riesgo:', error);
+      hideLoading();
+      showNotification('Error en análisis: ' + error.message, 'error');
+    }
+  }, 1000);
+}
+
+function runSeasonalAnalysis() {
+  showLoading('Analizando factores estacionales...');
+  
+  setTimeout(() => {
+    try {
+      const mesActual = new Date().getMonth() + 1;
+      const factor = knowledgeBase.CancunSpecificAnalytics.getSeasonFactor(mesActual);
+      
+      const resultsDiv = document.getElementById('analysisOutput');
+      resultsDiv.innerHTML = `
+        <div class="control-group">
+          <h4><i class="fas fa-calendar-alt"></i> Análisis Estacional</h4>
+          <p><strong>Mes actual:</strong> ${getMonthName(mesActual)}</p>
+          <p><strong>Factor de temporada:</strong> ${factor.toFixed(2)}x</p>
+          <p><strong>Impacto en ventas:</strong> ${factor > 1 ? 'Positivo (temporada alta)' : factor < 1 ? 'Negativo (temporada baja)' : 'Neutral'}</p>
+          <p><strong>Recomendaciones:</strong></p>
+          <ul>
+            <li>${factor > 1.5 ? 'Aumentar inventario y personal' : 'Mantener niveles normales'}</li>
+            <li>${factor > 1.3 ? 'Implementar precios premium' : 'Mantener precios competitivos'}</li>
+            <li>${factor < 0.9 ? 'Ofertas especiales para estimular demanda' : 'Estrategias de fidelización'}</li>
+          </ul>
+        </div>
+      `;
+      
+      document.getElementById('analysisResults').classList.remove('hidden');
+      hideLoading();
+      showNotification('Análisis estacional completado', 'success');
+      
+    } catch (error) {
+      console.error('Error en análisis estacional:', error);
+      hideLoading();
+      showNotification('Error en análisis: ' + error.message, 'error');
+    }
+  }, 1000);
+}
+
+function getMonthName(month) {
+  const months = [
+    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+  ];
+  return months[month - 1];
+}
+
+// ============================================
+// GENERADOR DE PITCH
+// ============================================
+
+async function generatePitch() {
+  const pitchInput = document.getElementById('pitchInput').value.trim();
+  
+  if (!pitchInput) {
+    showNotification('Describe tu producto o servicio primero', 'warning');
+    return;
+  }
+  
+  showLoading('Generando pitch estratégico...');
+  
+  setTimeout(() => {
+    try {
+      // Usar knowledgebase para análisis de zonas
+      const horaActual = new Date().getHours();
+      const zonasOptimas = knowledgeBase.CancunSpecificAnalytics.getOptimalZonesByHour(horaActual);
+      const factorTemporada = knowledgeBase.CancunSpecificAnalytics.getSeasonFactor(new Date().getMonth() + 1);
+      
+      // Generar pitch estructurado
+      const pitch = `
+🎯 **PITCH ESTRATÉGICO PARA: ${pitchInput}**
+
+---
+
+### 📍 **ZONAS RECOMENDADAS (${horaActual}:00)**
+${zonasOptimas.map((zona, i) => `${i + 1}. **${zona}** - ${getZoneStrategy(zona)}`).join('\n')}
+
+---
+
+### 📊 **ANÁLISIS DE MERCADO**
+- **Factor de temporada:** ${factorTemporada.toFixed(2)}x (${factorTemporada > 1 ? 'Alta demanda' : 'Demanda moderada'})
+- **Horario óptimo:** ${horaActual >= 8 && horaActual <= 12 ? 'Mañana' : horaActual >= 13 && horaActual <= 18 ? 'Tarde' : 'Noche'}
+- **Segmentación:** ${getSegmentation(pitchInput)}
+
+---
+
+### 💡 **ESTRATEGIAS POR ZONA**
+${zonasOptimas.slice(0, 3).map(zona => `
+**${zona}:**
+- ${getZoneTactics(zona, pitchInput)}
+`).join('\n')}
+
+---
+
+### 💰 **MODELO DE PRECIOS**
+1. **Zonas premium (Hotelera, Centro):** Precios +20-30%
+2. **Zonas media (Región 233, 247):** Precios estándar + financiamiento
+3. **Zonas básicas (Supermanzana 77, 91):** Precios económicos + planes de pago
+
+---
+
+### 🚀 **LLAMADO A LA ACCIÓN**
+1. Comienza en **${zonasOptimas[0] || 'Centro'}** esta semana
+2. Ofrece demostraciones gratuitas
+3. Usa testimonios de clientes similares
+4. Implementa seguimiento post-venta
+
+---
+
+*Generado con Geo-Suite Cancún PRO - ${new Date().toLocaleDateString('es-MX')}*
+      `;
+      
+      // Mostrar resultados
+      document.getElementById('pitchContent').textContent = pitch;
+      document.getElementById('pitchOutput').classList.remove('hidden');
+      
+      hideLoading();
+      showNotification('Pitch generado exitosamente', 'success');
+      
+    } catch (error) {
+      console.error('Error generando pitch:', error);
+      hideLoading();
+      showNotification('Error generando pitch: ' + error.message, 'error');
+    }
+  }, 1500);
+}
+
+function getZoneStrategy(zona) {
+  const estrategias = {
+    'Centro': 'Comercio consolidado, enfoque en calidad y exclusividad',
+    'Zona Hotelera': 'Turismo internacional, precios premium, servicio 24/7',
+    'Región 247': 'Población estable, productos de valor medio, financiamiento',
+    'Supermanzana': 'Zonas residenciales, conveniencia y precios competitivos',
+    'Puerto Juárez': 'Logística prioritaria, precios económicos, volumen'
+  };
+  return estrategias[zona] || 'Estrategia estándar de ventas';
+}
+
+function getZoneTactics(zona, producto) {
+  const tacticas = {
+    'Centro': `Enfócate en la calidad de ${producto.toLowerCase()}. Ofrece garantías extendidas y servicio personalizado.`,
+    'Zona Hotelera': `Presenta ${producto.toLowerCase()} como experiencia premium. Incluye servicio de entrega inmediata.`,
+    'Región 247': `Destaca el valor a largo plazo de ${producto.toLowerCase()}. Ofrece planes de pago flexibles.`,
+    'Supermanzana': `Enfatiza la conveniencia de ${producto.toLowerCase()}. Precios competitivos y entrega programada.`,
+    'Puerto Juárez': `Ofrece ${producto.toLowerCase()} como solución práctica. Precios económicos y atención rápida.`
+  };
+  return tacticas[zona] || `Presenta los beneficios prácticos de ${producto.toLowerCase()}.`;
+}
+
+function getSegmentation(producto) {
+  if (producto.toLowerCase().includes('premium') || producto.toLowerCase().includes('lujo')) {
+    return 'Segmento alto - Enfoque en exclusividad y calidad';
+  }
+  if (producto.toLowerCase().includes('básico') || producto.toLowerCase().includes('económico')) {
+    return 'Segmento masivo - Enfoque en precio y accesibilidad';
+  }
+  return 'Segmento medio - Enfoque en valor y beneficios';
+}
+
+function clearPitch() {
+  document.getElementById('pitchInput').value = '';
+  document.getElementById('pitchOutput').classList.add('hidden');
+  showNotification('Pitch limpiado', 'info');
+}
+
+function savePitch() {
+  const pitchContent = document.getElementById('pitchContent').textContent;
+  const pitchInput = document.getElementById('pitchInput').value;
+  
+  if (!pitchContent) {
+    showNotification('No hay pitch para guardar', 'warning');
+    return;
+  }
+  
+  const blob = new Blob([`PITCH: ${pitchInput}\n\n${pitchContent}`], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `pitch-cancun-${new Date().toISOString().split('T')[0]}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  
+  showNotification('Pitch guardado como archivo', 'success');
+}
+
+function copyPitch() {
+  const pitchContent = document.getElementById('pitchContent').textContent;
+  
+  if (!pitchContent) {
+    showNotification('No hay pitch para copiar', 'warning');
+    return;
+  }
+  
+  navigator.clipboard.writeText(pitchContent)
+    .then(() => {
+      showNotification('Pitch copiado al portapapeles', 'success');
+    })
+    .catch(err => {
+      showNotification('Error al copiar: ' + err.message, 'error');
+    });
+}
+
+function savePitchAsReport() {
+  const pitchContent = document.getElementById('pitchContent').textContent;
+  const pitchInput = document.getElementById('pitchInput').value;
+  
+  if (!pitchContent) {
+    showNotification('No hay pitch para guardar como reporte', 'warning');
+    return;
+  }
+  
+  const report = {
+    id: Date.now(),
+    title: `Pitch: ${pitchInput.substring(0, 50)}${pitchInput.length > 50 ? '...' : ''}`,
+    content: pitchContent,
+    type: 'pitch',
+    date: new Date().toLocaleDateString('es-MX'),
+    timestamp: new Date().toISOString()
+  };
+  
+  generatedReports.push(report);
+  updateReportsUI();
+  
+  showView('reports');
+  showNotification('Pitch guardado como reporte', 'success');
+}
+
+// ============================================
+// GESTIÓN DE REPORTES
+// ============================================
+
+function generateSalesReport() {
+  if (filteredData.length === 0) {
+    showNotification('Carga datos primero para generar reporte', 'warning');
+    return;
+  }
+  
+  showLoading('Generando reporte de ventas...');
+  
+  setTimeout(() => {
+    const total = filteredData.reduce((sum, item) => sum + item.monto, 0);
+    const avg = total / filteredData.length;
+    
+    // Análisis por zona
+    const zoneData = {};
+    filteredData.forEach(sale => {
+      zoneData[sale.zona] = (zoneData[sale.zona] || 0) + sale.monto;
+    });
+    
+    const bestZone = Object.keys(zoneData).reduce((a, b) => zoneData[a] > zoneData[b] ? a : b);
+    
+    const report = {
+      id: Date.now(),
+      title: `Reporte de Ventas - ${new Date().toLocaleDateString('es-MX')}`,
+      content: `
+📊 **REPORTE DE VENTAS**
+
+**PERÍODO:** ${document.getElementById('dateFrom').value || 'Inicio'} a ${document.getElementById('dateTo').value || 'Actual'}
+**TOTAL REGISTROS:** ${filteredData.length}
+
+---
+
+### 📈 **MÉTRICAS PRINCIPALES**
+- **Ventas totales:** $${total.toLocaleString('es-MX', {minimumFractionDigits: 2})} MXN
+- **Ticket promedio:** $${avg.toFixed(2)} MXN
+- **Transacciones:** ${filteredData.length}
+
+---
+
+### 🏆 **ZONAS DESTACADAS**
+${Object.keys(zoneData).map(zona => {
+  const porcentaje = ((zoneData[zona] / total) * 100).toFixed(1);
+  return `- **${zona}:** $${zoneData[zona].toLocaleString('es-MX')} MXN (${porcentaje}%)`;
+}).join('\n')}
+
+**Zona líder:** ${bestZone} (${((zoneData[bestZone] / total) * 100).toFixed(1)}%)
+
+---
+
+### 🕐 **ANÁLISIS TEMPORAL**
+${getTimeAnalysis()}
+
+---
+
+### 💡 **RECOMENDACIONES**
+1. Enfocar esfuerzos en **${bestZone}**
+2. Optimizar horarios según análisis temporal
+3. Considerar factores estacionales
+4. Monitorear tendencias por zona
+
+---
+
+*Generado automáticamente por Geo-Suite Cancún PRO*
+      `,
+      type: 'sales',
+      date: new Date().toLocaleDateString('es-MX'),
+      timestamp: new Date().toISOString()
+    };
+    
+    generatedReports.push(report);
+    updateReportsUI();
+    
+    hideLoading();
+    showNotification('Reporte de ventas generado', 'success');
+  }, 1500);
+}
+
+function generateStrategicReport() {
+  showLoading('Generando reporte estratégico...');
+  
+  setTimeout(() => {
+    try {
+      const horaActual = new Date().getHours();
+      const zonasOptimas = knowledgeBase.CancunSpecificAnalytics.getOptimalZonesByHour(horaActual);
+      const mesActual = new Date().getMonth() + 1;
+      const factorTemporada = knowledgeBase.CancunSpecificAnalytics.getSeasonFactor(mesActual);
+      
+      const report = {
+        id: Date.now(),
+        title: `Reporte Estratégico - ${new Date().toLocaleDateString('es-MX')}`,
+        content: `
+🎯 **REPORTE ESTRATÉGICO CANCÚN**
+
+**FECHA:** ${new Date().toLocaleDateString('es-MX')}
+**HORA DEL ANÁLISIS:** ${horaActual}:00
+
+---
+
+### 📍 **ZONAS ÓPTIMAS ACTUALES**
+${zonasOptimas.map((zona, i) => `${i + 1}. **${zona}** - ${getZoneStrategy(zona)}`).join('\n')}
+
+---
+
+### 📅 **FACTORES ESTACIONALES**
+- **Mes actual:** ${getMonthName(mesActual)}
+- **Factor de temporada:** ${factorTemporada.toFixed(2)}x
+- **Impacto:** ${factorTemporada > 1.3 ? 'ALTO' : factorTemporada > 1 ? 'MODERADO' : 'BAJO'}
+
+---
+
+### ⚠️ **RIESGOS LOGÍSTICOS**
+${['centro', 'hotel_zone', 'region_247'].map(zona => {
+  const riesgo = knowledgeBase.CancunSpecificAnalytics.calculateLogisticRisk(zona, horaActual);
+  return `- **${zona}:** ${riesgo.riskScore}/10 - ${riesgo.recommendation}`;
+}).join('\n')}
+
+---
+
+### 🚀 **RECOMENDACIONES ESTRATÉGICAS**
+
+#### 1. **DISTRIBUCIÓN ÓPTIMA**
+- Horario principal: ${horaActual >= 6 && horaActual <= 12 ? '6:00-12:00' : horaActual >= 13 && horaActual <= 18 ? '13:00-18:00' : '19:00-22:00'}
+- Zonas prioritarias: ${zonasOptimas.slice(0, 2).join(', ')}
+
+#### 2. **AJUSTES OPERATIVOS**
+${factorTemporada > 1.5 ? '- Aumentar inventario en 30%\n- Contratar personal temporal\n- Extender horarios de atención' : 
+  factorTemporada < 0.9 ? '- Optimizar costos operativos\n- Ofrecer promociones especiales\n- Enfocar en clientes recurrentes' :
+  '- Mantener operaciones estándar\n- Enfoque en eficiencia\n- Programar mantenimiento'}
+
+#### 3. **PLAN DE CONTINGENCIA**
+- Rutas alternativas para zonas de alto riesgo
+- Protocolo para condiciones climáticas adversas
+- Comunicación en tiempo real con equipo
+
+---
+
+### 📊 **MÉTRICAS DE SEGUIMIENTO**
+1. Ventas por zona (diario)
+2. Eficiencia de rutas (semanal)
+3. Satisfacción cliente (mensual)
+4. Costos logísticos (mensual)
+
+---
+
+*Generado con Knowledgebase Geo-Suite Cancún PRO*
+      `,
+        type: 'strategy',
+        date: new Date().toLocaleDateString('es-MX'),
+        timestamp: new Date().toISOString()
+      };
+      
+      generatedReports.push(report);
+      updateReportsUI();
+      
+      hideLoading();
+      showNotification('Reporte estratégico generado', 'success');
+      
+    } catch (error) {
+      console.error('Error generando reporte:', error);
+      hideLoading();
+      showNotification('Error generando reporte: ' + error.message, 'error');
+    }
+  }, 2000);
+}
+
+function generateRiskReport() {
+  showLoading('Generando reporte de riesgo...');
+  
+  setTimeout(() => {
+    try {
+      const horaActual = new Date().getHours();
+      const zonas = ['centro', 'hotel_zone', 'region_247', 'supermanzana', 'puerto_juares'];
+      
+      let riesgos = [];
+      zonas.forEach(zona => {
+        const riesgo = knowledgeBase.CancunSpecificAnalytics.calculateLogisticRisk(zona, horaActual);
+        riesgos.push({ zona, riesgo });
+      });
+      
+      // Ordenar por riesgo
+      riesgos.sort((a, b) => b.riesgo.riskScore - a.riesgo.riskScore);
+      
+      const report = {
+        id: Date.now(),
+        title: `Reporte de Riesgo - ${new Date().toLocaleDateString('es-MX')}`,
+        content: `
+⚠️ **REPORTE DE RIESGO LOGÍSTICO**
+
+**FECHA:** ${new Date().toLocaleDateString('es-MX')}
+**HORA:** ${horaActual}:00
+**NIVEL DE ALERTA:** ${riesgos[0].riesgo.riskScore > 7 ? 'ALTO' : riesgos[0].riesgo.riskScore > 4 ? 'MEDIO' : 'BAJO'}
+
+---
+
+### 📊 **EVALUACIÓN POR ZONA**
+
+| Zona | Riesgo (0-10) | Recomendación |
+|------|---------------|---------------|
+${riesgos.map(r => `| ${r.zona} | ${r.riesgo.riskScore}/10 | ${r.riesgo.recommendation} |`).join('\n')}
+
+---
+
+### 🚨 **ZONAS CRÍTICAS**
+${riesgos.filter(r => r.riesgo.riskScore > 7).map(r => `1. **${r.zona}** (${r.riesgo.riskScore}/10) - Evitar entre ${horaActual}:00-${horaActual + 2}:00`).join('\n') || 'No hay zonas críticas actualmente'}
+
+---
+
+### 🛡️ **MEDIDAS DE MITIGACIÓN**
+
+#### PARA RIESGO ALTO (>7)
+- Utilizar rutas alternativas
+- Programar entregas fuera de horas pico
+- Equipo de dos personas para entregas
+- Seguro adicional para mercancía
+
+#### PARA RIESGO MEDIO (4-7)
+- Verificar tráfico antes de salir
+- Comunicación constante con conductores
+- Tiempos de entrega extendidos
+- Plan B para rutas principales
+
+#### PARA RIESGO BAJO (<4)
+- Operación normal
+- Monitoreo estándar
+- Protocolos básicos de seguridad
+
+---
+
+### 📱 **PROTOCOLO DE EMERGENCIA**
+1. Contacto inmediato con supervisor
+2. Reruteo automático si retraso >15 min
+3. Comunicación con cliente
+4. Documentación del incidente
+
+---
+
+### 📅 **PLAN DE ACCIÓN INMEDIATO**
+${riesgos[0].riesgo.riskScore > 7 ? 
+`1. **SUSPENDER** operaciones en ${riesgos[0].zona} hasta las ${horaActual + 3}:00
+2. Redirigir personal a zonas de menor riesgo
+3. Notificar a clientes afectados
+4. Revisar condiciones cada hora` : 
+`1. Continuar operaciones con precaución
+2. Monitorear ${riesgos[0].zona} cada 30 minutos
+3. Tener rutas alternativas preparadas
+4. Mantener comunicación con equipo`}
+
+---
+
+*Reporte generado automáticamente - Sistema Geo-Suite Cancún PRO*
+      `,
+        type: 'risk',
+        date: new Date().toLocaleDateString('es-MX'),
+        timestamp: new Date().toISOString()
+      };
+      
+      generatedReports.push(report);
+      updateReportsUI();
+      
+      hideLoading();
+      showNotification('Reporte de riesgo generado', 'success');
+      
+    } catch (error) {
+      console.error('Error generando reporte:', error);
+      hideLoading();
+      showNotification('Error generando reporte: ' + error.message, 'error');
+    }
+  }, 1500);
+}
+
+function getTimeAnalysis() {
+  if (filteredData.length === 0) return 'No hay datos para análisis temporal';
+  
+  const hourData = new Array(24).fill(0);
+  filteredData.forEach(sale => {
+    const hour = parseInt(sale.hora.split(':')[0]) || 0;
+    if (hour >= 0 && hour < 24) {
+      hourData[hour] += sale.monto;
+    }
+  });
+  
+  const bestHour = hourData.reduce((iMax, x, i, arr) => x > arr[iMax] ? i : iMax, 0);
+  const worstHour = hourData.reduce((iMin, x, i, arr) => x < arr[iMin] ? i : iMin, 0);
+  
+  return `
+- **Mejor hora:** ${bestHour}:00 ($${hourData[bestHour].toLocaleString('es-MX')} MXN)
+- **Peor hora:** ${worstHour}:00 ($${hourData[worstHour].toLocaleString('es-MX')} MXN)
+- **Recomendación:** Enfocar esfuerzos en horario ${bestHour >= 8 && bestHour <= 12 ? 'matutino' : bestHour >= 13 && bestHour <= 18 ? 'vespertino' : 'nocturno'}
+  `;
+}
+
+function updateReportsUI() {
+  const container = document.getElementById('reportsContainer');
+  
+  if (generatedReports.length === 0) {
+    container.innerHTML = `
+      <div class="report-card">
+        <h4>No hay reportes generados aún</h4>
+        <p>Genera tu primer reporte usando los botones de arriba.</p>
+      </div>
+    `;
+    return;
+  }
+  
+  // Ordenar por fecha (más reciente primero)
+  generatedReports.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  
+  container.innerHTML = generatedReports.map(report => `
+    <div class="report-card">
+      <h4>${report.title}</h4>
+      <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 10px;">
+        ${report.date} | ${report.type}
+      </div>
+      <p style="font-size: 0.9rem;">${report.content.substring(0, 150)}${report.content.length > 150 ? '...' : ''}</p>
+      <div style="display: flex; gap: 10px; margin-top: 15px;">
+        <button class="btn btn-secondary" onclick="viewReport(${report.id})" style="padding: 8px 12px; font-size: 0.85rem;">
+          <i class="fas fa-eye"></i> Ver
+        </button>
+        <button class="btn btn-primary" onclick="downloadReport(${report.id})" style="padding: 8px 12px; font-size: 0.85rem;">
+          <i class="fas fa-download"></i> Descargar
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function viewReport(reportId) {
+  const report = generatedReports.find(r => r.id === reportId);
+  if (!report) return;
+  
+  const modalContent = `
+    <div style="max-height: 70vh; overflow-y: auto; padding-right: 10px;">
+      <div style="background: var(--bg-panel); padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+        <h3 style="margin-top: 0;">${report.title}</h3>
+        <p><strong>Fecha:</strong> ${report.date}</p>
+        <p><strong>Tipo:</strong> ${report.type}</p>
+      </div>
+      
+      <pre style="white-space: pre-wrap; font-family: inherit; line-height: 1.6;">${report.content}</pre>
+      
+      <div style="display: flex; gap: 10px; margin-top: 20px;">
+        <button class="btn btn-primary" onclick="downloadReport(${report.id})">
+          <i class="fas fa-download"></i> Descargar
+        </button>
+        <button class="btn btn-secondary" onclick="window.print()">
+          <i class="fas fa-print"></i> Imprimir
+        </button>
+      </div>
+    </div>
+  `;
+  
+  // Mostrar en modal o nueva ventana
+  const newWindow = window.open('', '_blank');
+  newWindow.document.write(`
+    <html>
+      <head>
+        <title>${report.title}</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+          .content { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+          pre { white-space: pre-wrap; line-height: 1.6; }
+        </style>
+      </head>
+      <body>
+        <div class="content">
+          ${modalContent.replace(/<button.*?<\/button>/g, '')}
+        </div>
+      </body>
+    </html>
+  `);
+  newWindow.document.close();
+}
+
+function downloadReport(reportId) {
+  const report = generatedReports.find(r => r.id === reportId);
+  if (!report) return;
+  
+  const blob = new Blob([report.content], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `reporte-${report.type}-${report.date.replace(/\//g, '-')}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  
+  showNotification('Reporte descargado', 'success');
+}
+
+// ============================================
+// CONFIGURACIÓN Y UTILIDADES
+// ============================================
+
+function saveSettings() {
+  const apiKey = document.getElementById('apiKeyConfig').value;
+  const mapboxToken = document.getElementById('mapboxToken').value;
+  
+  if (apiKey) {
+    localStorage.setItem('groqApiKey', apiKey);
+    document.getElementById('apiKey').value = apiKey;
+  }
+  
+  if (mapboxToken) {
+    localStorage.setItem('mapboxToken', mapboxToken);
+    mapboxgl.accessToken = mapboxToken;
+  }
+  
+  showNotification('Configuración guardada', 'success');
+}
+
+function exportData() {
+  if (filteredData.length === 0) {
+    showNotification('No hay datos para exportar', 'warning');
+    return;
+  }
+  
+  const csv = Papa.unparse(filteredData.map(d => ({
+    Fecha: d.fechaStr,
+    Cliente: d.cliente,
+    Monto: d.monto,
+    Zona: d.zona,
+    Hora: d.hora,
+    Latitud: d.lat,
+    Longitud: d.lng
+  })));
+  
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `datos-cancun-${new Date().toISOString().split('T')[0]}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  
+  showNotification('Datos exportados como CSV', 'success');
+}
+
+function clearAllData() {
+  if (confirm('¿Estás seguro de que quieres eliminar todos los datos? Esta acción no se puede deshacer.')) {
+    salesData = [];
+    filteredData = [];
+    generatedReports = [];
+    
+    updateStatistics();
+    updateTable();
+    
+    document.getElementById('dataStatus').textContent = 'Sin datos';
+    document.getElementById('dataStatus').className = 'text-warning';
+    document.getElementById('dataInfo').textContent = '0 registros';
+    document.getElementById('fileInfo').classList.add('hidden');
+    
+    // Limpiar mapa
+    markers.forEach(marker => marker.remove());
+    markers = [];
+    
+    // Limpiar gráficos
+    if (charts.zones) charts.zones.destroy();
+    if (charts.hours) charts.hours.destroy();
+    
+    showNotification('Todos los datos han sido eliminados', 'success');
+  }
+}
+
+function runStrategicAI() {
+  const apiKey = document.getElementById('apiKey').value.trim();
+  
+  if (!apiKey) {
+    showNotification('Ingresa tu API Key de Groq primero', 'warning');
+    return;
+  }
+  
+  if (filteredData.length === 0) {
+    showNotification('Carga datos primero para el análisis', 'warning');
+    return;
+  }
+  
+  showLoading('Conectando con IA para análisis estratégico...');
+  
+  // Preparar datos para la IA
+  const summaryData = {
+    totalSales: filteredData.reduce((sum, item) => sum + item.monto, 0),
+    totalTransactions: filteredData.length,
+    avgTicket: filteredData.reduce((sum, item) => sum + item.monto, 0) / filteredData.length,
+    
+    zones: {},
+    hours: {}
+  };
+  
+  // Análisis por zona
+  filteredData.forEach(sale => {
+    summaryData.zones[sale.zona] = summaryData.zones[sale.zona] || { total: 0, count: 0 };
+    summaryData.zones[sale.zona].total += sale.monto;
+    summaryData.zones[sale.zona].count += 1;
+  });
+  
+  // Análisis por hora
+  filteredData.forEach(sale => {
+    const hour = parseInt(sale.hora.split(':')[0]) || 0;
+    summaryData.hours[hour] = summaryData.hours[hour] || { total: 0, count: 0 };
+    summaryData.hours[hour].total += sale.monto;
+    summaryData.hours[hour].count += 1;
+  });
+  
+  // Construir prompt para la IA
+  const prompt = `
+Eres un analista estratégico senior especializado en ventas y distribución en Cancún, México.
+
+ANÁLISIS DE DATOS DE VENTAS:
+- Ventas totales: $${summaryData.totalSales.toFixed(2)} MXN
+- Transacciones totales: ${summaryData.totalTransactions}
+- Ticket promedio: $${summaryData.avgTicket.toFixed(2)} MXN
+
+DISTRIBUCIÓN POR ZONAS:
+${Object.keys(summaryData.zones).map(zone => {
+  const zoneData = summaryData.zones[zone];
+  const avg = zoneData.total / zoneData.count;
+  return `- ${zone}: ${zoneData.count} ventas, $${zoneData.total.toFixed(2)} MXN total, $${avg.toFixed(2)} MXN promedio`;
+}).join('\n')}
+
+GENERA UN ANÁLISIS ESTRATÉGICO QUE INCLUYA:
+1. Patrones de ventas identificados
+2. Recomendaciones específicas por zona
+3. Estrategias de optimización de rutas
+4. Sugerencias de productos por segmento
+5. Plan de acción para el próximo mes
+
+Responde en español, sé específico y accionable.
+  `;
+  
+  // Enviar a Groq API
+  fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${apiKey}`
+    },
+    body: JSON.stringify({
+      model: "llama-3.1-8b-instant",
+      messages: [
+        { 
+          role: "system", 
+          content: "Eres un experto en análisis de ventas y estrategia comercial para Cancún, México." 
+        },
+        { role: "user", content: prompt }
+      ],
+      temperature: 0.3,
+      max_tokens: 2000
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    hideLoading();
+    
+    if (data.choices && data.choices[0]) {
+      const analysis = data.choices[0].message.content;
+      
+      const resultsDiv = document.getElementById('analysisOutput');
+      resultsDiv.innerHTML = `
+        <div class="control-group">
+          <h4><i class="fas fa-robot"></i> Análisis Estratégico con IA</h4>
+          <pre style="white-space: pre-wrap; line-height: 1.6;">${analysis}</pre>
+        </div>
+      `;
+      
+      document.getElementById('analysisResults').classList.remove('hidden');
+      showNotification('Análisis con IA completado', 'success');
+    } else {
+      throw new Error('Respuesta inesperada de la API');
+    }
+  })
+  .catch(error => {
+    hideLoading();
+    console.error('Error en análisis IA:', error);
+    showNotification('Error en análisis IA: ' + error.message, 'error');
+  });
+}
+
+// ============================================
+// INICIALIZACIÓN DE LA APLICACIÓN
+// ============================================
+
+// Inicializar la aplicación cuando se carga la página
+window.onload = function() {
+  console.log('🚀 Inicializando Geo-Suite Cancún PRO...');
+  
+  // Cargar knowledgebase
+  loadKnowledgeBase();
+  
+  // Cargar configuración guardada
+  const savedApiKey = localStorage.getItem('groqApiKey');
+  if (savedApiKey) {
+    document.getElementById('apiKey').value = savedApiKey;
+    document.getElementById('apiKeyConfig').value = savedApiKey;
+  }
+  
+  const savedMapboxToken = localStorage.getItem('mapboxToken');
+  if (savedMapboxToken) {
+    document.getElementById('mapboxToken').value = savedMapboxToken;
+    mapboxgl.accessToken = savedMapboxToken;
+  }
+  
+  // Establecer fechas por defecto
+  const today = new Date();
+  const lastWeek = new Date();
+  lastWeek.setDate(today.getDate() - 7);
+  
+  document.getElementById('dateFrom').valueAsDate = lastWeek;
+  document.getElementById('dateTo').valueAsDate = today;
+  
+  // Cargar reportes guardados
+  try {
+    const savedReports = localStorage.getItem('generatedReports');
+    if (savedReports) {
+      generatedReports = JSON.parse(savedReports);
+      updateReportsUI();
+    }
+  } catch (e) {
+    console.error('Error cargando reportes:', e);
+  }
+  
+  // Inicializar mapa si está visible
+  if (document.getElementById('map').classList.contains('active')) {
+    setTimeout(initMap, 500);
+  }
+  
+  console.log('✅ Aplicación lista');
+};
+
+// Guardar datos al salir
+window.addEventListener('beforeunload', function() {
+  try {
+    localStorage.setItem('generatedReports', JSON.stringify(generatedReports));
+  } catch (e) {
+    console.error('Error guardando reportes:', e);
+  }
+});
+</script>
+</body>
+</html>

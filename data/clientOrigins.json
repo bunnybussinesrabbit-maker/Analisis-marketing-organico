@@ -1,0 +1,64 @@
+{
+  "clientOrigins": [
+    {
+      "id": "cdmx",
+      "name": "CDMX (Ciudad de México)",
+      "type": "international_domestic",
+      "description": "Visitors from Mexico City - typically higher income, urban, professional",
+      "characteristicIncomeLevel": "middle_high",
+      "travelPurpose": ["business", "vacation", "investment"],
+      "language": "Spanish",
+      "culture": "urban_metropolitan"
+    },
+    {
+      "id": "cancun_local",
+      "name": "Cancún Local",
+      "type": "local_resident",
+      "description": "Permanent residents of Cancún - familiarity with local market",
+      "characteristicIncomeLevel": "lower_middle",
+      "travelPurpose": ["daily_life", "local_commerce"],
+      "language": "Spanish",
+      "culture": "local_caribbean"
+    },
+    {
+      "id": "quintana_roo",
+      "name": "Quintana Roo (Regional)",
+      "type": "regional",
+      "description": "Residents from other parts of Quintana Roo state - semi-urban",
+      "characteristicIncomeLevel": "lower_middle",
+      "travelPurpose": ["commerce", "family_visits"],
+      "language": "Spanish",
+      "culture": "regional_caribbean"
+    },
+    {
+      "id": "yucatan",
+      "name": "Yucatán (Vecino)",
+      "type": "regional_neighbor",
+      "description": "Residents from Yucatán state - shared cultural elements",
+      "characteristicIncomeLevel": "lower_middle",
+      "travelPurpose": ["commerce", "cultural"],
+      "language": "Spanish",
+      "culture": "mayan_influenced"
+    },
+    {
+      "id": "international",
+      "name": "Internacional (Turistas/Expatriados)",
+      "type": "international_tourist",
+      "description": "Foreign tourists and expats - diverse backgrounds, high purchasing power",
+      "characteristicIncomeLevel": "high",
+      "travelPurpose": ["vacation", "relocation", "business"],
+      "language": "Multiple",
+      "culture": "diverse_cosmopolitan"
+    },
+    {
+      "id": "migrant",
+      "name": "Población Migrante",
+      "type": "migrant_worker",
+      "description": "Migration-based populations - seeking opportunities, variable income",
+      "characteristicIncomeLevel": "low_lower_middle",
+      "travelPurpose": ["employment", "relocation"],
+      "language": "Spanish",
+      "culture": "working_class_diverse"
+    }
+  ]
+}

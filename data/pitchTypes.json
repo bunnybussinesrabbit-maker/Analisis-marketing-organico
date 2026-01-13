@@ -1,0 +1,72 @@
+{
+  "pitchTypes": [
+    {
+      "id": "nostalgia",
+      "name": "Nostalgia",
+      "description": "Recalls memories, familiarity, heritage. Emotional trigger based on past experiences.",
+      "psychologicalTrigger": "Emotional connection to past",
+      "bestFor": ["40+", "family-oriented", "heritage-focused"],
+      "keyPhrases": [
+        "Como en los viejos tiempos...",
+        "Recuerdos de calidad",
+        "Tradición familiar",
+        "Confianza de generaciones"
+      ],
+      "recommendedZones": ["zona_centro", "region_237"],
+      "recommendedTimes": ["09:00-11:00", "15:00-17:00"],
+      "demographicOptimal": ["45-65", "family_heads"],
+      "occupationOptimal": ["artisan", "service", "retired"]
+    },
+    {
+      "id": "authority",
+      "name": "Autoridad",
+      "description": "Expert credibility, social proof, endorsements. Logical trigger based on credentials.",
+      "psychologicalTrigger": "Trust through expertise",
+      "bestFor": ["professionals", "tech-savvy", "decision-makers"],
+      "keyPhrases": [
+        "Certificado por...",
+        "Expertos recomiendan...",
+        "Número 1 en...",
+        "Reconocido internacionalmente"
+      ],
+      "recommendedZones": ["zona_hotelera", "sm_91"],
+      "recommendedTimes": ["10:00-12:00", "14:00-16:00"],
+      "demographicOptimal": ["26-45", "professional"],
+      "occupationOptimal": ["professional", "entrepreneur"]
+    },
+    {
+      "id": "scarcity",
+      "name": "Escasez",
+      "description": "Limited availability, urgency, exclusivity. Urgency-based trigger for quick decisions.",
+      "psychologicalTrigger": "Fear of missing out (FOMO)",
+      "bestFor": ["decision-makers", "high_income", "status-conscious"],
+      "keyPhrases": [
+        "Últimas unidades",
+        "Oferta limitada",
+        "Hoy solamente",
+        "Disponibilidad restringida"
+      ],
+      "recommendedZones": ["zona_hotelera", "zona_centro"],
+      "recommendedTimes": ["14:00-18:00"],
+      "demographicOptimal": ["30-50", "upper_middle"],
+      "occupationOptimal": ["professional", "entrepreneur"]
+    },
+    {
+      "id": "community",
+      "name": "Comunidad",
+      "description": "Belonging, social connection, local pride. Social trigger for collective identity.",
+      "psychologicalTrigger": "Sense of belonging",
+      "bestFor": ["family_units", "collective_cultures", "local_populations"],
+      "keyPhrases": [
+        "Tu comunidad confía en...",
+        "Apoya lo local",
+        "Juntos crecemos",
+        "Somos tu vecino"
+      ],
+      "recommendedZones": ["region_237", "sm_77", "region_233"],
+      "recommendedTimes": ["10:00-12:00", "17:00-19:00"],
+      "demographicOptimal": ["25-55", "family"],
+      "occupationOptimal": ["commerce", "artisan", "service"]
+    }
+  ]
+}

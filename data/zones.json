@@ -1,0 +1,58 @@
+{
+  "zones": [
+    {
+      "id": "zona_hotelera",
+      "name": "Zona Hotelera",
+      "coordinates": [21.135, -86.745],
+      "socioeconomic": "high",
+      "density": "medium",
+      "security": "high",
+      "description": "Centro turístico internacional con alta rotación de visitantes"
+    },
+    {
+      "id": "zona_centro",
+      "name": "Centro",
+      "coordinates": [21.161, -86.851],
+      "socioeconomic": "medium",
+      "density": "high",
+      "security": "medium",
+      "description": "Zona en renovación urbana, comercio consolidado, población mixta"
+    },
+    {
+      "id": "region_237",
+      "name": "Región 237",
+      "coordinates": [21.145, -86.820],
+      "socioeconomic": "lower_middle",
+      "density": "high",
+      "security": "medium",
+      "description": "Zona norte, alta densidad, procesos de regularización, clase trabajadora"
+    },
+    {
+      "id": "region_233",
+      "name": "Región 233",
+      "coordinates": [21.155, -86.835],
+      "socioeconomic": "lower_middle",
+      "density": "medium",
+      "security": "medium",
+      "description": "Población joven, mejor conectividad, familias emergentes"
+    },
+    {
+      "id": "sm_91",
+      "name": "Supermanzana 91",
+      "coordinates": [21.165, -86.860],
+      "socioeconomic": "middle",
+      "density": "medium",
+      "security": "high",
+      "description": "Zona céntrica en transición, clase media, enfoque en renovación"
+    },
+    {
+      "id": "sm_77",
+      "name": "Supermanzana 77 (Corales)",
+      "coordinates": [21.140, -86.800],
+      "socioeconomic": "low",
+      "density": "high",
+      "security": "low",
+      "description": "Alta vulnerabilidad, población joven, enfoque en necesidades básicas"
+    }
+  ]
+}

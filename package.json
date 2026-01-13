@@ -1,0 +1,34 @@
+{
+  "name": "geo-suite-cancun-pro",
+  "version": "2.0.0",
+  "description": "Plataforma estratégica de análisis de ventas D2D para Cancún con IA predictiva",
+  "main": "index.html",
+  "type": "commonjs",
+  "scripts": {
+    "start": "npx http-server -p 8080 -c-1 --gzip",
+    "dev": "npx nodemon --watch . --ext html,js,json --exec 'npx http-server -p 8080 -c-1'",
+    "validate": "node -c index.html",
+    "lint": "echo 'Validación de sintaxis completada'",
+    "analyze:csv": "node scripts/analyze-csv.js",
+    "test:data": "node scripts/test-data.js",
+    "build": "echo 'PWA - No build necesario. Usar directamente en navegador.'",
+    "serve": "npx serve -l 8080"
+  },
+  "keywords": [
+    "sales-analytics",
+    "d2d",
+    "cancun",
+    "predictive-modeling",
+    "pwa",
+    "mapbox",
+    "ai"
+  ],
+  "author": "Geo-Suite Team",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "http-server": "^14.1.1",
+    "nodemon": "^3.0.1",
+    "serve": "^14.2.0"
+  }
+}

@@ -1,0 +1,140 @@
+{
+  "socioeconomicProfiles": {
+    "incomeCategories": [
+      {
+        "id": "low",
+        "label": "Bajo",
+        "range": "< 5,000 MXN/mes",
+        "characteristics": ["price_sensitive", "essential_needs", "bulk_buyers"],
+        "purchasingPower": "low",
+        "decisionTime": "slow"
+      },
+      {
+        "id": "lower_middle",
+        "label": "Bajo-Medio",
+        "range": "5,000-15,000 MXN/mes",
+        "characteristics": ["moderate_savings", "quality_aware", "installment_flexible"],
+        "purchasingPower": "moderate",
+        "decisionTime": "moderate"
+      },
+      {
+        "id": "middle",
+        "label": "Medio",
+        "range": "15,000-40,000 MXN/mes",
+        "characteristics": ["quality_focused", "investment_oriented", "brand_conscious"],
+        "purchasingPower": "good",
+        "decisionTime": "fast"
+      },
+      {
+        "id": "upper_middle",
+        "label": "Medio-Alto",
+        "range": "40,000-100,000 MXN/mes",
+        "characteristics": ["premium_seeking", "status_conscious", "exclusive_access"],
+        "purchasingPower": "high",
+        "decisionTime": "fast"
+      },
+      {
+        "id": "high",
+        "label": "Alto",
+        "range": "> 100,000 MXN/mes",
+        "characteristics": ["luxury_oriented", "convenience_priority", "investment_capital"],
+        "purchasingPower": "very_high",
+        "decisionTime": "very_fast"
+      }
+    ],
+    "occupationCategories": [
+      {
+        "id": "unemployed",
+        "label": "Desempleado",
+        "income": "low",
+        "purchasingDecision": "family_dependent"
+      },
+      {
+        "id": "artisan",
+        "label": "Artesano/Comerciante",
+        "income": "lower_middle",
+        "purchasingDecision": "self_directed"
+      },
+      {
+        "id": "construction",
+        "label": "Construcción/Manual",
+        "income": "lower_middle",
+        "purchasingDecision": "family_influenced"
+      },
+      {
+        "id": "commerce",
+        "label": "Comercio/Vendedor",
+        "income": "lower_middle",
+        "purchasingDecision": "commission_driven"
+      },
+      {
+        "id": "service",
+        "label": "Servicios",
+        "income": "lower_middle",
+        "purchasingDecision": "budget_conscious"
+      },
+      {
+        "id": "professional",
+        "label": "Profesional/Ejecutivo",
+        "income": "middle_upper_middle",
+        "purchasingDecision": "logic_based"
+      },
+      {
+        "id": "entrepreneur",
+        "label": "Empresario",
+        "income": "upper_middle_high",
+        "purchasingDecision": "roi_focused"
+      },
+      {
+        "id": "tourist",
+        "label": "Turista",
+        "income": "high",
+        "purchasingDecision": "impulse_convenience"
+      }
+    ],
+    "demographicCategories": [
+      {
+        "id": "18-25",
+        "label": "18-25 años",
+        "lifeStage": "young_single",
+        "priorities": ["technology", "trends", "social_status"],
+        "motivators": ["independence", "social_proof", "experiences"]
+      },
+      {
+        "id": "26-35",
+        "label": "26-35 años",
+        "lifeStage": "young_family",
+        "priorities": ["education", "home", "security"],
+        "motivators": ["family_welfare", "investment", "growth"]
+      },
+      {
+        "id": "36-45",
+        "label": "36-45 años",
+        "lifeStage": "established",
+        "priorities": ["quality", "health", "investment"],
+        "motivators": ["comfort", "tradition", "expertise"]
+      },
+      {
+        "id": "46-55",
+        "label": "46-55 años",
+        "lifeStage": "peak_earning",
+        "priorities": ["premium", "status", "legacy"],
+        "motivators": ["exclusivity", "social_standing", "heritage"]
+      },
+      {
+        "id": "56-65",
+        "label": "56-65 años",
+        "lifeStage": "preretirement",
+        "priorities": ["security", "nostalgia", "legacy"],
+        "motivators": ["stability", "memories", "family_values"]
+      },
+      {
+        "id": "65+",
+        "label": "65+ años",
+        "lifeStage": "retirement",
+        "priorities": ["comfort", "health", "nostalgia"],
+        "motivators": ["quality_life", "family", "tradition"]
+      }
+    ]
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "zones": [
+    {
+      "id": "zona_hotelera",
+      "name": "Zona Hotelera",
+      "coordinates": [21.135, -86.745],
+      "socioeconomic": "high",
+      "density": "medium",
+      "security": "high",
+      "description": "Turismo internacional, alta rotación, precios premium",
+      "target": "Turistas internacionales, ejecutivos"
+    },
+    {
+      "id": "centro",
+      "name": "Centro (Distrito 1)",
+      "coordinates": [21.161, -86.851],
+      "socioeconomic": "medium",
+      "density": "high",
+      "security": "medium",
+      "description": "Renovación urbana, comercio consolidado, turismo local",
+      "target": "Comerciantes, turistas, residentes con poder adquisitivo"
+    },
+    {
+      "id": "region_237",
+      "name": "Región 237",
+      "coordinates": [21.140, -86.890],
+      "socioeconomic": "lower_middle",
+      "density": "high",
+      "security": "medium",
+      "description": "Zona norte, alta densidad poblacional, procesos de regularización",
+      "target": "Clase trabajadora, ingresos medios-bajos"
+    },
+    {
+      "id": "region_233",
+      "name": "Región 233",
+      "coordinates": [21.175, -86.870],
+      "socioeconomic": "lower_middle",
+      "density": "high",
+      "security": "low",
+      "description": "Población joven, mejor conectividad, inversión pública reciente",
+      "target": "Familias jóvenes, estudiantes universitarios"
+    },
+    {
+      "id": "sm_77",
+      "name": "Supermanzana 77 (Corales)",
+      "coordinates": [21.165, -86.860],
+      "socioeconomic": "low",
+      "density": "high",
+      "security": "low",
+      "description": "Crisis habitacional, alta vulnerabilidad, necesidades básicas",
+      "target": "Población en extrema necesidad"
+    },
+    {
+      "id": "sm_91",
+      "name": "Supermanzana 91",
+      "coordinates": [21.155, -86.875],
+      "socioeconomic": "low",
+      "density": "high",
+      "security": "low",
+      "description": "Zona céntrica en transición, propiedades en remate",
+      "target": "Clase media en transición, propietarios"
+    }
+  ]
+}

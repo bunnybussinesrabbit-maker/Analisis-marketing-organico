@@ -1,0 +1,183 @@
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                                                                               ║
+║              ✅ SINCRONIZACIÓN CSV + UTF-8: IMPLEMENTADO                      ║
+║                                                                               ║
+║                         Fecha: 12 Enero 2026                                 ║
+║                         Status: COMPLETADO ✅                                ║
+║                                                                               ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 TUS COLUMNAS CSV
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+timestamp │ zona │ cliente │ origen │ tipo_pitch │ resultado │ monto │ latitud │ longitud
+
+⬇️ AHORA SE MAPEA AUTOMÁTICAMENTE A:
+
+timestamp  → timestamp     (análisis temporal) ✅
+zona       → zona          (análisis por zona) ✅
+cliente    → cliente       (identificación) ✅
+origen     → clientOrigin  (análisis por origen) ✅
+tipo_pitch → pitchType     (análisis de pitch) ✅
+resultado  → result        (conversión) ✅
+monto      → monto         (ingresos) ✅
+latitud    → lat           (geolocalización) ✅
+longitud   → lng           (geolocalización) ✅
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔤 CORRECCIÓN UTF-8 AUTOMÁTICA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ANTES:  MarÃ­a LÃ³pez      ❌ (corrupto)
+AHORA:  María López        ✅ (limpio)
+
+Se corrige automáticamente en:
+  ✅ Cliente
+  ✅ Zona
+  ✅ Tipo de pitch
+  ✅ Origen
+  ✅ Resultado
+  ✅ Fecha
+
+Sin necesidad de pre-procesamiento manual
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🧪 VERIFICACIÓN INTEGRADA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+En consola (F12), ejecuta:
+
+  verifySyncData()
+
+Verifica automáticamente:
+  ✅ Campos requeridos presentes
+  ✅ Limpieza UTF-8
+  ✅ Ausencia de "unknown"
+  ✅ Mapeo de columnas correcto
+
+Resultado:
+  ✅ SINCRONIZACIÓN COMPLETADA
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔍 NUEVOS COMANDOS EN CONSOLA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+verifySyncData()
+  └─ Valida sincronización y limpieza UTF-8
+
+showDataSample(n)
+  └─ Muestra primeros N registros procesados
+
+window.analyzePitchEffectiveness()
+  └─ Análisis por tipo de pitch
+
+window.analyzeOriginEffectiveness()
+  └─ Análisis por origen de cliente
+
+window.analyzePitchByZone()
+  └─ Análisis cruzado: Pitch × Zona
+
+window.analyzePitchByOrigin()
+  └─ Análisis cruzado: Pitch × Origen
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 FLUJO RECOMENDADO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Abre index.html
+   │
+2. Carga tu CSV con columnas:
+   timestamp, zona, cliente, origen, tipo_pitch, resultado, monto, latitud, longitud
+   │
+3. Espera mensaje "N registros cargados" ✅
+   │
+4. Presiona F12 (DevTools)
+   │
+5. En Console ejecuta:
+   verifySyncData()
+   │
+6. Verifica resultado:
+   ✅ SINCRONIZACIÓN COMPLETADA
+   │
+7. Ejecuta análisis cruzados:
+   window.analyzePitchEffectiveness()
+   window.analyzePitchByZone()
+   etc...
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ CAMBIOS IMPLEMENTADOS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+En index.html:
+
+1. ✅ Función sanitizeUTF8() (L3280)
+   └─ Corrige encoding UTF-8 automáticamente
+   └─ Reemplaza caracteres corruptos
+   └─ Se aplica a todos los campos de texto
+
+2. ✅ Mejorada detección de columnas en processData() (L3305-L3335)
+   └─ Reconoce: tipo_pitch, resultado, origen
+   └─ También reconoce variantes: pitchtype, result, origin, etc.
+
+3. ✅ Aplicación de sanitización (L3360-L3375)
+   └─ Cliente: sanitizeUTF8(row[clientKey])
+   └─ Zona: sanitizeUTF8(row[zoneKey])
+   └─ Pitch: sanitizeUTF8(row[pitchKey])
+   └─ Origen: sanitizeUTF8(row[clientOriginKey])
+   └─ Resultado: sanitizeUTF8(row[resultKey])
+
+4. ✅ Nuevo campo timestamp (L3380)
+   └─ Necesario para análisis temporal
+   └─ Se genera desde dateKey si existe
+
+5. ✅ Función verifySyncData() (consola)
+   └─ Valida campos requeridos
+   └─ Verifica limpieza UTF-8
+   └─ Verifica ausencia de "unknown"
+   └─ Muestra mapeo de columnas
+
+6. ✅ Función showDataSample() (consola)
+   └─ Visualiza primeros N registros procesados
+   └─ Útil para verificar limpieza de datos
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 RESULTADO FINAL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CSV CON TUS COLUMNAS:
+  timestamp │ zona │ cliente │ origen │ tipo_pitch │ resultado │ monto │ ...
+
+                            ⬇️
+
+PROCESADO Y SINCRONIZADO:
+  timestamp  ✅  zona  ✅  cliente (María López, no MarÃ­a LÃ³pez)
+  clientOrigin ✅  pitchType ✅  result ✅  monto ✅
+
+                            ⬇️
+
+LISTO PARA:
+  ✅ Análisis por pitch
+  ✅ Análisis por origen
+  ✅ Análisis cruzado pitch×zona
+  ✅ Análisis cruzado pitch×origen
+  ✅ Módulos de análisis avanzado
+  ✅ Herramientas de debugging
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📁 DOCUMENTACIÓN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+SINCRONIZACION_CSV_UTF8.md
+  └─ Guía completa de sincronización
+  └─ Mapeo de columnas detallado
+  └─ Ejemplos de CSV válidos
+  └─ Comandos de consola
+
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                                                                               ║
+║                    ✅ LISTO PARA USAR                                        ║
+║                                                                               ║
+║  Próximo paso: Carga tu CSV y ejecuta verifySyncData() en consola (F12)     ║
+║                                                                               ║
+╚═══════════════════════════════════════════════════════════════════════════════╝

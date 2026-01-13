@@ -1,0 +1,21 @@
+timestamp,zona,cliente,origen,tipo_pitch,resultado,monto,latitud,longitud
+2026-01-10T09:00:00Z,zona_hotelera,Juan García,CDMX,autoridad,exitoso,450,21.135,-86.745
+2026-01-10T09:30:00Z,centro,María López,Local,nostalgia,fallido,0,21.161,-86.851
+2026-01-10T10:00:00Z,region_237,Carlos Ruiz,Quintana Roo,escasez,exitoso,800,21.089,-86.923
+2026-01-10T10:30:00Z,sm_77,Ana Martínez,Local,comunidad,exitoso,150,21.148,-86.812
+2026-01-10T11:00:00Z,sm_91,Roberto Díaz,Internacional,autoridad,exitoso,600,21.156,-86.789
+2026-01-10T11:30:00Z,zona_hotelera,Sofia García,CDMX,escasez,exitoso,500,21.140,-86.750
+2026-01-10T12:00:00Z,centro,Pedro López,Cancún,autoridad,fallido,0,21.165,-86.848
+2026-01-10T12:30:00Z,region_237,Elena Rodríguez,Quintana Roo,nostalgia,exitoso,750,21.095,-86.920
+2026-01-10T13:00:00Z,sm_77,Miguel Torres,Local,comunidad,exitoso,200,21.150,-86.815
+2026-01-10T13:30:00Z,sm_91,Laura García,Internacional,escasez,exitoso,550,21.160,-86.785
+2026-01-10T14:00:00Z,zona_hotelera,Francisco Díaz,CDMX,nostalgia,exitoso,480,21.138,-86.748
+2026-01-10T14:30:00Z,centro,Gabriela López,Local,comunidad,fallido,0,21.163,-86.850
+2026-01-10T15:00:00Z,region_237,David Ruiz,Quintana Roo,autoridad,exitoso,850,21.085,-86.925
+2026-01-10T15:30:00Z,sm_77,Verónica Martínez,Local,escasez,exitoso,175,21.145,-86.820
+2026-01-10T16:00:00Z,sm_91,Ricardo Díaz,Internacional,comunidad,exitoso,625,21.155,-86.790
+2026-01-10T16:30:00Z,zona_hotelera,Alejandra García,CDMX,autoridad,exitoso,520,21.142,-86.752
+2026-01-10T17:00:00Z,centro,Fernando López,Cancún,nostalgia,exitoso,420,21.167,-86.846
+2026-01-10T17:30:00Z,region_237,Beatriz Ruiz,Quintana Roo,escasez,exitoso,900,21.090,-86.922
+2026-01-10T18:00:00Z,sm_77,Catalina Martínez,Local,comunidad,exitoso,225,21.152,-86.810
+2026-01-10T18:30:00Z,sm_91,Edmundo Díaz,Internacional,autoridad,exitoso,575,21.158,-86.788
