@@ -144,7 +144,7 @@ body {
   margin: 0;
   overflow: hidden;
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto 1fr; /* Sibling Architecture: Header + Content */
 }
 
@@ -168,6 +168,7 @@ body {
   gap: 20px;
   height: auto;
   min-height: 70px;
+  min-width: 0; /* Prevents overflow in grid layout */
 }
 
 .header {
@@ -275,11 +276,14 @@ body {
    ============================================ */
 .main-content {
   padding: 20px;
-  max-width: 100%;
+  max-width: 1600px; /* Ingenious: Centers content on ultra-wide screens for better readability */
+  margin: 0 auto;
+  width: 100%;
   display: flex;
   flex-direction: column;
   height: 100%; /* Toma el 1fr del grid del body */
   overflow-y: auto;
+  min-width: 0; /* Prevents overflow in grid layout */
 }
 
 .view-section {
