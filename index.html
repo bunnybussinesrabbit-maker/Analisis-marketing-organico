@@ -1484,9 +1484,6 @@ body {
       <button class="nav-btn" data-view="analysis">
         <i class="fas fa-chart-line"></i> Análisis Avanzado
       </button>
-      <button class="nav-btn" data-view="capture">
-        <i class="fas fa-camera"></i> Captura en Vivo
-      </button>
       <button class="nav-btn" data-view="zones">
         <i class="fas fa-map-marker-alt"></i> Zonas Estratégicas
       </button>
@@ -3494,11 +3491,25 @@ function processData(rawData) {
       }
       if (isNaN(monto)) monto = 0;
 
+      const dateStr = row[dateKey] || new Date().toISOString();
+      let fecha = new Date(dateStr);
+
+      // Validar si la fecha es válida
+      if (isNaN(fecha.getTime())) {
+        console.warn(`Fecha inválida en fila ${index}: ${row[dateKey]}`);
+        // Usar fecha actual como respaldo
+        fecha = new Date();
+      }
+
+      const hora = fecha.toTimeString().split(' ')[0].substring(0, 5); // Formato HH:mm
+
       const venta = {
         lat,
         lng,
         monto,
-        fechaStr: row[dateKey] || new Date().toISOString().split('T')[0],
+        fecha, // Objeto Date
+        hora, // String HH:mm
+        fechaStr: fecha.toISOString().split('T')[0], // String YYYY-MM-DD
         zona: sanitizeUTF8(row[zoneKey] || 'sin_zona').toLowerCase(),
         pitchType: normalizePitch(sanitizeUTF8(row[pitchKey] || '')),
         result: normalizeResult(sanitizeUTF8(row[resultKey] || '')),
