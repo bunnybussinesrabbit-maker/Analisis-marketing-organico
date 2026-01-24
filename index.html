@@ -141,22 +141,16 @@ body {
   color: var(--text-primary);
   line-height: 1.6;
   height: 100vh;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  grid-template-rows: 100vh;
   overflow: hidden;
 }
 
 /* ============================================
    LAYOUT PRINCIPAL
    ============================================ */
-.app-container {
-  display: grid;
-  grid-template-columns: 280px 1fr;
-  grid-template-rows: 1fr;
-  flex: 1;
-  max-width: 100vw;
-  overflow: auto;
-}
+/* Eliminado .app-container en favor de Grid en body */
 
 /* ============================================
    SIDEBAR / PANEL LATERAL
@@ -166,21 +160,13 @@ body {
   border-right: 1px solid var(--border);
   padding: 20px 15px;
   overflow-y: auto;
-  position: sticky;
-  top: 0;
   height: 100%;
 }
 
 .header {
-  padding: 15px 25px;
-  background: var(--bg-panel);
+  padding-bottom: 20px;
+  margin-bottom: 20px;
   border-bottom: 1px solid var(--border);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 15px;
-  z-index: 100;
 }
 
 .header h1 {
@@ -251,6 +237,8 @@ body {
   max-width: 100%;
   display: flex;
   flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
 }
 
 .view-section {
@@ -938,8 +926,9 @@ body {
    RESPONSIVE DESIGN
    ============================================ */
 @media (max-width: 1024px) {
-  .app-container {
+  body {
     grid-template-columns: 1fr;
+    grid-template-rows: 1fr;
   }
   
   .sidebar {
@@ -1467,14 +1456,12 @@ body {
   </div>
 </div>
 
-<div class="header">
-  <h1><i class="fas fa-satellite-dish"></i> Geo-Suite Cancún</h1>
-  <p>Plataforma Estratégica Inteligente</p>
-</div>
-
-<div class="app-container">
   <!-- SIDEBAR -->
   <aside class="sidebar">
+    <div class="header">
+      <h1><i class="fas fa-satellite-dish"></i> Geo-Suite Cancún</h1>
+      <p>Plataforma Estratégica Inteligente</p>
+    </div>
 
     <!-- Navegación -->
     <nav class="nav-menu">
@@ -2470,7 +2457,6 @@ body {
       </div>
     </section>
   </main>
-</div>
 
 <!-- NAVEGACIÓN MÓVIL -->
 <div class="mobile-nav">
