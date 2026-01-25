@@ -271,6 +271,44 @@ body {
   font-size: 1.1rem;
 }
 
+.nav-wrapper {
+  position: relative;
+  flex: 1;
+  min-width: 0; /* Important for flexbox to allow shrinking */
+}
+
+.nav-arrows {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 30px;
+  height: 30px;
+  background-color: rgba(15, 23, 42, 0.8);
+  color: var(--accent-blue);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: opacity 0.2s;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.nav-arrows.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#nav-arrow-left {
+  left: -15px;
+}
+
+#nav-arrow-right {
+  right: -15px;
+}
 /* ============================================
    CONTENIDO PRINCIPAL
    ============================================ */
@@ -1510,7 +1548,8 @@ body {
     </div>
 
     <!-- Navegación -->
-    <nav class="nav-menu">
+    <div class="nav-wrapper">
+        <nav class="nav-menu">
       <button class="nav-btn active" data-view="dashboard">
         <i class="fas fa-chart-pie"></i> Dashboard
       </button>
@@ -1548,6 +1587,9 @@ body {
   <i class="fas fa-cogs"></i> Análisis Completo
 </button>
     </nav>
+      <div id="nav-arrow-left" class="nav-arrows"><i class="fas fa-chevron-left"></i></div>
+      <div id="nav-arrow-right" class="nav-arrows"><i class="fas fa-chevron-right"></i></div>
+    </div>
 
     <!-- Estado del sistema (Compacto en Header) -->
     <div class="system-status-compact">
@@ -6647,6 +6689,9 @@ async function loadReferenceData() {
 
   // Asegurarse de que la vista del dashboard esté activa al cargar
   showView('dashboard');
+
+  setupNavArrows();
+  window.addEventListener('resize', setupNavArrows);
   // ============================================
 // INICIALIZACIÓN DE MÓDULOS AVANZADOS
 // ============================================
@@ -7845,6 +7890,49 @@ document.addEventListener('DOMContentLoaded', function() {
 
 console.log('✅ Sistema de captura de datos en vivo cargado');
 
+function setupNavArrows() {
+  const navMenu = document.querySelector('.nav-menu');
+  const leftArrow = document.getElementById('nav-arrow-left');
+  const rightArrow = document.getElementById('nav-arrow-right');
+
+  if (!navMenu || !leftArrow || !rightArrow) return;
+
+  const checkOverflow = () => {
+    // Request animation frame to ensure calculations are based on the latest layout
+    requestAnimationFrame(() => {
+      const hasOverflow = navMenu.scrollWidth > navMenu.clientWidth;
+
+      if (hasOverflow) {
+        const atStart = navMenu.scrollLeft < 5;
+        const atEnd = navMenu.scrollLeft >= (navMenu.scrollWidth - navMenu.clientWidth - 5);
+
+        leftArrow.classList.toggle('visible', !atStart);
+        rightArrow.classList.toggle('visible', !atEnd);
+      } else {
+        leftArrow.classList.remove('visible');
+        rightArrow.classList.remove('visible');
+      }
+    });
+  };
+
+  // Event listeners for arrow clicks
+  leftArrow.addEventListener('click', () => navMenu.scrollBy({ left: -250, behavior: 'smooth' }));
+  rightArrow.addEventListener('click', () => navMenu.scrollBy({ left: 250, behavior: 'smooth' }));
+
+  // Check for overflow when the user scrolls the nav menu
+  navMenu.addEventListener('scroll', checkOverflow, { passive: true });
+
+  // Use ResizeObserver to detect when the navMenu's size changes
+  const resizeObserver = new ResizeObserver(checkOverflow);
+  resizeObserver.observe(navMenu);
+
+  // Use MutationObserver to detect when child elements are added or removed
+  const mutationObserver = new MutationObserver(checkOverflow);
+  mutationObserver.observe(navMenu, { childList: true, subtree: true });
+
+  // Initial check
+  checkOverflow();
+}
 </script>
 </body>
 </html>
