@@ -132,7 +132,7 @@
 html, body {
   height: 100%;
   width: 100%;
-  overflow: hidden;
+  overflow: auto;
 }
 
 body {
@@ -140,52 +140,58 @@ body {
   background: var(--bg-dark);
   color: var(--text-primary);
   line-height: 1.6;
+  height: 100vh;
+  margin: 0;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto 1fr; /* Sibling Architecture: Header + Content */
 }
 
 /* ============================================
    LAYOUT PRINCIPAL
    ============================================ */
-.app-container {
-  display: grid;
-  grid-template-columns: 280px 1fr;
-  grid-template-rows: minmax(0, 1fr);
-  height: 100%;
-  max-width: 100vw;
-  overflow: hidden;
-  border-top: 1px solid transparent; /* Fix margin collapse */
-}
+/* Arquitectura de Bloques Hermanos (Sibling): Header superior y área de trabajo independiente */
 
 /* ============================================
-   SIDEBAR / PANEL LATERAL
+   HEADER / BARRA DE NAVEGACIÓN SUPERIOR
    ============================================ */
-.sidebar {
+.top-navbar {
   background: var(--bg-panel);
-  border-right: 1px solid var(--border);
-  padding: 20px 15px;
-  overflow-y: auto;
-  position: sticky;
-  top: 0;
-  height: 100%;
+  border-bottom: 1px solid var(--border);
+  padding: 10px 20px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  height: auto;
+  min-height: 70px;
+  min-width: 0; /* Prevents overflow in grid layout */
 }
 
 .header {
-  padding-bottom: 20px;
-  margin-bottom: 20px;
-  border-bottom: 1px solid var(--border);
+  padding-bottom: 0;
+  margin-bottom: 0;
+  border-bottom: none;
+  min-width: fit-content;
 }
 
 .header h1 {
-  font-size: 1.4rem;
+  font-size: 1.2rem;
   color: var(--accent-blue);
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 5px;
+  gap: 8px;
+  margin-bottom: 0;
+  white-space: nowrap;
 }
 
 .header p {
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   color: var(--text-secondary);
+  display: none; /* Ocultar eslogan en desktop para ganar espacio */
 }
 
 /* ============================================
@@ -193,25 +199,57 @@ body {
    ============================================ */
 .nav-menu {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: 8px;
+  overflow-x: auto;
+  flex: 1;
+  padding: 5px 0;
+  scrollbar-width: none; /* Ocultar scrollbar en Firefox */
+}
+
+.nav-menu::-webkit-scrollbar {
+  display: none; /* Ocultar scrollbar en Chrome/Safari */
+}
+
+.nav-menu .btn {
+  width: auto;
+  padding: 10px 16px;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.system-status-compact {
+  display: flex;
+  gap: 15px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  border-left: 1px solid var(--border);
+  padding-left: 15px;
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
 }
 
 .nav-btn {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
+  gap: 8px;
+  padding: 10px 14px;
   background: transparent;
   border: 1px solid transparent;
   color: var(--text-secondary);
-  border-radius: 12px;
+  border-radius: 8px;
   cursor: pointer;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   font-weight: 500;
   transition: all 0.3s ease;
-  text-align: left;
-  width: 100%;
+  text-align: center;
+  width: auto;
+  white-space: nowrap;
 }
 
 .nav-btn:hover {
@@ -221,12 +259,11 @@ body {
 }
 
 .nav-btn.active {
-  background: linear-gradient(135deg, rgba(56, 189, 248, 0.25) 0%, rgba(139, 92, 246, 0.25) 100%);
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%);
   color: var(--accent-blue);
-  border-left: 4px solid var(--accent-blue);
-  border-color: var(--accent-blue);
+  border-bottom: 2px solid var(--accent-blue);
+  border-radius: 8px 8px 2px 2px;
   font-weight: 600;
-  box-shadow: inset 0 0 10px rgba(56, 189, 248, 0.1);
 }
 
 .nav-btn i {
@@ -239,21 +276,26 @@ body {
    ============================================ */
 .main-content {
   padding: 20px;
-  overflow: hidden;
-  max-width: 100%;
-  display: flex; /* Corrected from flow-root */
+  max-width: 1600px; /* Ingenious: Centers content on ultra-wide screens for better readability */
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
   flex-direction: column;
+  height: 100%; /* Toma el 1fr del grid del body */
+  overflow-y: auto;
+  min-width: 0; /* Prevents overflow in grid layout */
 }
 
 .view-section {
   display: none;
   animation: fadeIn 0.3s ease;
-  height: 100%;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 .view-section.active {
-  display: flex;
-  flex-direction: column;
+  display: block;
   flex: 1;
   height: 100%;
 }
@@ -929,20 +971,22 @@ body {
    RESPONSIVE DESIGN
    ============================================ */
 @media (max-width: 1024px) {
-  .app-container {
-    grid-template-columns: 1fr;
+  body {
+    grid-template-rows: 1fr auto;
   }
   
-  .sidebar {
+  .top-navbar {
     display: none;
   }
   
   .mobile-nav {
     display: block;
+    position: static;
   }
   
   .main-content {
-    padding-bottom: 80px;
+    padding-top: 20px;
+    padding-bottom: 0;
   }
 }
 
@@ -1458,9 +1502,8 @@ body {
   </div>
 </div>
 
-<div class="app-container">
-  <!-- SIDEBAR -->
-  <aside class="sidebar">
+  <!-- HEADER / NAVEGACIÓN SUPERIOR -->
+  <header class="top-navbar">
     <div class="header">
       <h1><i class="fas fa-satellite-dish"></i> Geo-Suite Cancún</h1>
       <p>Plataforma Estratégica Inteligente</p>
@@ -1479,9 +1522,6 @@ body {
       </button>
       <button class="nav-btn" data-view="analysis">
         <i class="fas fa-chart-line"></i> Análisis Avanzado
-      </button>
-      <button class="nav-btn" data-view="capture">
-        <i class="fas fa-camera"></i> Captura en Vivo
       </button>
       <button class="nav-btn" data-view="zones">
         <i class="fas fa-map-marker-alt"></i> Zonas Estratégicas
@@ -1509,25 +1549,22 @@ body {
 </button>
     </nav>
 
-    <!-- Estado del sistema -->
-    <div class="control-group mt-20">
-      <h3><i class="fas fa-info-circle"></i> Estado</h3>
-      <div class="form-group">
-        <label>Datos Cargados:</label>
-        <div id="dataStatus" class="text-warning">Sin datos</div>
+    <!-- Estado del sistema (Compacto en Header) -->
+    <div class="system-status-compact">
+      <div class="status-item">
+        <i class="fas fa-database"></i> <span id="dataStatus">Sin datos</span>
       </div>
-      <div class="form-group">
-        <label>Knowledgebase:</label>
-        <div id="kbStatus" class="text-success">Disponible</div>
+      <div class="status-item">
+        <i class="fas fa-brain"></i> <span id="kbStatus" class="text-success">OK</span>
       </div>
     </div>
-  </aside>
+  </header>
 
   <!-- CONTENIDO PRINCIPAL -->
   <main class="main-content">
     
     <!-- ================= DASHBOARD ================= -->
-    <section id="dashboard" class="view-section active">
+    <section id="dashboard" class="view-section">
       <h2 class="mb-30"><i class="fas fa-chart-pie"></i> Dashboard Principal</h2>
       
       <div class="kpi-grid">
@@ -2463,7 +2500,6 @@ body {
       </div>
     </section>
   </main>
-</div>
 
 <!-- NAVEGACIÓN MÓVIL -->
 <div class="mobile-nav">
@@ -2962,6 +2998,11 @@ function showView(viewId) {
 }
 
 function updateNavigationBreadcrumb(viewId) {
+  // No añadir breadcrumb al dashboard
+  if (viewId === 'dashboard') {
+    return;
+  }
+
   const viewNames = {
     'dashboard': 'Dashboard Principal',
     'map': 'Mapa Interactivo',
@@ -3485,11 +3526,25 @@ function processData(rawData) {
       }
       if (isNaN(monto)) monto = 0;
 
+      const dateStr = row[dateKey] || new Date().toISOString();
+      let fecha = new Date(dateStr);
+
+      // Validar si la fecha es válida
+      if (isNaN(fecha.getTime())) {
+        console.warn(`Fecha inválida en fila ${index}: ${row[dateKey]}`);
+        // Usar fecha actual como respaldo
+        fecha = new Date();
+      }
+
+      const hora = fecha.toTimeString().split(' ')[0].substring(0, 5); // Formato HH:mm
+
       const venta = {
         lat,
         lng,
         monto,
-        fechaStr: row[dateKey] || new Date().toISOString().split('T')[0],
+        fecha, // Objeto Date
+        hora, // String HH:mm
+        fechaStr: fecha.toISOString().split('T')[0], // String YYYY-MM-DD
         zona: sanitizeUTF8(row[zoneKey] || 'sin_zona').toLowerCase(),
         pitchType: normalizePitch(sanitizeUTF8(row[pitchKey] || '')),
         result: normalizeResult(sanitizeUTF8(row[resultKey] || '')),
@@ -6589,6 +6644,9 @@ async function loadReferenceData() {
   if (document.getElementById('map-section').classList.contains('active')) {
     setTimeout(initMap, 500);
   }
+
+  // Asegurarse de que la vista del dashboard esté activa al cargar
+  showView('dashboard');
   // ============================================
 // INICIALIZACIÓN DE MÓDULOS AVANZADOS
 // ============================================
