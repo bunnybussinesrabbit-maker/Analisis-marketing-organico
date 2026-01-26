@@ -2,56 +2,22 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "type": "chrome",
-      "request": "launch",
-      "name": "Abrir Chrome (Debugging)",
-      "url": "http://localhost:8080",
+      "type": "pwa-chrome",
+      "request": "attach",
+      "name": "Conectar a Chrome Local (Codespaces)",
+      "port": 9222,
+      "urlFilter": "http://127.0.0.1:5500/*", 
       "webRoot": "${workspaceFolder}",
-      "runtimeExecutable": "/usr/bin/google-chrome",
-      "runtimeArgs": [
-        "--remote-debugging-port=9222",
-        "--no-sandbox",
-        "--disable-gpu"
-      ],
-      "sourceMaps": true,
-      "sourceMapPathOverride": {
-        "webpack:///": "${webRoot}/",
-        "webpack:///./*": "${webRoot}/*"
+      "timeout": 60000,
+      "sourceMapPathOverrides": {
+        "webpack:///./*": "${webRoot}/*",
+        "/workspaces/${workspaceFolderBasename}/*": "${webRoot}/*"
       },
-      "preLaunchTask": "start-server",
-      "postDebugTask": "stop-server",
       "smartStep": true,
       "skipFiles": [
         "<node_internals>/**",
         "node_modules/**"
       ]
-    },
-    {
-      "type": "chrome",
-      "request": "attach",
-      "name": "Conectar a Chrome existente",
-      "port": 9222,
-      "urlFilter": "http://localhost:*/*",
-      "webRoot": "${workspaceFolder}",
-      "sourceMaps": true,
-      "sourceMapPathOverride": {
-        "webpack:///": "${webRoot}/",
-        "webpack:///./*": "${webRoot}/*"
-      }
-    },
-    {
-      "type": "chrome",
-      "request": "launch",
-      "name": "Abrir PWA (App Completa)",
-      "url": "http://localhost:8080/index.html",
-      "webRoot": "${workspaceFolder}",
-      "runtimeExecutable": "/usr/bin/google-chrome",
-      "runtimeArgs": [
-        "--remote-debugging-port=9222",
-        "--enable-features=WebComponentsV0",
-        "--disable-web-resources-cache"
-      ],
-      "sourceMaps": true
     }
   ]
 }
