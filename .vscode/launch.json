@@ -2,18 +2,22 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "PWA-Chrome",
-      "request": "launch",
-      "type": "chrome",
-      "url": "http://localhost:8080",
-      "webRoot": "${workspaceFolder}"
-    },
-    {
       "type": "pwa-chrome",
       "request": "attach",
-      "name": "ATTACH Analisis Marketing",
+      "name": "Conectar a Chrome Local (Codespaces)",
       "port": 9222,
-      "webRoot": "${workspaceFolder}"
+      "urlFilter": "http://127.0.0.1:5500/*", 
+      "webRoot": "${workspaceFolder}",
+      "timeout": 60000,
+      "sourceMapPathOverrides": {
+        "webpack:///./*": "${webRoot}/*",
+        "/workspaces/${workspaceFolderBasename}/*": "${webRoot}/*"
+      },
+      "smartStep": true,
+      "skipFiles": [
+        "<node_internals>/**",
+        "node_modules/**"
+      ]
     }
   ]
 }
