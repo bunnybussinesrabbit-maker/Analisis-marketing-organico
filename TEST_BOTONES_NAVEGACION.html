@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnóstico de Botones de Navegación</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0e27;
+            color: #0ff;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #0f0;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .panel {
+            background: #1a1a2e;
+            border: 2px solid #0ff;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .panel h2 {
+            color: #0f0;
+            font-size: 14px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #0ff;
+            padding-bottom: 5px;
+        }
+        button {
+            background: #0f0;
+            color: #000;
+            border: none;
+            padding: 8px 15px;
+            margin: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            border-radius: 4px;
+        }
+        button:hover {
+            background: #00ff00;
+            box-shadow: 0 0 10px #0f0;
+        }
+        .console {
+            background: #000;
+            border: 1px solid #0f0;
+            border-radius: 4px;
+            padding: 10px;
+            height: 300px;
+            overflow-y: auto;
+            font-size: 11px;
+            margin-top: 10px;
+        }
+        .success { color: #0f0; }
+        .error { color: #f00; }
+        .warning { color: #ff0; }
+        .info { color: #0ff; }
+        .log-entry { margin: 3px 0; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>DIAGNÓSTICO: Botones de Navegación</h1>
+    
+    <div class="panel">
+        <h2>Estado General del Sistema</h2>
+        <button onclick="runDiagnostics()">Ejecutar Diagnóstico Completo</button>
+        <button onclick="clearOutput()">Limpiar Consola</button>
+        <div class="console" id="output"></div>
+    </div>
+
+    <div class="panel">
+        <h2>Pruebas Específicas</h2>
+        <button onclick="testShowViewExists()">1. Verificar showView()</button>
+        <button onclick="testButtons()">2. Verificar Botones del DOM</button>
+        <button onclick="testEventListeners()">3. Verificar Event Listeners</button>
+        <button onclick="testClickHandler()">4. Simular Click en Botón</button>
+        <button onclick="testViewSections()">5. Verificar Secciones de Vista</button>
+    </div>
+
+    <div class="panel">
+        <h2>Acciones Manuales</h2>
+        <button onclick="manualShowView('dashboard')">Llamar showView('dashboard')</button>
+        <button onclick="manualShowView('map-section')">Llamar showView('map-section')</button>
+        <button onclick="manualShowView('data')">Llamar showView('data')</button>
+        <div class="console" id="manual-output"></div>
+    </div>
+</div>
+
+<script>
+const output = document.getElementById('output');
+const manualOutput = document.getElementById('manual-output');
+
+const log = (msg, type = 'info', target = output) => {
+    const entry = document.createElement('div');
+    entry.className = `log-entry ${type}`;
+    entry.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+    target.appendChild(entry);
+    target.scrollTop = target.scrollHeight;
+    console.log(`[${type.toUpperCase()}] ${msg}`);
+};
+
+const clearOutput = () => {
+    output.innerHTML = '';
+    log('Consola limpiada', 'info');
+};
+
+// TEST 1: Verificar que showView existe
+function testShowViewExists() {
+    clearOutput();
+    log('TEST 1: Verificando existencia de showView()', 'info');
+    
+    // Necesitamos cargar index.html en un iframe para acceder a showView
+    log('⚠️ showView está en index.html (scope diferente)', 'warning');
+    log('Para verificar, abre index.html en DevTools y ejecuta:', 'info');
+    log('   typeof showView', 'info');
+    log('   showView.toString()', 'info');
+}
+
+// TEST 2: Verificar botones en el DOM
+function testButtons() {
+    clearOutput();
+    log('TEST 2: Verificando botones en el DOM', 'info');
+    
+    const buttons = document.querySelectorAll('[data-view]');
+    log(`Botones encontrados: ${buttons.length}`, buttons.length > 0 ? 'success' : 'error');
+    
+    if (buttons.length === 0) {
+        log('❌ NO HAY BOTONES CON data-view', 'error');
+        log('Esto significa que index.html NO se cargó en este contexto', 'warning');
+        return;
+    }
+    
+    buttons.forEach((btn, idx) => {
+        log(`  ${idx + 1}. ID: ${btn.id || 'sin-id'} | data-view: ${btn.dataset.view} | Texto: ${btn.textContent.trim()}`, 'info');
+    });
+}
+
+// TEST 3: Verificar event listeners
+function testEventListeners() {
+    clearOutput();
+    log('TEST 3: Verificando event listeners en botones', 'info');
+    
+    const buttons = document.querySelectorAll('[data-view]');
+    if (buttons.length === 0) {
+        log('❌ No hay botones para probar', 'error');
+        return;
+    }
+    
+    let hasListeners = 0;
+    buttons.forEach((btn, idx) => {
+        // Verificar onclick inline
+        const hasOnClick = btn.getAttribute('onclick');
+        if (hasOnClick) {
+            hasListeners++;
+            log(`  ${idx + 1}. onclick inline: ${hasOnClick.substring(0, 50)}...`, 'success');
+        } else {
+            log(`  ${idx + 1}. ❌ SIN onclick inline`, 'error');
+        }
+    });
+    
+    log(`Total botones con listeners: ${hasListeners}/${buttons.length}`, hasListeners > 0 ? 'success' : 'error');
+}
+
+// TEST 4: Simular click
+function testClickHandler() {
+    clearOutput();
+    log('TEST 4: Simulando click en primer botón', 'info');
+    
+    const buttons = document.querySelectorAll('[data-view]');
+    if (buttons.length === 0) {
+        log('❌ No hay botones para clickear', 'error');
+        return;
+    }
+    
+    const firstBtn = buttons[0];
+    const viewId = firstBtn.dataset.view;
+    
+    log(`Botón seleccionado: ${viewId}`, 'info');
+    log(`Intentando disparar click...`, 'info');
+    
+    try {
+        // Simulamos el click
+        firstBtn.click();
+        log('✅ Click disparado exitosamente', 'success');
+    } catch (e) {
+        log(`❌ Error al disparar click: ${e.message}`, 'error');
+    }
+}
+
+// TEST 5: Verificar secciones de vista
+function testViewSections() {
+    clearOutput();
+    log('TEST 5: Verificando secciones de vista', 'info');
+    
+    const sections = document.querySelectorAll('[class*="view"], [id*="section"]');
+    log(`Secciones encontradas: ${sections.length}`, 'info');
+    
+    const expectedViews = ['dashboard', 'map-section', 'data', 'capture', 'analysis', 'zones', 'pitch', 'routes', 'tools', 'reports'];
+    
+    expectedViews.forEach(view => {
+        const section = document.getElementById(view);
+        if (section) {
+            log(`  ✅ ${view}: ENCONTRADA (display: ${window.getComputedStyle(section).display})`, 'success');
+        } else {
+            log(`  ❌ ${view}: NO ENCONTRADA`, 'error');
+        }
+    });
+}
+
+// TEST COMPLETO
+function runDiagnostics() {
+    clearOutput();
+    log('='.repeat(50), 'info');
+    log('DIAGNÓSTICO COMPLETO - BOTONES DE NAVEGACIÓN', 'info');
+    log('='.repeat(50), 'info');
+    
+    log('', 'info');
+    log('PASO 1: Verificando si este documento tiene index.html cargado...', 'info');
+    
+    // Este test se ejecuta en el contexto del test, no en index.html
+    // Por eso las funciones de index.html no están disponibles
+    
+    log('⚠️ IMPORTANTE: Este archivo HTML es INDEPENDIENTE de index.html', 'warning');
+    log('No puede acceder directamente a showView() porque está en otro documento', 'warning');
+    log('', 'info');
+    
+    log('PARA DIAGNOSTICAR CORRECTAMENTE:', 'info');
+    log('1. Abre index.html en el navegador', 'info');
+    log('2. Presiona F12 para abrir Developer Tools', 'info');
+    log('3. Ve a la pestaña "Console"', 'info');
+    log('4. Copia y pega estos comandos:', 'info');
+    log('', 'info');
+    log('--- COPIA ESTO EN LA CONSOLA DE index.html ---', 'warning');
+    log('typeof showView', 'info');
+    log('typeof initAdvancedModules', 'info');
+    log('document.querySelectorAll("[data-view]").length', 'info');
+    log('document.querySelectorAll("[data-view]")[0].onclick', 'info');
+    log('showView("dashboard")', 'info');
+    log('--- FIN ---', 'warning');
+    log('', 'info');
+    
+    log('Si showView devuelve "undefined" → El problema es que la función no está disponible', 'error');
+    log('Si showView existe pero los botones no funcionan → Problema de event binding', 'error');
+    log('Si showView funciona manualmente pero no desde onclick → Problema de scope', 'error');
+}
+
+// Pruebas manuales
+function manualShowView(viewId) {
+    const output = document.getElementById('manual-output');
+    output.innerHTML = '';
+    
+    log(`Buscando sección: ${viewId}`, 'info', manualOutput);
+    
+    const section = document.getElementById(viewId);
+    if (!section) {
+        log(`❌ Sección NO encontrada: ${viewId}`, 'error', manualOutput);
+        return;
+    }
+    
+    log(`✅ Sección encontrada: ${viewId}`, 'success', manualOutput);
+    
+    try {
+        // Simular lo que haría showView
+        document.querySelectorAll('[class*="view"], [id*="section"]').forEach(s => {
+            if (s.id === viewId) {
+                s.style.display = 'block';
+                log(`✅ Mostrando sección: ${s.id}`, 'success', manualOutput);
+            } else {
+                s.style.display = 'none';
+            }
+        });
+        
+        log('✅ Vista cambiada exitosamente', 'success', manualOutput);
+    } catch (e) {
+        log(`❌ Error: ${e.message}`, 'error', manualOutput);
+    }
+}
+
+// Ejecutar diagnóstico al cargar
+window.addEventListener('load', () => {
+    log('Página de diagnóstico cargada', 'success');
+    log('Selecciona un test para comenzar', 'info');
+});
+</script>
+
+</body>
+</html>

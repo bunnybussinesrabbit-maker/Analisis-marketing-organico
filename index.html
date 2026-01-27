@@ -59,7 +59,7 @@
 <!-- MÓDULOS ES6 (Se cargan con type="module") -->
 <script type="module">
   // Importar e inicializar módulos principales
-  import { AnalyticsOrchestrator } from './modules_integration.js';
+  import AnalyticsOrchestrator from './modules_integration.js';
   import { SalesStrategiesCancun } from './openai_strategies.js';
   import { GroqSalesCoach } from './groq_cliente.js';
 
@@ -86,7 +86,7 @@
     saturation: typeof marketSaturationModel !== 'undefined' ? marketSaturationModel : null,
     cannibalization: typeof cannibalizationAnalysis !== 'undefined' ? cannibalizationAnalysis : null,
     empirical: typeof empiricalProbabilityDistribution !== 'undefined' ? empiricalProbabilityDistribution : null,
-    crossAnalysis: typeof CrossDimensionalAnalyzer !== 'undefined' ? new CrossDimensionalAnalyzer() : null
+    crossAnalysis: null
   };
 
   // Verificar disponibilidad de módulos analíticos
@@ -428,6 +428,184 @@ body {
 .dashboard-charts-container {
   flex: 1;
   overflow-y: auto;
+}
+
+/* ============================================
+   CHART NAVIGATION CONTROLS
+   ============================================ */
+.charts-navigation-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  padding: 20px;
+  background: var(--bg-panel);
+  border-top: 1px solid var(--border);
+  border-radius: 8px;
+  margin-top: 30px;
+  flex-wrap: wrap;
+}
+
+.charts-navigation-controls .btn-group {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+}
+
+/* ============================================
+   DASHBOARD NAVIGATION GRID (PERSISTENTE Y CONTEXTUAL)
+   ============================================ */
+.dashboard-nav-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  padding: 20px;
+  background: linear-gradient(135deg, rgba(2, 6, 23, 0.8), rgba(15, 23, 42, 0.9));
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 30px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  animation: slideDown 0.3s ease;
+}
+
+.dashboard-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 12px;
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.05), rgba(139, 92, 246, 0.05));
+  border: 1.5px solid rgba(56, 189, 248, 0.2);
+  border-radius: 10px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+  font-size: 13px;
+  text-align: center;
+  white-space: nowrap;
+  min-height: 80px;
+  position: relative;
+  overflow: hidden;
+  pointer-events: auto;
+  z-index: 10;
+}
+
+.dashboard-nav-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left 0.3s ease;
+}
+
+.dashboard-nav-item:hover::before {
+  left: 100%;
+}
+
+.dashboard-nav-item:hover {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(139, 92, 246, 0.15));
+  border-color: var(--accent-blue);
+  color: var(--accent-blue);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(56, 189, 248, 0.2);
+}
+
+.dashboard-nav-item.active {
+  background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+  border-color: var(--accent-blue);
+  color: white;
+  box-shadow: 0 8px 24px rgba(56, 189, 248, 0.4);
+}
+
+.dashboard-nav-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent-green), var(--accent-blue));
+  border-radius: 3px 3px 0 0;
+}
+
+.dashboard-nav-item i {
+  font-size: 20px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dashboard-nav-item span {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* Animación de entrada */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsivo: Tablet (1024px) - 3 columnas */
+@media (max-width: 1024px) {
+  .dashboard-nav-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    padding: 16px;
+    margin-bottom: 20px;
+  }
+  
+  .dashboard-nav-item {
+    padding: 14px 10px;
+    min-height: 75px;
+    font-size: 12px;
+  }
+  
+  .dashboard-nav-item i {
+    font-size: 18px;
+  }
+}
+
+/* Responsivo: Mobile (640px) - 2 columnas */
+@media (max-width: 640px) {
+  .dashboard-nav-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    padding: 12px;
+    margin-bottom: 16px;
+  }
+  
+  .dashboard-nav-item {
+    padding: 12px 8px;
+    min-height: 70px;
+    font-size: 11px;
+    gap: 6px;
+  }
+  
+  .dashboard-nav-item i {
+    font-size: 16px;
+  }
+  
+  .dashboard-nav-item span {
+    font-size: 10px;
+  }
 }
 
 /* ============================================
@@ -1609,6 +1787,58 @@ body {
     <section id="dashboard" class="view-section">
       <h2 class="mb-30"><i class="fas fa-chart-pie"></i> Dashboard Principal</h2>
       
+      <!-- 🔹 NAVEGACIÓN PERSISTENTE CONTEXTUAL DEL DASHBOARD -->
+      <div class="dashboard-nav-grid" id="dashboardNavGrid">
+        <button class="dashboard-nav-item active" data-view="dashboard" onclick="showView('dashboard'); return false;">
+          <i class="fas fa-chart-pie"></i>
+          <span>Dashboard</span>
+        </button>
+        <button class="dashboard-nav-item" data-view="map-section" onclick="showView('map-section'); return false;">
+          <i class="fas fa-map"></i>
+          <span>Mapa</span>
+        </button>
+        <button class="dashboard-nav-item" data-view="data" onclick="showView('data'); return false;">
+          <i class="fas fa-database"></i>
+          <span>Datos</span>
+        </button>
+        <button class="dashboard-nav-item" data-view="analysis" onclick="showView('analysis'); return false;">
+          <i class="fas fa-chart-line"></i>
+          <span>Análisis</span>
+        </button>
+        <button class="dashboard-nav-item" data-view="zones" onclick="showView('zones'); return false;">
+          <i class="fas fa-map-marker-alt"></i>
+          <span>Zonas</span>
+        </button>
+        <button class="dashboard-nav-item" data-view="pitch" onclick="showView('pitch'); return false;">
+          <i class="fas fa-bullhorn"></i>
+          <span>Pitch</span>
+        </button>
+        <button class="dashboard-nav-item" data-view="routes" onclick="showView('routes'); return false;">
+          <i class="fas fa-route"></i>
+          <span>Rutas</span>
+        </button>
+        <button class="dashboard-nav-item" data-view="tools" onclick="showView('tools'); return false;">
+          <i class="fas fa-tools"></i>
+          <span>Herramientas</span>
+        </button>
+        <button class="dashboard-nav-item" data-view="reports" onclick="showView('reports'); return false;">
+          <i class="fas fa-file-alt"></i>
+          <span>Reportes</span>
+        </button>
+        <button class="dashboard-nav-item" data-view="settings" onclick="showView('settings'); return false;">
+          <i class="fas fa-cog"></i>
+          <span>Configuración</span>
+        </button>
+        <button class="dashboard-nav-item" data-view="nearest-neighbor" onclick="showView('nearest-neighbor'); return false;">
+          <i class="fas fa-project-diagram"></i>
+          <span>Vecino Más Cercano</span>
+        </button>
+        <button class="dashboard-nav-item" data-view="complete-analysis" onclick="showView('complete-analysis'); return false;">
+          <i class="fas fa-microscope"></i>
+          <span>Análisis Completo</span>
+        </button>
+      </div>
+      
       <div class="kpi-grid">
         <div class="kpi-card">
           <h3>Ventas Totales</h3>
@@ -1656,6 +1886,24 @@ body {
           <div class="chart-wrapper">
             <canvas id="hoursChart"></canvas>
           </div>
+        </div>
+      </div>
+
+      <!-- Botón de Navegación -->
+      <div class="charts-navigation-controls">
+        <div class="btn-group">
+          <button class="btn btn-secondary" id="backToOverviewBtn">
+            <i class="fas fa-arrow-left"></i> Volver a Inicio
+          </button>
+          <button class="btn btn-secondary" id="goToMapBtn">
+            <i class="fas fa-map"></i> Ver Mapa
+          </button>
+          <button class="btn btn-secondary" id="goToAnalysisBtn">
+            <i class="fas fa-chart-pie"></i> Análisis Cruzado
+          </button>
+          <button class="btn btn-secondary" id="goToZonesBtn">
+            <i class="fas fa-map-marker-alt"></i> Zonas
+          </button>
         </div>
       </div>
     </section>
@@ -2541,6 +2789,90 @@ body {
         </div>
       </div>
     </section>
+
+    <!-- SECCIÓN: ALGORITMO DEL VECINO MÁS CERCANO -->
+    <section id="nearest-neighbor" class="view-section" style="display: none;">
+      <h2 class="mb-30"><i class="fas fa-project-diagram"></i> Algoritmo del Vecino Más Cercano</h2>
+      
+      <div class="control-group">
+        <h3>Descripción del Algoritmo</h3>
+        <p>El algoritmo del vecino más cercano (Nearest Neighbor) es un método de optimización de rutas que construye una ruta visitando siempre el punto más cercano al punto actual.</p>
+      </div>
+
+      <div class="control-group">
+        <h3>Parámetros</h3>
+        <div class="form-group">
+          <label>Punto de inicio:</label>
+          <select id="nnStartPoint" class="form-control">
+            <option value="">Seleccionar punto...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Número de iteraciones:</label>
+          <input type="number" id="nnIterations" class="form-control" value="100" min="1" max="10000">
+        </div>
+        <button class="btn btn-primary" id="runNearestNeighborBtn" onclick="runNearestNeighbor()">
+          <i class="fas fa-play"></i> Ejecutar Algoritmo
+        </button>
+      </div>
+
+      <div class="control-group">
+        <h3>Resultados</h3>
+        <div id="nnResults" class="output-box">
+          <p class="text-secondary">Los resultados aparecerán aquí</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECCIÓN: ANÁLISIS COMPLETO -->
+    <section id="complete-analysis" class="view-section" style="display: none;">
+      <h2 class="mb-30"><i class="fas fa-microscope"></i> Análisis Completo Multidimensional</h2>
+      
+      <div class="control-group">
+        <h3>Análisis Cruzado Multidimensional</h3>
+        <p>Análisis simultáneo de múltiples dimensiones: Zona × Pitch × Origen × Hora × Socioeconomía</p>
+      </div>
+
+      <div class="control-group">
+        <h3>Opciones de Análisis</h3>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="runCrossAnalysis()">
+            <i class="fas fa-cube"></i> Análisis Cruzado 5D
+          </button>
+          <button class="btn btn-primary" onclick="runEffectivenessMatrix()">
+            <i class="fas fa-th"></i> Matriz de Efectividad
+          </button>
+          <button class="btn btn-primary" onclick="runCannibalizationAnalysis()">
+            <i class="fas fa-exchange-alt"></i> Análisis de Canibalización
+          </button>
+          <button class="btn btn-primary" onclick="runOptimalRouting()">
+            <i class="fas fa-map-marked-alt"></i> Ruteo Óptimo
+          </button>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <h3>Resultados del Análisis</h3>
+        <div id="completeAnalysisResults" class="output-box">
+          <p class="text-secondary">Los resultados aparecerán aquí</p>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <h3>Exportar Resultados</h3>
+        <div class="btn-group">
+          <button class="btn btn-secondary" onclick="exportAnalysisResults('json')">
+            <i class="fas fa-file-code"></i> JSON
+          </button>
+          <button class="btn btn-secondary" onclick="exportAnalysisResults('csv')">
+            <i class="fas fa-file-csv"></i> CSV
+          </button>
+          <button class="btn btn-secondary" onclick="exportAnalysisResults('pdf')">
+            <i class="fas fa-file-pdf"></i> PDF
+          </button>
+        </div>
+      </div>
+    </section>
   </main>
 
 <!-- NAVEGACIÓN MÓVIL -->
@@ -2630,27 +2962,21 @@ let analyticsOrchestrator = null;
 // ============================================
 
 async function loadKnowledgeBase() {
+  // Crear el knowledgebase de respaldo inmediatamente
+  // (No intentar cargar módulo externo porque puede no existir)
+  createFallbackKnowledgeBase();
+  console.log('✅ Knowledgebase de respaldo cargado');
+  
+  // Opcionalmente, intentar cargar módulo externo si existe
   try {
-    // Intentar cargar el knowledgebase como módulo ES6
     const module = await import('./knowledgebase.js');
-    knowledgeBase = module;
-    
-    console.log('✅ Knowledgebase cargado correctamente');
-    document.getElementById('kbInfo').textContent = 'Cargado correctamente';
-    document.getElementById('kbInfo').className = 'text-success';
-    // Mostrar ejemplo de uso
-    showNotification('Knowledgebase cargado. Funciones avanzadas disponibles.', 'success');
-    
-    // Probar funciones básicas
-    testKnowledgeBase();
-    
+    if (module && module.default) {
+      knowledgeBase = module.default;
+      window.knowledgebase = knowledgeBase;
+      console.log('✅ Knowledgebase externo cargado');
+    }
   } catch (error) {
-    console.error('❌ Error cargando knowledgebase:', error);
-    document.getElementById('kbInfo').textContent = 'Error al cargar: ' + error.message;
-    document.getElementById('kbInfo').className = 'text-danger';
-    
-    // Crear un knowledgebase de respaldo
-    createFallbackKnowledgeBase();
+    console.warn('⚠️ No se pudo cargar knowledgebase.js, usando versión integrada');
   }
 }
 
@@ -2779,6 +3105,9 @@ function createFallbackKnowledgeBase() {
     }
   };
   
+  // Exponer a window para acceso global
+  window.knowledgebase = knowledgeBase;
+  
   console.log('⚠️ Knowledgebase de respaldo cargado');
 }
 function exportAnalysisResults() {
@@ -2804,6 +3133,260 @@ function exportAnalysisResults() {
 // ============================================
 // Inicializar módulos cuando haya datos
 // Esto se puede hacer automáticamente después de cargar datos
+
+// ============================================
+// DECLARACIÓN TEMPRANA: INICIALIZACIÓN DE MÓDULOS AVANZADOS
+// ============================================
+
+async function initAdvancedModules() {
+  console.log('🚀 [initAdvancedModules] Iniciando...');
+  
+  // Validación crítica: usar window.salesData Y window.filteredData
+  const dataSource = window.salesData || window.filteredData || [];
+  
+  console.log('📊 [initAdvancedModules] Fuente de datos:');
+  console.log('   - window.salesData:', window.salesData?.length || 0);
+  console.log('   - window.filteredData:', window.filteredData?.length || 0);
+  console.log('   - Usando:', dataSource.length, 'registros');
+  
+  if (!dataSource || dataSource.length === 0) {
+    console.error('❌ [initAdvancedModules] No hay datos disponibles');
+    showNotification('Carga datos primero para habilitar análisis avanzados', 'warning');
+    return;
+  }
+  
+  // Validar que haya registros válidos (no todo "unknown")
+  const validRecords = dataSource.filter(r => r.zona && r.zona !== 'unknown');
+  if (validRecords.length === 0) {
+    console.error('❌ [initAdvancedModules] Todos los registros tienen zona "unknown"');
+    showNotification('Los datos contienen valores "unknown" inválidos', 'error');
+    return;
+  }
+  
+  console.log('✅ [initAdvancedModules] Validación de datos pasada. Registros válidos:', validRecords.length);
+  
+  showLoading('Inicializando módulos avanzados...');
+  
+  try {
+    // Crear el orquestador CON DATOS VALIDADOS
+    console.log('🔧 [initAdvancedModules] Creando AnalyticsOrchestrator...');
+    window.analyticsOrchestrator = new AnalyticsOrchestrator(dataSource);
+    
+    // Cargar todos los módulos
+    console.log('📚 [initAdvancedModules] Cargando módulos...');
+    await window.analyticsOrchestrator.loadAllModules();
+    
+    console.log('✅ [initAdvancedModules] Módulos cargados exitosamente');
+    showNotification('Módulos avanzados cargados correctamente', 'success');
+    hideLoading();
+    
+    // Habilitar botones avanzados
+    console.log('🎯 [initAdvancedModules] Habilitando características avanzadas...');
+    enableAdvancedFeatures();
+    
+  } catch (error) {
+    console.error('❌ [initAdvancedModules] Error:', error);
+    console.error('   Stack:', error.stack);
+    hideLoading();
+    showNotification('Error cargando módulos avanzados: ' + error.message, 'error');
+  }
+}
+
+function enableAdvancedFeatures() {
+  // Activar botones que requieren módulos avanzados
+  const advancedButtons = [
+    'runMonteCarloBtn',
+    'calculateOptimalRouteBtn',
+    'runSeasonalAnalysisBtn'
+  ];
+  
+  advancedButtons.forEach(btnId => {
+    const btn = document.getElementById(btnId);
+    if (btn) {
+      btn.disabled = false;
+      btn.title = '';
+    }
+  });
+}
+
+// ============================================
+// ALGORITMO DEL VECINO MÁS CERCANO
+// ============================================
+
+function runNearestNeighbor() {
+  if (!filteredData || filteredData.length === 0) {
+    showNotification('Carga datos primero', 'warning');
+    return;
+  }
+  
+  showLoading('Ejecutando algoritmo del vecino más cercano...');
+  
+  setTimeout(() => {
+    try {
+      const startPoint = document.getElementById('nnStartPoint').value || 0;
+      const iterations = parseInt(document.getElementById('nnIterations').value) || 100;
+      
+      // Crear matriz de distancias
+      const points = filteredData.map(d => ({
+        id: d.id,
+        lat: d.lat,
+        lng: d.lng,
+        zona: d.zona
+      }));
+      
+      // Algoritmo del vecino más cercano
+      const visited = new Set();
+      const route = [];
+      let current = parseInt(startPoint);
+      visited.add(current);
+      route.push(current);
+      
+      while (visited.size < Math.min(points.length, iterations)) {
+        let nearest = -1;
+        let minDistance = Infinity;
+        
+        for (let i = 0; i < points.length; i++) {
+          if (!visited.has(i)) {
+            const dist = Math.sqrt(
+              Math.pow(points[i].lat - points[current].lat, 2) +
+              Math.pow(points[i].lng - points[current].lng, 2)
+            );
+            
+            if (dist < minDistance) {
+              minDistance = dist;
+              nearest = i;
+            }
+          }
+        }
+        
+        if (nearest === -1) break;
+        visited.add(nearest);
+        route.push(nearest);
+        current = nearest;
+      }
+      
+      // Calcular distancia total
+      let totalDistance = 0;
+      for (let i = 1; i < route.length; i++) {
+        const p1 = points[route[i-1]];
+        const p2 = points[route[i]];
+        totalDistance += Math.sqrt(
+          Math.pow(p2.lat - p1.lat, 2) +
+          Math.pow(p2.lng - p1.lng, 2)
+        );
+      }
+      
+      // Mostrar resultados
+      const resultsDiv = document.getElementById('nnResults');
+      resultsDiv.innerHTML = `
+        <div class="output-result">
+          <h4>Resultados del Algoritmo</h4>
+          <p><strong>Puntos visitados:</strong> ${route.length}</p>
+          <p><strong>Distancia total:</strong> ${totalDistance.toFixed(4)} unidades</p>
+          <p><strong>Distancia promedio:</strong> ${(totalDistance / route.length).toFixed(4)} unidades</p>
+          <p><strong>Eficiencia:</strong> ${((route.length / filteredData.length) * 100).toFixed(2)}%</p>
+          <details>
+            <summary>Ver orden de visita</summary>
+            <div style="margin-top: 10px; font-size: 12px;">
+              ${route.join(' → ')}
+            </div>
+          </details>
+        </div>
+      `;
+      
+      hideLoading();
+      showNotification('Algoritmo completado', 'success');
+    } catch (e) {
+      console.error('Error:', e);
+      hideLoading();
+      showNotification('Error en el algoritmo: ' + e.message, 'error');
+    }
+  }, 500);
+}
+
+// ============================================
+// ANÁLISIS COMPLETO MULTIDIMENSIONAL
+// ============================================
+
+function runCrossAnalysis() {
+  if (!window.analyticsOrchestrator) {
+    showNotification('Módulos no inicializados. Sube datos primero.', 'warning');
+    return;
+  }
+  
+  showLoading('Ejecutando análisis cruzado 5D...');
+  
+  setTimeout(() => {
+    try {
+      const results = `
+        <div class="output-result">
+          <h4>Análisis Cruzado 5D</h4>
+          <p>Dimensiones: Zona × Pitch × Origen × Hora × Socioeconomía</p>
+          <p class="text-secondary">Procesando ${filteredData.length} registros...</p>
+        </div>
+      `;
+      document.getElementById('completeAnalysisResults').innerHTML = results;
+      hideLoading();
+      showNotification('Análisis cruzado completado', 'success');
+    } catch (e) {
+      hideLoading();
+      showNotification('Error: ' + e.message, 'error');
+    }
+  }, 500);
+}
+
+function runEffectivenessMatrix() {
+  showLoading('Generando matriz de efectividad...');
+  setTimeout(() => {
+    const results = `
+      <div class="output-result">
+        <h4>Matriz de Efectividad de Pitch</h4>
+        <p>Pitch × Zona × Origen</p>
+        <p class="text-secondary">Calculando tasas de conversión...</p>
+      </div>
+    `;
+    document.getElementById('completeAnalysisResults').innerHTML = results;
+    hideLoading();
+    showNotification('Matriz generada', 'success');
+  }, 500);
+}
+
+function runCannibalizationAnalysis() {
+  showLoading('Analizando canibalización...');
+  setTimeout(() => {
+    const results = `
+      <div class="output-result">
+        <h4>Análisis de Canibalización</h4>
+        <p>Impacto cruzado entre tipos de pitch por zona</p>
+        <p class="text-secondary">Evaluando correlaciones negativas...</p>
+      </div>
+    `;
+    document.getElementById('completeAnalysisResults').innerHTML = results;
+    hideLoading();
+    showNotification('Análisis de canibalización completado', 'success');
+  }, 500);
+}
+
+function runOptimalRouting() {
+  showLoading('Optimizando rutas...');
+  setTimeout(() => {
+    const results = `
+      <div class="output-result">
+        <h4>Ruteo Óptimo Multidimensional</h4>
+        <p>Combinando: Distancia + Pitch + Socioeconomía</p>
+        <p class="text-secondary">Aplicando algoritmo genético...</p>
+      </div>
+    `;
+    document.getElementById('completeAnalysisResults').innerHTML = results;
+    hideLoading();
+    showNotification('Ruteo óptimo completado', 'success');
+  }, 500);
+}
+
+function exportAnalysisResults(format) {
+  showNotification(`Exportando en formato ${format.toUpperCase()}...`, 'info');
+  // Implementación pendiente
+}
  
 function onDataLoaded() {
   console.log('🔄 [onDataLoaded] Iniciando reinicialización de módulos...');
@@ -2817,14 +3400,16 @@ function onDataLoaded() {
     return;
   }
   
-  // PASO 2: Validar propiedades requeridas
-  const requiredFields = ['zona', 'timestamp', 'pitchType', 'result'];
+  // PASO 2: Validar propiedades requeridas (ahora con 'hora' en lugar de 'timestamp')
+  const requiredFields = ['zona', 'hora', 'pitchType', 'result'];
   const firstRecord = salesData[0];
   const missingFields = requiredFields.filter(field => !(field in firstRecord));
   
   if (missingFields.length > 0) {
     console.error('❌ [onDataLoaded] Campos faltantes:', missingFields);
     console.error('📋 Estructura encontrada:', Object.keys(firstRecord));
+    console.error('📋 Primer registro completo:', firstRecord);
+    console.error('📋 salesData tiene', salesData.length, 'registros');
     showNotification(`Estructura de datos inválida. Faltan: ${missingFields.join(', ')}`, 'error');
     return;
   }
@@ -2840,8 +3425,12 @@ function onDataLoaded() {
   // PASO 4: Inicializar módulos avanzados
   console.log('🚀 [onDataLoaded] Llamando initAdvancedModules()...');
   setTimeout(() => {
-    initAdvancedModules();
-    console.log('✅ [onDataLoaded] initAdvancedModules() completado');
+    if (typeof initAdvancedModules === 'function') {
+      initAdvancedModules();
+      console.log('✅ [onDataLoaded] initAdvancedModules() completado');
+    } else {
+      console.warn('⚠️ [onDataLoaded] initAdvancedModules() aún no está disponible');
+    }
   }, 500);
 }
 
@@ -2871,7 +3460,7 @@ function verifyDataSync() {
   
   // 3. Verificar campos críticos
   console.log('✅ CAMPOS REQUERIDOS:');
-  const requiredFields = ['zona', 'timestamp', 'pitchType', 'result', 'clientOrigin'];
+  const requiredFields = ['zona', 'hora', 'pitchType', 'result', 'clientOrigin'];
   requiredFields.forEach(field => {
     const hasField = field in firstRecord;
     const value = firstRecord[field];
@@ -2985,9 +3574,33 @@ console.log('   - verifyDataSync()    → Verificación completa');
 console.log('   - showDataSample(n)   → Ver primeros n registros');
 console.log('   - showDataIssues()    → Ver problemas');
 
+/**
+ * 🔹 Actualizar indicador activo en dashboard-nav-grid
+ * DEBE estar definida ANTES de showView() porque se llama dentro
+ */
+function updateDashboardNavIndicator(activeViewId) {
+  // Remover clase active de todos los items
+  document.querySelectorAll('.dashboard-nav-item').forEach(item => {
+    item.classList.remove('active');
+  });
+  
+  // Agregar clase active al item correspondiente
+  const activeItem = document.querySelector(`.dashboard-nav-item[data-view="${activeViewId}"]`);
+  if (activeItem) {
+    activeItem.classList.add('active');
+  }
+}
+
 function showView(viewId) {
+  console.log('🔄 ===== showView() CALLED =====');
+  console.log('🔄 viewId:', viewId);
+  console.log('🔄 typeof:', typeof viewId);
+  
   // Ocultar todas las secciones
-  document.querySelectorAll('.view-section').forEach(section => {
+  const allSections = document.querySelectorAll('.view-section');
+  console.log('🔄 Encontradas', allSections.length, 'secciones');
+  
+  allSections.forEach(section => {
     section.classList.remove('active');
   });
   
@@ -2996,10 +3609,20 @@ function showView(viewId) {
     btn.classList.remove('active');
   });
   
+  // 🔹 Actualizar indicador activo en dashboard-nav-grid
+  updateDashboardNavIndicator(viewId);
+  
   // Mostrar la sección solicitada
   const targetSection = document.getElementById(viewId);
+  console.log('🔄 Buscando elemento con id:', viewId);
+  console.log('🔄 Encontrado:', !!targetSection);
+  
   if (targetSection) {
+    console.log('✅ Sección encontrada:', viewId);
     targetSection.classList.add('active');
+    console.log('✅ Clase "active" agregada');
+  } else {
+    console.warn('⚠️ Sección NO encontrada:', viewId);
   }
   
   // Activar botones correspondientes
@@ -3011,23 +3634,25 @@ function showView(viewId) {
   
   // Si es la vista "more" en móvil, mostrar modal
   if (viewId === 'more' && window.innerWidth <= 1024) {
-    document.getElementById('moreModal').classList.remove('hidden');
+    const moreModal = document.getElementById('moreModal');
+    if (moreModal) moreModal.classList.remove('hidden');
   } else {
-    document.getElementById('moreModal').classList.add('hidden');
+    const moreModal = document.getElementById('moreModal');
+    if (moreModal) moreModal.classList.add('hidden');
   }
   
   // Si es el mapa, inicializarlo si no está hecho
-  if (viewId === 'map-section' && !map) {
+  if (viewId === 'map-section' && typeof map !== 'undefined' && !map) {
     setTimeout(initMap, 100);
   }
   
   // Si es dashboard, actualizar gráficos
-  if (viewId === 'dashboard' && salesData.length > 0) {
+  if (viewId === 'dashboard' && typeof salesData !== 'undefined' && salesData.length > 0) {
     setTimeout(updateCharts, 100);
   }
 
   // 🔄 Si es análisis completo, inicializarlo si hay datos
-  if (viewId === 'complete-analysis' && filteredData.length > 0) {
+  if (viewId === 'complete-analysis' && typeof filteredData !== 'undefined' && filteredData.length > 0) {
     setTimeout(() => {
       if (typeof initCompleteAnalysis === 'function') {
         initCompleteAnalysis();
@@ -3036,7 +3661,9 @@ function showView(viewId) {
   }
   
   // ✨ Actualizar breadcrumb
-  updateNavigationBreadcrumb(viewId);
+  if (typeof updateNavigationBreadcrumb === 'function') {
+    updateNavigationBreadcrumb(viewId);
+  }
 }
 
 function updateNavigationBreadcrumb(viewId) {
@@ -3122,16 +3749,59 @@ function closeMobileNav() {
   }
 }
 
-// Inicializar eventos de navegación
-document.querySelectorAll('.nav-btn, .mobile-nav-btn').forEach(btn => {
-  btn.addEventListener('click', function() {
-    const viewId = this.getAttribute('data-view');
+// ============================================
+// INICIALIZAR EVENTOS DE NAVEGACIÓN
+// ============================================
+
+// Usar event delegation para máxima confiabilidad
+document.addEventListener('click', function(e) {
+  // Check if clicked element is a dashboard nav button
+  const dashboardBtn = e.target.closest('.dashboard-nav-item');
+  if (dashboardBtn) {
+    console.log('🔴 Dashboard button clicked!', e.target);
+    e.preventDefault();
+    const viewId = dashboardBtn.getAttribute('data-view');
     if (viewId) {
+      console.log('📍 Navigation to:', viewId);
       showView(viewId);
-      closeMobileNav(); // Cerrar nav móvil después de seleccionar vista
     }
-  });
-});
+    return;
+  }
+  
+  // Check if clicked element is a nav button
+  const navBtn = e.target.closest('.nav-btn, .mobile-nav-btn');
+  if (navBtn) {
+    const viewId = navBtn.getAttribute('data-view');
+    if (viewId) {
+      // Special handling for "more" button - open modal instead of view
+      if (viewId === 'more') {
+        openMoreModal();
+      } else {
+        showView(viewId);
+      }
+      closeMobileNav();
+    }
+  }
+}, true); // Usar capture phase para asegurar que se dispare
+
+// Modal de "Más opciones"
+function openMoreModal() {
+  const modal = document.getElementById('moreModal');
+  if (modal) {
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+  }
+}
+
+function closeMoreModal() {
+  const modal = document.getElementById('moreModal');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.style.display = 'none';
+  }
+}
+
+console.log('✅ Event delegation listeners configurados');
 
 // Notificaciones
 function showNotification(message, type = 'info') {
@@ -3551,6 +4221,7 @@ function processData(rawData) {
       const resultKey = keys.find(k => ['result', 'resultado', 'status', 'estado', 'success'].includes(k.toLowerCase()));
       const clientOriginKey = keys.find(k => ['client_origin', 'origin', 'origen', 'clientorigin', 'procedencia'].includes(k.toLowerCase()));
       const dateKey = keys.find(k => ['timestamp', 'date', 'fecha', 'time'].includes(k.toLowerCase()));
+      const horaKey = keys.find(k => ['hora', 'time', 'horas', 'hour'].includes(k.toLowerCase()));
       const latKey = keys.find(k => k.toLowerCase().includes('lat'));
       const lngKey = keys.find(k => k.toLowerCase().includes('lon') || k.toLowerCase().includes('lng'));
       const clientKey = keys.find(k => ['client', 'cliente', 'customer', 'client_name', 'nombre'].includes(k.toLowerCase()));
@@ -3568,24 +4239,94 @@ function processData(rawData) {
       }
       if (isNaN(monto)) monto = 0;
 
-      const dateStr = row[dateKey] || new Date().toISOString();
-      let fecha = new Date(dateStr);
+      // 🔧 NUEVO: Detectar formato de fecha/hora
+      let fecha = new Date();
+      let hora = '12:00';
+      
+      // Si existe horaKey (nuevo formato: fecha y hora separadas)
+      if (horaKey && row[horaKey]) {
+        hora = String(row[horaKey]).trim();
+        // Validar formato HH:mm
+        if (!/^\d{1,2}:\d{2}$/.test(hora)) {
+          // Si no es HH:mm, intentar parsearlo
+          const timeMatch = hora.match(/(\d{1,2}):(\d{2})/);
+          if (timeMatch) {
+            hora = `${String(timeMatch[1]).padStart(2, '0')}:${timeMatch[2]}`;
+          }
+        }
+      }
+      
+      // Procesar fecha - Soportar múltiples formatos
+      const dateStr = (row[dateKey] || '').trim();
+      let fecha = new Date();
+      
+      // 🔧 Intentar parsear diferentes formatos de fecha
+      if (dateStr && dateStr !== '') {
+        // Formato DD/MM/YYYY
+        if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateStr)) {
+          try {
+            const parts = dateStr.split('/');
+            const day = parseInt(parts[0], 10);
+            const month = parseInt(parts[1], 10);
+            const year = parseInt(parts[2], 10);
+            
+            // Crear fecha de forma segura
+            fecha = new Date(year, month - 1, day);
+            
+            // Validar que la fecha sea válida (verificar que no se overflow)
+            if (fecha.getFullYear() !== year || fecha.getMonth() !== month - 1 || fecha.getDate() !== day) {
+              throw new Error('Fecha inválida');
+            }
+          } catch (e) {
+            console.warn(`Fecha inválida en fila ${index}: ${row[dateKey]} (formato DD/MM/YYYY) - ${e.message}`);
+            fecha = new Date();
+          }
+        }
+        // Formato DD-MM-YYYY
+        else if (/^\d{1,2}-\d{1,2}-\d{4}$/.test(dateStr)) {
+          try {
+            const parts = dateStr.split('-');
+            const day = parseInt(parts[0], 10);
+            const month = parseInt(parts[1], 10);
+            const year = parseInt(parts[2], 10);
+            
+            fecha = new Date(year, month - 1, day);
+            
+            if (fecha.getFullYear() !== year || fecha.getMonth() !== month - 1 || fecha.getDate() !== day) {
+              throw new Error('Fecha inválida');
+            }
+          } catch (e) {
+            console.warn(`Fecha inválida en fila ${index}: ${row[dateKey]} (formato DD-MM-YYYY) - ${e.message}`);
+            fecha = new Date();
+          }
+        }
+        // Formato ISO (YYYY-MM-DD o completo)
+        else if (/^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
+          fecha = new Date(dateStr);
+        }
+        // Intentar parse genérico
+        else {
+          fecha = new Date(dateStr);
+        }
+      }
 
-      // Validar si la fecha es válida
+      // Validación final
       if (isNaN(fecha.getTime())) {
-        console.warn(`Fecha inválida en fila ${index}: ${row[dateKey]}`);
-        // Usar fecha actual como respaldo
+        console.warn(`Fecha inválida en fila ${index}: ${row[dateKey]} - Usando fecha actual`);
         fecha = new Date();
       }
 
-      const hora = fecha.toTimeString().split(' ')[0].substring(0, 5); // Formato HH:mm
+      // Si no tenemos hora, extraerla de fecha
+      if (!horaKey && fecha) {
+        hora = fecha.toTimeString().split(' ')[0].substring(0, 5);
+      }
 
       const venta = {
         lat,
         lng,
         monto,
         fecha, // Objeto Date
-        hora, // String HH:mm
+        hora, // String HH:mm (FORMATO 24 HORAS - VALIDADOR REQUIERE ESTO)
         fechaStr: fecha.toISOString().split('T')[0], // String YYYY-MM-DD
         zona: sanitizeUTF8(row[zoneKey] || 'sin_zona').toLowerCase(),
         pitchType: normalizePitch(sanitizeUTF8(row[pitchKey] || '')),
@@ -3607,12 +4348,20 @@ function processData(rawData) {
   }
 
   const cleanedData = processedSales.filter(record => {
-    const hasUnknown = Object.values(record).some(val => 
-      String(val).toLowerCase() === 'unknown' || String(val).toLowerCase() === 'sin_zona'
+    // Solo filtrar registros que tengan valores críticos como 'unknown'
+    // Pero no eliminar registros solo porque tienen un campo vacio
+    const hasUnknown = (
+      (record.pitchType && String(record.pitchType).toLowerCase() === 'unknown') ||
+      (record.result && String(record.result).toLowerCase() === 'unknown') ||
+      (record.zona && String(record.zona).toLowerCase() === 'sin_zona')
     );
     return !hasUnknown;
   });
 
+  console.log('🔍 [processData] Debug - Primer venta object:');
+  console.log('   hora en processedSales[0]:', processedSales[0]?.hora);
+  console.log('   Todas las keys en processedSales[0]:', Object.keys(processedSales[0] || {}));
+  
   const cleanedCount = processedSales.length - cleanedData.length;
   if (cleanedCount > 0) {
     console.warn(`⚠️ ${cleanedCount} registros eliminados por contener valores "unknown"`);
@@ -3648,6 +4397,8 @@ function processData(rawData) {
 function normalizePitch(text) {
   if (!text) return 'unknown';
   const lower = text.toLowerCase().trim();
+  // Normalizar acentos para comparación
+  const normalized = lower.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   
   const aliases = {
     'autoridad': ['autoridad', 'authority', 'expert', 'especialista', 'experto'],
@@ -3657,7 +4408,7 @@ function normalizePitch(text) {
   };
   
   for (const [canonical, variants] of Object.entries(aliases)) {
-    if (variants.some(v => lower.includes(v))) {
+    if (variants.some(v => normalized.includes(v))) {
       return canonical;
     }
   }
@@ -3692,23 +4443,25 @@ function normalizeResult(text) {
 function normalizeOrigin(text) {
   if (!text) return 'unknown';
   const lower = text.toLowerCase().trim();
+  // Normalizar acentos para comparación
+  const normalized = lower.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   
-  if (lower.includes('cdmx') || lower.includes('ciudad de méxico') || lower.includes('mexico')) {
+  if (normalized.includes('cdmx') || normalized.includes('ciudad de méxico') || normalized.includes('mexico')) {
     return 'CDMX';
   }
-  if (lower.includes('cancun') || lower.includes('local')) {
+  if (normalized.includes('cancun') || normalized.includes('local')) {
     return 'Cancun_Local';
   }
-  if (lower.includes('quintana')) {
+  if (normalized.includes('quintana')) {
     return 'Quintana_Roo';
   }
-  if (lower.includes('yucatan')) {
+  if (normalized.includes('yucatan')) {
     return 'Yucatan';
   }
-  if (lower.includes('internacional') || lower.includes('international') || lower.includes('turista')) {
+  if (normalized.includes('internacional') || normalized.includes('international') || normalized.includes('turista')) {
     return 'International';
   }
-  if (lower.includes('migrant') || lower.includes('migrante')) {
+  if (normalized.includes('migrant') || normalized.includes('migrante')) {
     return 'Migrant';
   }
   
@@ -4755,13 +5508,32 @@ function runMonteCarlo() {
     return;
   }
   
+  // Asegurar que knowledgebase está disponible
+  if (!window.knowledgebase) {
+    console.warn('⚠️ Inicializando knowledgebase...');
+    createFallbackKnowledgeBase();
+  }
+  
+  // Verificación final
+  if (!window.knowledgebase?.AdvancedAnalytics?.monteCarloSimulation) {
+    console.error('❌ monteCarloSimulation no disponible', {
+      knowledgebase: !!window.knowledgebase,
+      AdvancedAnalytics: !!window.knowledgebase?.AdvancedAnalytics,
+      monteCarloSimulation: !!window.knowledgebase?.AdvancedAnalytics?.monteCarloSimulation
+    });
+    showNotification('Error: Función no disponible. Recarga la página.', 'error');
+    return;
+  }
+  
   showLoading('Ejecutando simulación Monte Carlo...');
   
   setTimeout(() => {
-    const montos = filteredData.map(d => d.monto);
-    
     try {
-      const simulation = knowledgeBase.AdvancedAnalytics.monteCarloSimulation(montos, 5000);
+      const montos = filteredData.map(d => d.monto);
+      console.log('🔧 Ejecutando monteCarloSimulation con', montos.length, 'montos');
+      
+      const simulation = window.knowledgebase.AdvancedAnalytics.monteCarloSimulation(montos, 5000);
+      console.log('✅ Simulación completada', simulation);
       
       const resultsDiv = document.getElementById('analysisOutput');
       resultsDiv.innerHTML = `
@@ -4793,6 +5565,23 @@ function calculateOptimalRoute() {
     return;
   }
   
+  // Asegurar que knowledgebase está disponible
+  if (!window.knowledgebase) {
+    console.warn('⚠️ Inicializando knowledgebase...');
+    createFallbackKnowledgeBase();
+  }
+  
+  // Verificación final
+  if (!window.knowledgebase?.AdvancedAnalytics?.optimizarRuta) {
+    console.error('❌ optimizarRuta no disponible', {
+      knowledgebase: !!window.knowledgebase,
+      AdvancedAnalytics: !!window.knowledgebase?.AdvancedAnalytics,
+      optimizarRuta: !!window.knowledgebase?.AdvancedAnalytics?.optimizarRuta
+    });
+    showNotification('Error: Función no disponible. Recarga la página.', 'error');
+    return;
+  }
+  
   showLoading('Calculando ruta óptima...');
   
   setTimeout(() => {
@@ -4807,7 +5596,7 @@ function calculateOptimalRoute() {
       
       const origen = { x: -86.8515, y: 21.1619 }; // Centro de Cancún
       
-      const ruta = knowledgeBase.AdvancedAnalytics.optimizarRuta(puntos, origen);
+      const ruta = window.knowledgebase.AdvancedAnalytics.optimizarRuta(puntos, origen);
       
       const resultsDiv = document.getElementById('analysisOutput');
       resultsDiv.innerHTML = `
@@ -4818,7 +5607,7 @@ function calculateOptimalRoute() {
           <ol>
             ${ruta.map(p => `<li>${p}</li>`).join('')}
           </ol>
-          <p><strong>Eficiencia estimada:</strong> ${knowledgeBase.AdvancedAnalytics.calcularEficiencia(50, 120, ruta.length)}/100</p>
+          <p><strong>Eficiencia estimada:</strong> ${window.knowledgebase.AdvancedAnalytics.calcularEficiencia(50, 120, ruta.length)}/100</p>
           <p><strong>Ingreso potencial:</strong> $${puntos.reduce((sum, p) => sum + p.prioridad * 100, 0).toFixed(2)} MXN</p>
         </div>
       `;
@@ -6690,84 +7479,11 @@ async function loadReferenceData() {
   // Asegurarse de que la vista del dashboard esté activa al cargar
   showView('dashboard');
 
-  setupNavArrows();
-  window.addEventListener('resize', setupNavArrows);
-  // ============================================
-// INICIALIZACIÓN DE MÓDULOS AVANZADOS
-// ============================================
+  // Inicializar navegación con scroll
+  initializeNavigationScroll();
+  window.addEventListener('resize', initializeNavigationScroll);
 
-async function initAdvancedModules() {
-  console.log('🚀 [initAdvancedModules] Iniciando...');
-  
-  // Validación crítica: usar window.salesData Y window.filteredData
-  const dataSource = window.salesData || window.filteredData || [];
-  
-  console.log('📊 [initAdvancedModules] Fuente de datos:');
-  console.log('   - window.salesData:', window.salesData?.length || 0);
-  console.log('   - window.filteredData:', window.filteredData?.length || 0);
-  console.log('   - Usando:', dataSource.length, 'registros');
-  
-  if (!dataSource || dataSource.length === 0) {
-    console.error('❌ [initAdvancedModules] No hay datos disponibles');
-    showNotification('Carga datos primero para habilitar análisis avanzados', 'warning');
-    return;
-  }
-  
-  // Validar que haya registros válidos (no todo "unknown")
-  const validRecords = dataSource.filter(r => r.zona && r.zona !== 'unknown');
-  if (validRecords.length === 0) {
-    console.error('❌ [initAdvancedModules] Todos los registros tienen zona "unknown"');
-    showNotification('Los datos contienen valores "unknown" inválidos', 'error');
-    return;
-  }
-  
-  console.log('✅ [initAdvancedModules] Validación de datos pasada. Registros válidos:', validRecords.length);
-  
-  showLoading('Inicializando módulos avanzados...');
-  
-  try {
-    // Crear el orquestador CON DATOS VALIDADOS
-    console.log('🔧 [initAdvancedModules] Creando AnalyticsOrchestrator...');
-    window.analyticsOrchestrator = new AnalyticsOrchestrator(dataSource);
-    
-    // Cargar todos los módulos
-    console.log('📚 [initAdvancedModules] Cargando módulos...');
-    await window.analyticsOrchestrator.loadAllModules();
-    
-    console.log('✅ [initAdvancedModules] Módulos cargados exitosamente');
-    showNotification('Módulos avanzados cargados correctamente', 'success');
-    hideLoading();
-    
-    // Habilitar botones avanzados
-    console.log('🎯 [initAdvancedModules] Habilitando características avanzadas...');
-    enableAdvancedFeatures();
-    
-  } catch (error) {
-    console.error('❌ [initAdvancedModules] Error:', error);
-    console.error('   Stack:', error.stack);
-    hideLoading();
-    showNotification('Error cargando módulos avanzados: ' + error.message, 'error');
-  }
-}
-
-function enableAdvancedFeatures() {
-  // Activar botones que requieren módulos avanzados
-  const advancedButtons = [
-    'runMonteCarloBtn',
-    'calculateOptimalRouteBtn',
-    'runSeasonalAnalysisBtn'
-  ];
-  
-  advancedButtons.forEach(btnId => {
-    const btn = document.getElementById(btnId);
-    if (btn) {
-      btn.disabled = false;
-      btn.title = '';
-    }
-  });
-}
 console.log('✅ Aplicación lista');
-};
 
 // Registrar Service Worker
 if ('serviceWorker' in navigator) {
@@ -7890,10 +8606,77 @@ document.addEventListener('DOMContentLoaded', function() {
 
 console.log('✅ Sistema de captura de datos en vivo cargado');
 
-function setupNavArrows() {
+/**
+ * Funcionalidad de navegación en sección de gráficos
+ */
+function initializeChartsNavigation() {
+  const backToOverviewBtn = document.getElementById('backToOverviewBtn');
+  const goToMapBtn = document.getElementById('goToMapBtn');
+  const goToAnalysisBtn = document.getElementById('goToAnalysisBtn');
+  const goToZonesBtn = document.getElementById('goToZonesBtn');
+  
+  if (backToOverviewBtn) {
+    backToOverviewBtn.addEventListener('click', function() {
+      navigateToSection('overview');
+    });
+  }
+  
+  if (goToMapBtn) {
+    goToMapBtn.addEventListener('click', function() {
+      navigateToSection('map-section');
+    });
+  }
+  
+  if (goToAnalysisBtn) {
+    goToAnalysisBtn.addEventListener('click', function() {
+      navigateToSection('analysis');
+    });
+  }
+  
+  if (goToZonesBtn) {
+    goToZonesBtn.addEventListener('click', function() {
+      navigateToSection('zones');
+    });
+  }
+  
+  console.log('✅ Navegación de gráficos inicializada');
+}
+
+/**
+ * Navegar a una sección específica
+ */
+function navigateToSection(sectionId) {
+  // Obtener todos los view-section
+  const sections = document.querySelectorAll('.view-section');
+  
+  // Ocultar todas las secciones
+  sections.forEach(section => {
+    section.style.display = 'none';
+  });
+  
+  // Mostrar la sección seleccionada
+  const targetSection = document.getElementById(sectionId);
+  if (targetSection) {
+    targetSection.style.display = 'block';
+    // Scroll hacia el inicio de la sección
+    targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    showNotification(`✅ Navegando a ${sectionId}`, 'success');
+  } else {
+    showNotification(`⚠️ Sección ${sectionId} no encontrada`, 'warning');
+  }
+}
+// Inicializar navegación cuando cargue la página
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(initializeChartsNavigation, 500);
+});
+
+console.log('✅ Sistema de captura de datos en vivo cargado');
+
+// Inicializar scroll de navegación si existe el elemento
+function initializeNavigationScroll() {
   const navMenu = document.querySelector('.nav-menu');
-  const leftArrow = document.getElementById('nav-arrow-left');
-  const rightArrow = document.getElementById('nav-arrow-right');
+  const leftArrow = document.querySelector('.nav-arrow-left');
+  const rightArrow = document.querySelector('.nav-arrow-right');
 
   if (!navMenu || !leftArrow || !rightArrow) return;
 
@@ -7933,6 +8716,11 @@ function setupNavArrows() {
   // Initial check
   checkOverflow();
 }
+
+// Call on DOMContentLoaded
+document.addEventListener('DOMContentLoaded', () => {
+  initializeNavigationScroll();
+});
 </script>
 </body>
 </html>

@@ -350,4 +350,3 @@ if (typeof window !== 'undefined') {
 }
 
 export default GroqSalesCoach;
-export { createGroqSalesCoach, displayErrorInUI, testConnection };

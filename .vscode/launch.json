@@ -2,18 +2,28 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "PWA-Chrome",
-      "request": "launch",
+      "name": "🔗 ATTACH Chrome (Vanilla JS - Con Subcarpetas)",
       "type": "chrome",
-      "url": "http://localhost:8080",
-      "webRoot": "${workspaceFolder}"
-    },
-    {
-      "type": "pwa-chrome",
       "request": "attach",
-      "name": "ATTACH Analisis Marketing",
       "port": 9222,
-      "webRoot": "${workspaceFolder}"
+      "pathMapping": {
+        "/": "${workspaceFolder}/",
+        "http://localhost:8080/": "${workspaceFolder}/"
+      },
+      "sourceMapPathOverrides": {
+        "http://localhost:8080/analytics_module/*": "${workspaceFolder}/analytics_module/*",
+        "http://localhost:8080/utils/*": "${workspaceFolder}/utils/*",
+        "http://localhost:8080/data/*": "${workspaceFolder}/data/*",
+        "http://localhost:8080/*": "${workspaceFolder}/*",
+        "localhost:8080/analytics_module/*": "${workspaceFolder}/analytics_module/*",
+        "localhost:8080/utils/*": "${workspaceFolder}/utils/*",
+        "localhost:8080/*": "${workspaceFolder}/*",
+        "/analytics_module/*": "${workspaceFolder}/analytics_module/*",
+        "/utils/*": "${workspaceFolder}/utils/*",
+        "/*": "${workspaceFolder}/*"
+      },
+      "trace": "verbose",
+      "logPointsText": "chrome breakpoints en subcarpetas"
     }
   ]
 }

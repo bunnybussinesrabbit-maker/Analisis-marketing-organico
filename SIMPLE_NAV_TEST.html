@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Navigation Test</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0e27;
+            color: #0ff;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #0f0;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .panel {
+            background: #1a1a2e;
+            border: 2px solid #0ff;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .panel h2 {
+            color: #0f0;
+            font-size: 14px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #0ff;
+            padding-bottom: 5px;
+        }
+        button {
+            background: #0f0;
+            color: #000;
+            border: none;
+            padding: 8px 15px;
+            margin: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            border-radius: 4px;
+        }
+        button:hover {
+            background: #00ff00;
+            box-shadow: 0 0 10px #0f0;
+        }
+        .console {
+            background: #000;
+            border: 1px solid #0f0;
+            border-radius: 4px;
+            padding: 10px;
+            height: 250px;
+            overflow-y: auto;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+        .success { color: #0f0; }
+        .error { color: #f00; }
+        .warning { color: #ff0; }
+        .info { color: #0ff; }
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>✓ NAVIGATION TEST - Direct Loading</h1>
+    
+    <div class="panel">
+        <h2>Instructions</h2>
+        <p>This page tests navigation without iframes (avoiding cross-origin errors).</p>
+        <p><strong>Step 1:</strong> Click "Load App" to load index.html</p>
+        <p><strong>Step 2:</strong> Check console (F12) for errors</p>
+        <p><strong>Step 3:</strong> Click any dashboard button below</p>
+    </div>
+
+    <div class="panel">
+        <h2>Test Controls</h2>
+        <div class="button-group">
+            <button onclick="loadApp()">Load App (index.html)</button>
+            <button onclick="clearConsole()">Clear Console</button>
+            <button onclick="testNavigation()">Test All 10 Buttons</button>
+        </div>
+        <div class="console" id="console"></div>
+    </div>
+
+    <div class="panel">
+        <h2>Dashboard Navigation Buttons (Test These)</h2>
+        <div class="button-group">
+            <button onclick="clickButton('dashboard')">Dashboard</button>
+            <button onclick="clickButton('map-section')">Map</button>
+            <button onclick="clickButton('data')">Data</button>
+            <button onclick="clickButton('capture')">Capture</button>
+            <button onclick="clickButton('analysis')">Analysis</button>
+            <button onclick="clickButton('zones')">Zones</button>
+            <button onclick="clickButton('pitch')">Pitch</button>
+            <button onclick="clickButton('routes')">Routes</button>
+            <button onclick="clickButton('tools')">Tools</button>
+            <button onclick="clickButton('reports')">Reports</button>
+        </div>
+    </div>
+
+    <div class="panel">
+        <h2>App Container (Opens Below)</h2>
+        <div id="app-container" style="border: 1px solid #0ff; padding: 10px; margin-top: 10px; min-height: 200px;">
+            <p class="info">App will load here. Use browser's Network tab to diagnose loading issues.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+const log = (msg, type = 'info') => {
+    const console_el = document.getElementById('console');
+    const entry = document.createElement('div');
+    entry.className = `log-entry ${type}`;
+    entry.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+    console_el.appendChild(entry);
+    console_el.scrollTop = console_el.scrollHeight;
+    console.log(`[${type.toUpperCase()}] ${msg}`);
+};
+
+const clearConsole = () => {
+    document.getElementById('console').innerHTML = '';
+    log('Console cleared', 'info');
+};
+
+const loadApp = () => {
+    log('Loading index.html directly in this window...', 'info');
+    window.location.href = '/index.html';
+};
+
+const clickButton = (viewId) => {
+    log(`Clicking button for view: ${viewId}`, 'info');
+    // Find and click the button in index.html if loaded via window
+    const buttons = document.querySelectorAll('[data-view]');
+    if (buttons.length === 0) {
+        log('ERROR: No dashboard buttons found! index.html may not be loaded properly.', 'error');
+        return;
+    }
+    const button = Array.from(buttons).find(btn => btn.dataset.view === viewId);
+    if (button) {
+        log(`Found button for ${viewId}, clicking...`, 'success');
+        button.click();
+    } else {
+        log(`ERROR: Button for ${viewId} not found!`, 'error');
+    }
+};
+
+const testNavigation = () => {
+    const viewIds = ['dashboard', 'map-section', 'data', 'capture', 'analysis', 'zones', 'pitch', 'routes', 'tools', 'reports'];
+    log(`Testing all ${viewIds.length} navigation buttons...`, 'info');
+    
+    viewIds.forEach((viewId, index) => {
+        setTimeout(() => {
+            log(`Step ${index + 1}/${viewIds.length}: Navigating to ${viewId}...`, 'info');
+            try {
+                if (typeof showView === 'function') {
+                    showView(viewId);
+                    log(`Successfully called showView('${viewId}')`, 'success');
+                } else {
+                    log(`ERROR: showView() function not available!`, 'error');
+                }
+            } catch (e) {
+                log(`ERROR in showView('${viewId}'): ${e.message}`, 'error');
+            }
+        }, index * 500);
+    });
+};
+
+// Initial logging
+window.addEventListener('load', () => {
+    log('Test page loaded', 'success');
+    log('INSTRUCTION: Click "Load App" first, then test buttons', 'info');
+});
+
+// Log any global errors
+window.addEventListener('error', (event) => {
+    log(`GLOBAL ERROR: ${event.message} (${event.filename}:${event.lineno})`, 'error');
+});
+
+// Log module errors
+window.addEventListener('unhandledrejection', (event) => {
+    log(`UNHANDLED REJECTION: ${event.reason}`, 'error');
+});
+</script>
+
+</body>
+</html>
