@@ -28,7 +28,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
 
 <!-- Mapbox -->
-<link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
+<link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet'>
 <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
 
 <!-- Turf.js para cálculos geográficos -->
@@ -388,13 +388,21 @@
    VARIABLES Y RESET
    ============================================ */
 :root {
+  /* Colores primarios de marca (Naranja/Marrón) */
+  --primary-orange: #FF8C42;
+  --primary-brown: #6B4423;
+  --primary-white: #FFFFFF;
+  --accent-orange-light: #FFB380;
+  --accent-red: #C85A3A;
+  
+  /* Colores base */
   --bg-dark: #020617;
   --bg-panel: #0f172a;
   --bg-card: #1e293b;
-  --accent-blue: #38bdf8;
+  --accent-blue: #FF8C42;           /* Naranja primario */
   --accent-green: #22c55e;
-  --accent-purple: #8b5cf6;
-  --accent-pink: #ec4899;
+  --accent-purple: #FFB380;         /* Naranja claro */
+  --accent-pink: #C85A3A;           /* Rojo terracota */
   --danger: #ef4444;
   --warning: #f59e0b;
   --text-primary: #f8fafc;
@@ -652,9 +660,15 @@ body {
 }
 
 .view-section.active {
-  display: block;
+  display: flex;
+  flex-direction: column;
   flex: 1;
-  height: 100%;
+  min-height: calc(100vh - 150px);
+}
+
+/* Especial: Sección del mapa necesita más altura */
+#map-section.active {
+  min-height: calc(100vh - 100px);
 }
 
 /* Address collapsing margin on the section title */
@@ -932,11 +946,15 @@ body {
   margin-bottom: 24px;
   position: relative;
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 500px; /* Altura mínima para que el mapa sea visible */
 }
 
 #map {
   width: 100%;
-  height: 100%;
+  flex: 1;
+  min-height: 400px;
 }
 
 /* ============================================
@@ -1052,6 +1070,250 @@ body {
   background: var(--accent-purple);
 }
 
+/* ============================================
+   HEADER DE CONTROLES DE CAPAS DEL MAPA
+   ============================================ */
+.map-controls-header {
+  background: var(--primary-white);
+  border-bottom: 2px solid var(--primary-orange);
+  padding: 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 10;
+  width: 100%;
+  flex-shrink: 0; /* No contraer con el flex: 1 del mapa */
+}
+
+.map-controls-left,
+.map-controls-right {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.map-layer-btn {
+  background: var(--bg-panel);
+  color: var(--primary-brown);
+  border: 1px solid var(--primary-orange);
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.map-layer-btn:hover {
+  background: var(--accent-orange-light);
+  color: var(--primary-white);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 140, 66, 0.3);
+}
+
+.map-layer-btn.active {
+  background: var(--primary-orange);
+  color: var(--primary-white);
+  border-color: var(--primary-orange);
+  box-shadow: 0 4px 12px rgba(255, 140, 66, 0.4);
+}
+
+.map-menu-toggle {
+  background: var(--primary-orange);
+  color: var(--primary-white);
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.map-menu-toggle:hover {
+  background: var(--accent-red);
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(200, 90, 58, 0.4);
+}
+
+/* Responsive: Tablet y inferior */
+@media (max-width: 1024px) {
+  .map-controls-header {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+  
+  .map-layer-btn,
+  .map-menu-toggle {
+    padding: 7px 12px;
+    font-size: 0.85rem;
+  }
+  
+  .btn-text {
+    display: none;
+  }
+}
+
+/* Responsive: Mobile */
+@media (max-width: 768px) {
+  .map-controls-header {
+    padding: 8px 10px;
+    gap: 6px;
+  }
+  
+  .map-layer-btn,
+  .map-menu-toggle {
+    padding: 6px 10px;
+    font-size: 0.8rem;
+  }
+  
+  .map-layer-btn i,
+  .map-menu-toggle i {
+    font-size: 1rem;
+  }
+  
+  .toggle-label {
+    display: none;
+  }
+}
+
+/* ============================================
+   HEADER DE NAVEGACIÓN DEL DASHBOARD
+   ============================================ */
+.dashboard-header-nav {
+  background: linear-gradient(135deg, var(--primary-orange) 0%, var(--accent-red) 100%);
+  padding: 16px 24px;
+  border-bottom: 3px solid var(--primary-brown);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  box-shadow: 0 4px 12px rgba(255, 140, 66, 0.2);
+  width: 100%;
+  margin: -30px -30px 30px -30px;
+  padding: 16px 24px;
+}
+
+.dashboard-header-nav .dashboard-title {
+  color: var(--primary-white);
+  font-size: 1.4rem;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+}
+
+.dashboard-nav-buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.dashboard-nav-btn {
+  background: var(--primary-white);
+  color: var(--primary-orange);
+  border: 2px solid var(--primary-white);
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.dashboard-nav-btn:hover {
+  background: var(--accent-orange-light);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(255, 140, 66, 0.3);
+}
+
+.dashboard-nav-btn:active {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(255, 140, 66, 0.2);
+}
+
+/* Responsive: Tablet */
+@media (max-width: 1024px) {
+  .dashboard-header-nav {
+    padding: 12px 16px;
+    gap: 12px;
+    margin: -20px -20px 20px -20px;
+  }
+  
+  .dashboard-header-nav .dashboard-title {
+    font-size: 1.2rem;
+  }
+  
+  .dashboard-nav-btn {
+    padding: 8px 12px;
+    font-size: 0.85rem;
+  }
+  
+  .btn-label {
+    display: none;
+  }
+}
+
+/* Responsive: Mobile */
+@media (max-width: 768px) {
+  .dashboard-header-nav {
+    padding: 12px;
+    gap: 8px;
+    justify-content: center;
+    flex-direction: column;
+    margin: -20px -20px 20px -20px;
+  }
+  
+  .dashboard-header-nav .dashboard-title {
+    font-size: 1.1rem;
+    width: 100%;
+    text-align: center;
+  }
+  
+  .dashboard-nav-buttons {
+    width: 100%;
+    justify-content: space-around;
+    gap: 6px;
+  }
+  
+  .dashboard-nav-btn {
+    padding: 8px 10px;
+    font-size: 0.75rem;
+    flex: 1;
+    justify-content: center;
+  }
+  
+  .dashboard-nav-btn i {
+    font-size: 1.2rem;
+  }
+  
+  .btn-label {
+    display: none;
+  }
+}
+
+.dashboard-content {
+  margin-top: 20px;
+}
+
 /* Map overlay positioned absolutely within section#map */
 .map-overlay {
   position: absolute;
@@ -1131,11 +1393,11 @@ body {
   position: absolute;
   top: 20px;
   right: 20px;
-  background: rgba(15, 23, 42, 0.9);
+  background: rgba(173, 194, 245, 0.9);
   border: 1px solid var(--border);
   border-radius: 50%;
   width: 50px;
-  height: 50px;
+  height:50px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1143,7 +1405,7 @@ body {
   z-index: 1;
   color: var(--text-secondary);
   transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 12px rgba(230, 78, 78, 0.3)0.3);
 }
 
 .overlay-toggle-minimized:hover {
@@ -2097,6 +2359,29 @@ body {
     
     <!-- ================= DASHBOARD ================= -->
     <section id="dashboard" class="view-section">
+      <!-- Header de Navegación Rápida del Dashboard -->
+      <div class="dashboard-header-nav">
+        <h2 class="dashboard-title"><i class="fas fa-chart-bar"></i> Panel de Control</h2>
+        <div class="dashboard-nav-buttons">
+          <button class="dashboard-nav-btn" onclick="showView('map-section')" title="Ir al Mapa">
+            <i class="fas fa-map"></i> <span class="btn-label">Mapa</span>
+          </button>
+          <button class="dashboard-nav-btn" onclick="showView('data')" title="Gestión de Datos">
+            <i class="fas fa-database"></i> <span class="btn-label">Datos</span>
+          </button>
+          <button class="dashboard-nav-btn" onclick="showView('analysis')" title="Análisis Cruzados">
+            <i class="fas fa-chart-line"></i> <span class="btn-label">Análisis</span>
+          </button>
+          <button class="dashboard-nav-btn" onclick="showView('routes')" title="Optimización de Rutas">
+            <i class="fas fa-route"></i> <span class="btn-label">Rutas</span>
+          </button>
+          <button class="dashboard-nav-btn" onclick="showView('tools')" title="Herramientas Avanzadas">
+            <i class="fas fa-tools"></i> <span class="btn-label">Herramientas</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="dashboard-content">
       <h2 class="mb-30"><i class="fas fa-chart-pie"></i> Dashboard Principal</h2>
       
       <div class="kpi-grid">
@@ -2201,12 +2486,35 @@ body {
       </div>
       
       <div class="map-container" id="mapContainer">
+        <!-- Header de Controles de Capas del Mapa -->
+        <div class="map-controls-header">
+          <div class="map-controls-left">
+            <button class="map-layer-btn active" data-layer="none" title="Sin capa">
+              <i class="fas fa-eye"></i> <span class="btn-text">Normal</span>
+            </button>
+            <button class="map-layer-btn" data-layer="heat-intensity" title="Mapa de calor por monto">
+              <i class="fas fa-fire"></i> <span class="btn-text">Calor</span>
+            </button>
+            <button class="map-layer-btn" data-layer="heat-density" title="Densidad de puntos">
+              <i class="fas fa-fill-drip"></i> <span class="btn-text">Densidad</span>
+            </button>
+            <button class="map-layer-btn" data-layer="routes" title="Rutas optimizadas">
+              <i class="fas fa-road"></i> <span class="btn-text">Rutas</span>
+            </button>
+          </div>
+          <div class="map-controls-right">
+            <button class="map-menu-toggle" onclick="toggleMapSettingsMenu()" title="Opciones del mapa">
+              <i class="fas fa-cog"></i> <span class="toggle-label">Opciones</span>
+            </button>
+          </div>
+        </div>
         <div id="map"></div>
       </div>
       
       <!-- Map Overlay - FUERA del mapa para evitar interferencia con Mapbox -->
       <div class="map-overlay" id="mapOverlay">
         <div class="overlay-header" onclick="toggleMapOverlay()">
+          <h3>Capas de Datos Disponibles</h3>
           <h4><i class="fas fa-layer-group"></i> Capas</h4>
           <button class="toggle-overlay" id="toggleOverlayBtn">
             <i class="fas fa-chevron-up"></i>
@@ -2335,6 +2643,7 @@ body {
             </tbody>
           </table>
         </div>
+      </div>
       </div>
     </section>
     
@@ -3992,9 +4301,23 @@ function showView(viewId) {
     if (moreModal) moreModal.classList.add('hidden');
   }
   
-  // Si es el mapa, inicializarlo si no está hecho
+    // Si es el mapa, inicializarlo si no está hecho
   if (viewId === 'map-section' && !map) {
-    setTimeout(initMap, 100);
+    setTimeout(() => {
+      initMap();
+      // Esperar a que Mapbox se renderice completamente
+      setTimeout(() => {
+        if (map) {
+          map.resize();
+          console.log('✅ Mapa redimensionado y listo');
+        }
+      }, 300);
+    }, 150);
+  } else if (viewId === 'map-section' && map) {
+    // Si el mapa ya existe, solo redimensionarlo
+    setTimeout(() => {
+      map.resize();
+    }, 100);
   }
   
   // Si es dashboard, actualizar gráficos
@@ -5725,6 +6048,58 @@ function getColorForAmount(amount) {
   return '#3b82f6'; // Azul
 }
 
+// ============================================
+// CONTROLES DE CAPAS DEL MAPA
+// ============================================
+
+function toggleMapLayer(layerId) {
+  if (!map) return;
+  
+  // Actualizar botones activos
+  document.querySelectorAll('.map-layer-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  
+  // Ocultar todas las capas de datos
+  if (map.getLayer('heat-intensity')) map.setLayoutProperty('heat-intensity', 'visibility', 'none');
+  if (map.getLayer('heat-density')) map.setLayoutProperty('heat-density', 'visibility', 'none');
+  if (map.getLayer('route')) map.setLayoutProperty('route', 'visibility', 'none');
+  
+  // Mostrar capa seleccionada
+  if (layerId !== 'none') {
+    if (map.getLayer(layerId)) {
+      map.setLayoutProperty(layerId, 'visibility', 'visible');
+      document.querySelector(`[data-layer="${layerId}"]`).classList.add('active');
+    }
+  } else {
+    document.querySelector('[data-layer="none"]').classList.add('active');
+  }
+}
+
+function toggleMapSettingsMenu() {
+  const menu = document.getElementById('mapSettingsMenu');
+  if (menu) {
+    menu.classList.toggle('visible');
+  } else {
+    // Si no existe, mostrar un mensaje simple
+    console.log('Menú de opciones del mapa');
+  }
+}
+
+// Event listeners para botones de capas (ejecutado cuando el DOM está listo)
+document.addEventListener('DOMContentLoaded', function() {
+  // Agregar event listeners a botones de capas del mapa si existen
+  const layerButtons = document.querySelectorAll('.map-layer-btn');
+  if (layerButtons.length > 0) {
+    layerButtons.forEach(btn => {
+      btn.addEventListener('click', function() {
+        const layerId = this.getAttribute('data-layer');
+        toggleMapLayer(layerId);
+      });
+    });
+  }
+});
+
 function toggleMapOverlay() {
   const overlay = document.getElementById('mapOverlay');
   const toggleBtn = document.getElementById('toggleOverlayBtn');
@@ -6208,11 +6583,11 @@ function visualizeRoute() {
 
 function getStartCoordinates(startPoint) {
   const coordinates = {
-    'centro': { x: -86.8515, y: 21.1619 },
-    'hotel_zone': { x: -86.84, y: 21.17 },
-    'region_247': { x: -86.87, y: 21.15 },
-    'supermanzana': { x: -86.86, y: 21.16 },
-    'puerto_juares': { x: -86.83, y: 21.18 }
+    'centro': { lng: -86.8515, lat: 21.1619 },
+    'hotel_zone': { lng: -86.84, lat: 21.17 },
+    'region_247': { lng: -86.87, lat: 21.15 },
+    'supermanzana': { lng: -86.86, lat: 21.16 },
+    'puerto_juares': { lng: -86.83, lat: 21.18 }
   };
   
   return coordinates[startPoint] || coordinates.centro;
@@ -6246,8 +6621,8 @@ function generateRandomPoint(startPoint) {
   
   // Radio de 5 km aproximadamente (0.05 grados)
   const radius = 0.05;
-  const lat = center.y + (Math.random() - 0.5) * radius;
-  const lng = center.x + (Math.random() - 0.5) * radius;
+  const lat = center.lat + (Math.random() - 0.5) * radius;
+  const lng = center.lng + (Math.random() - 0.5) * radius;
   
   // Determinar la zona basada en la ubicación
   const zone = determineZone(lat, lng);
@@ -6255,7 +6630,7 @@ function generateRandomPoint(startPoint) {
   // Generar un ingreso aleatorio entre 100 y 1000
   const revenue = 100 + Math.random() * 900;
   
-  return { lat, lng, zone, revenue };
+  return { lng, lat, zone, revenue }; // ✅ Retornar {lng, lat} consistentemente
 }
 
 function visualizeCalculatedRoute() {
@@ -6278,8 +6653,9 @@ function visualizeCalculatedRoute() {
   const route = currentCalculatedRoute;
   
   // Crear coordenadas para la línea (inicio + puntos en orden)
+  // ✅ Orden correcto: [lng, lat] para Mapbox
   const coordinates = [
-    [route.start.x, route.start.y]
+    [route.start.lng, route.start.lat]
   ];
   
   // Ordenar puntos según la ruta calculada
@@ -6296,11 +6672,11 @@ function visualizeCalculatedRoute() {
   
   // Añadir puntos ordenados
   orderedPoints.forEach(point => {
-    coordinates.push([point.lng, point.lat]);
+    coordinates.push([point.lng, point.lat]); // ✅ [lng, lat]
   });
   
   // Volver al inicio para cerrar el circuito
-  coordinates.push([route.start.x, route.start.y]);
+  coordinates.push([route.start.lng, route.start.lat]); // ✅ [lng, lat]
   
   // Añadir capa de ruta al mapa
   map.addSource('route', {
@@ -6346,7 +6722,7 @@ function visualizeCalculatedRoute() {
   `;
   
   const startMarker = new mapboxgl.Marker(startEl)
-    .setLngLat([route.start.x, route.start.y])
+    .setLngLat([route.start.lng, route.start.lat]) // ✅ [lng, lat]
     .setPopup(new mapboxgl.Popup().setHTML(`
       <strong>Inicio: ${route.startPointName}</strong><br>
       ${route.stops} paradas programadas
