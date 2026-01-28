@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Test Navigation - Geo-Suite</title>
+<style>
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    padding: 20px;
+    background: #f5f5f5;
+  }
+  
+  .test-panel {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  
+  h2 {
+    margin-top: 0;
+    color: #333;
+  }
+  
+  .button-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+    margin: 15px 0;
+  }
+  
+  button {
+    padding: 10px 15px;
+    background: #0284c7;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: background 0.3s;
+  }
+  
+  button:hover {
+    background: #0369a1;
+  }
+  
+  button.danger {
+    background: #dc2626;
+  }
+  
+  button.danger:hover {
+    background: #b91c1c;
+  }
+  
+  .log-container {
+    background: #1e1e1e;
+    color: #0f0;
+    padding: 15px;
+    border-radius: 6px;
+    max-height: 300px;
+    overflow-y: auto;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  
+  .log-entry {
+    margin: 5px 0;
+  }
+  
+  .log-success { color: #0f0; }
+  .log-error { color: #f00; }
+  .log-warning { color: #ff0; }
+  .log-info { color: #0ff; }
+  
+  iframe {
+    width: 100%;
+    height: 600px;
+    border: 2px solid #0284c7;
+    border-radius: 8px;
+    margin-top: 20px;
+  }
+</style>
+</head>
+<body>
+
+<div class="test-panel">
+  <h2>🧪 Test Panel - Navegación Geo-Suite</h2>
+  
+  <div>
+    <h3>1. Pruebas de Botones del Dashboard</h3>
+    <div class="button-grid">
+      <button onclick="testNavigation('dashboard')">Dashboard</button>
+      <button onclick="testNavigation('map-section')">Mapa</button>
+      <button onclick="testNavigation('data')">Datos</button>
+      <button onclick="testNavigation('analysis')">Análisis</button>
+      <button onclick="testNavigation('zones')">Zonas</button>
+      <button onclick="testNavigation('pitch')">Pitch</button>
+      <button onclick="testNavigation('routes')">Rutas</button>
+      <button onclick="testNavigation('tools')">Herramientas</button>
+      <button onclick="testNavigation('reports')">Reportes</button>
+      <button onclick="testNavigation('settings')">Configuración</button>
+    </div>
+  </div>
+  
+  <div style="margin-top: 20px;">
+    <h3>2. Utilidades de Debug</h3>
+    <div class="button-grid">
+      <button onclick="checkFunctionExists()">Verificar showView()</button>
+      <button onclick="checkNavButtons()">Verificar Botones</button>
+      <button onclick="checkSections()">Verificar Secciones</button>
+      <button onclick="clearLog()" class="danger">Limpiar Log</button>
+    </div>
+  </div>
+  
+  <div style="margin-top: 20px;">
+    <h3>📋 Log de Ejecución</h3>
+    <div class="log-container" id="logContainer"></div>
+  </div>
+</div>
+
+<h2>Vista Previa - Geo-Suite Cancún PRO</h2>
+<iframe id="mainFrame" src="./index.html"></iframe>
+
+<script>
+const logContainer = document.getElementById('logContainer');
+
+function addLog(message, type = 'info') {
+  const entry = document.createElement('div');
+  entry.className = `log-entry log-${type}`;
+  entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+  logContainer.appendChild(entry);
+  logContainer.scrollTop = logContainer.scrollHeight;
+}
+
+function clearLog() {
+  logContainer.innerHTML = '';
+  addLog('Log limpiado', 'info');
+}
+
+function testNavigation(viewId) {
+  addLog(`🔄 Intentando navegar a: ${viewId}`, 'info');
+  
+  try {
+    const iframe = document.getElementById('mainFrame');
+    const iframeWindow = iframe.contentWindow;
+    
+    if (typeof iframeWindow.showView === 'function') {
+      iframeWindow.showView(viewId);
+      addLog(`✅ Navegación exitosa a: ${viewId}`, 'success');
+    } else {
+      addLog(`❌ showView() no está definida en el iframe`, 'error');
+    }
+  } catch (error) {
+    addLog(`❌ Error: ${error.message}`, 'error');
+  }
+}
+
+function checkFunctionExists() {
+  try {
+    const iframe = document.getElementById('mainFrame');
+    const iframeWindow = iframe.contentWindow;
+    
+    if (typeof iframeWindow.showView === 'function') {
+      addLog(`✅ showView() está definida y disponible`, 'success');
+    } else {
+      addLog(`❌ showView() NO está definida`, 'error');
+    }
+  } catch (error) {
+    addLog(`❌ Error al acceder al iframe: ${error.message}`, 'error');
+  }
+}
+
+function checkNavButtons() {
+  try {
+    const iframe = document.getElementById('mainFrame');
+    const iframeDocument = iframe.contentDocument || iframe.contentWindow.document;
+    
+    const dashboardButtons = iframeDocument.querySelectorAll('.dashboard-nav-item');
+    const navButtons = iframeDocument.querySelectorAll('.nav-btn');
+    
+    addLog(`📊 Botones dashboard encontrados: ${dashboardButtons.length}`, 'info');
+    addLog(`📊 Botones nav encontrados: ${navButtons.length}`, 'info');
+    
+    if (dashboardButtons.length > 0) {
+      addLog('✅ Event listeners para dashboard buttons deberían estar activos', 'success');
+    }
+  } catch (error) {
+    addLog(`❌ Error: ${error.message}`, 'error');
+  }
+}
+
+function checkSections() {
+  try {
+    const iframe = document.getElementById('mainFrame');
+    const iframeDocument = iframe.contentDocument || iframe.contentWindow.document;
+    
+    const sections = iframeDocument.querySelectorAll('.view-section');
+    addLog(`📑 Secciones encontradas: ${sections.length}`, 'info');
+    
+    sections.forEach(section => {
+      const id = section.id;
+      const isActive = section.classList.contains('active');
+      addLog(`  └─ #${id} (Active: ${isActive})`, 'info');
+    });
+  } catch (error) {
+    addLog(`❌ Error: ${error.message}`, 'error');
+  }
+}
+
+// Ejecutar chequeo inicial después de que se cargue el iframe
+document.getElementById('mainFrame').addEventListener('load', function() {
+  addLog('📱 Iframe cargado', 'success');
+  checkFunctionExists();
+  checkNavButtons();
+  checkSections();
+}, { once: true });
+
+// Log inicial
+addLog('🚀 Test Panel inicializado', 'success');
+</script>
+
+</body>
+</html>

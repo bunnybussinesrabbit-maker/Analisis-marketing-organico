@@ -1,0 +1,70 @@
+# 🔴 DEBUGGING MANUAL - Navigation Buttons Not Working
+
+## Paso 1: Abre SIMPLE_TEST.html
+
+Abre en tu navegador:
+```
+http://localhost:8080/SIMPLE_TEST.html
+```
+
+## Paso 2: Ejecuta los Tests en Orden
+
+### Test 1: Check iframe
+- Haz clic en "Check iframe"
+- Verifica que dice "✅" en los mensajes
+
+### Test 2: Check showView()
+- Haz clic en "Check showView()"
+- Debería decir: "✅ showView() EXISTS"
+
+### Test 3: Try navigation
+- Haz clic en "Nav to dashboard"
+- Verifica que en la consola del navegador (F12) ves logs
+- **Importante**: Mira el iframe - ¿cambió la sección?
+
+### Test 4: Detailed check
+- Haz clic en "Detailed check"
+- Esto te mostrará toda la estructura
+
+## Paso 3: Abre DevTools (F12)
+
+En el navegador donde abres SIMPLE_TEST.html:
+1. Presiona **F12**
+2. Ve a la pestaña **Console**
+3. Busca mensajes verdes o rojos
+4. Copia y pega aquí qué ves
+
+## Paso 4: Verifica en el iframe
+
+El iframe en SIMPLE_TEST.html muestra la app real. Cuando haces clic en los botones de prueba:
+- ¿Cambia la sección en el iframe?
+- ¿Hay errores en la consola?
+
+## Si los Botones NO Funcionan
+
+Posibles problemas:
+1. El servidor no está corriendo
+2. Hay un error JavaScript
+3. Los elementos HTML están incorrectos
+4. Hay conflicto de CSS
+
+## Si los Botones SÍ Funcionan
+
+¡Excelente! Entonces el problema podría ser que necesitas hacer hard refresh.
+
+En el navegador principal (donde tienes index.html):
+- Presiona **Ctrl + Shift + R**
+
+Esto borra el cache y recarga todo.
+
+---
+
+**¿Qué debes reportar?**
+
+1. ¿Qué dice el Test 1?
+2. ¿Qué dice el Test 2?
+3. ¿Qué dice el Test 3?
+4. ¿Hay errores en la consola (F12)?
+5. ¿Cambió la sección en el iframe al hacer clic?
+
+Copia y pega la información en tu siguiente mensaje.

@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>DEBUG - Navigation Buttons</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: #1e1e1e;
+            color: #0f0;
+            padding: 20px;
+        }
+        .section {
+            background: #2d2d2d;
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 3px solid #0f0;
+        }
+        button {
+            background: #0f0;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            margin: 5px;
+            font-weight: bold;
+        }
+        button:hover {
+            background: #00ff00;
+        }
+        pre {
+            background: #000;
+            padding: 10px;
+            overflow-x: auto;
+        }
+        .error {
+            color: #f00;
+        }
+        .success {
+            color: #0f0;
+        }
+    </style>
+</head>
+<body>
+
+<h1>🔍 DEBUG - Navigation Buttons Test</h1>
+
+<div class="section">
+    <h2>1. Test Direct showView() Call</h2>
+    <button onclick="testDirectCall()">Test Direct Call</button>
+    <pre id="output1"></pre>
+</div>
+
+<div class="section">
+    <h2>2. Check iframe Functions</h2>
+    <button onclick="checkIframe()">Check Iframe Functions</button>
+    <pre id="output2"></pre>
+</div>
+
+<div class="section">
+    <h2>3. Test Navigation Buttons</h2>
+    <button onclick="testNavButtons()">Test Nav Buttons</button>
+    <pre id="output3"></pre>
+</div>
+
+<div class="section">
+    <h2>4. Check HTML Structure</h2>
+    <button onclick="checkStructure()">Check Structure</button>
+    <pre id="output4"></pre>
+</div>
+
+<div class="section">
+    <h2>🖥️ Live Preview</h2>
+    <iframe id="appFrame" src="http://localhost:8080/index.html" style="width: 100%; height: 800px; border: 2px solid #0f0;"></iframe>
+</div>
+
+<script>
+function log(elementId, text) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    el.innerHTML += text + '\n';
+    el.scrollTop = el.scrollHeight;
+}
+
+function clearLog(elementId) {
+    document.getElementById(elementId).innerHTML = '';
+}
+
+function testDirectCall() {
+    clearLog('output1');
+    log('output1', '⏳ Waiting for iframe to load...');
+    
+    setTimeout(() => {
+        try {
+            const iframe = document.getElementById('appFrame');
+            const iframeWindow = iframe.contentWindow;
+            
+            if (typeof iframeWindow.showView === 'undefined') {
+                log('output1', '<span class="error">❌ showView() is NOT defined</span>');
+                return;
+            }
+            
+            log('output1', '<span class="success">✅ showView() found</span>');
+            log('output1', 'Calling: showView("dashboard")');
+            
+            iframeWindow.showView('dashboard');
+            
+            log('output1', '<span class="success">✅ Call completed</span>');
+            
+        } catch (error) {
+            log('output1', '<span class="error">❌ ERROR: ' + error.message + '</span>');
+        }
+    }, 1000);
+}
+
+function checkIframe() {
+    clearLog('output2');
+    
+    try {
+        const iframe = document.getElementById('appFrame');
+        const iframeWindow = iframe.contentWindow;
+        const iframeDoc = iframe.contentDocument;
+        
+        if (!iframeWindow || !iframeDoc) {
+            log('output2', '<span class="error">❌ Cannot access iframe</span>');
+            return;
+        }
+        
+        log('output2', '✅ iframe accessible');
+        
+        // Check functions
+        const funcs = ['showView', 'updateDashboardNavIndicator', 'updateNavigationBreadcrumb'];
+        funcs.forEach(func => {
+            if (typeof iframeWindow[func] === 'function') {
+                log('output2', '<span class="success">✅ ' + func + '() exists</span>');
+            } else {
+                log('output2', '<span class="error">❌ ' + func + '() NOT FOUND</span>');
+            }
+        });
+        
+        // Check data
+        log('output2', '');
+        log('output2', 'Global Variables:');
+        log('output2', '  - salesData: ' + (iframeWindow.salesData ? '✅ ' + iframeWindow.salesData.length + ' records' : '❌ undefined'));
+        log('output2', '  - filteredData: ' + (iframeWindow.filteredData ? '✅ ' + iframeWindow.filteredData.length + ' records' : '❌ undefined'));
+        
+    } catch (error) {
+        log('output2', '<span class="error">❌ ERROR: ' + error.message + '</span>');
+    }
+}
+
+function testNavButtons() {
+    clearLog('output3');
+    
+    try {
+        const iframe = document.getElementById('appFrame');
+        const iframeDoc = iframe.contentDocument;
+        
+        const buttons = iframeDoc.querySelectorAll('.dashboard-nav-item');
+        log('output3', 'Found ' + buttons.length + ' dashboard nav buttons');
+        
+        buttons.forEach((btn, i) => {
+            const dataView = btn.getAttribute('data-view');
+            const hasOnclick = btn.getAttribute('onclick');
+            const hasListener = btn._listeners ? 'yes' : 'checking...';
+            
+            log('output3', '');
+            log('output3', (i+1) + '. Button: ' + dataView);
+            log('output3', '   onclick: ' + (hasOnclick ? '✅ yes' : '❌ no'));
+            log('output3', '   Text: ' + btn.textContent.trim());
+        });
+        
+        // Try clicking first button
+        log('output3', '');
+        log('output3', '--- ATTEMPTING CLICK ---');
+        if (buttons.length > 0) {
+            const firstBtn = buttons[0];
+            log('output3', 'Clicking: ' + firstBtn.getAttribute('data-view'));
+            
+            // Create and dispatch click event
+            const event = new MouseEvent('click', {
+                bubbles: true,
+                cancelable: true,
+                view: iframe.contentWindow
+            });
+            firstBtn.dispatchEvent(event);
+            
+            log('output3', '<span class="success">✅ Click event dispatched</span>');
+        }
+        
+    } catch (error) {
+        log('output3', '<span class="error">❌ ERROR: ' + error.message + '</span>');
+    }
+}
+
+function checkStructure() {
+    clearLog('output4');
+    
+    try {
+        const iframe = document.getElementById('appFrame');
+        const iframeDoc = iframe.contentDocument;
+        
+        const sections = iframeDoc.querySelectorAll('.view-section');
+        log('output4', 'Found ' + sections.length + ' view-sections');
+        
+        sections.forEach((section, i) => {
+            const id = section.getAttribute('id');
+            const isActive = section.classList.contains('active');
+            const display = window.getComputedStyle(section).display;
+            
+            log('output4', (i+1) + '. #' + id);
+            log('output4', '   Active: ' + (isActive ? 'yes' : 'no'));
+            log('output4', '   Display: ' + display);
+        });
+        
+    } catch (error) {
+        log('output4', '<span class="error">❌ ERROR: ' + error.message + '</span>');
+    }
+}
+
+// Initial message
+document.addEventListener('DOMContentLoaded', () => {
+    log('output1', 'Ready. Click buttons to test.');
+});
+</script>
+
+</body>
+</html>
