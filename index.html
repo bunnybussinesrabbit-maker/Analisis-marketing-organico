@@ -4261,7 +4261,6 @@ function processData(rawData) {
       
       // Procesar fecha - Soportar múltiples formatos
       const dateStr = (row[dateKey] || '').trim();
-      let fecha = new Date();
       
       // 🔧 Intentar parsear diferentes formatos de fecha
       if (dateStr && dateStr !== '') {
