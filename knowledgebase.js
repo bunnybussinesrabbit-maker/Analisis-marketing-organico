@@ -172,8 +172,5 @@ const knowledgebase = {
 // Exponer el objeto al ámbito global para que index.html lo encuentre
 window.knowledgebase = knowledgebase;
 
-// Exportar para ES6 modules
-export default knowledgebase;
-
 // Notificar que la base de conocimiento está lista
 console.log("✅ KnowledgeBase cargada: Módulos de Logística y Estadística activos.");
