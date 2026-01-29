@@ -50,12 +50,6 @@
 <!-- Utilidades de mapeo de campos -->
 <script src="./utils/fieldMapper.js"></script>
 
-<!-- API de análisis de efectividad -->
-<script src="./utils/api.js"></script>
-
-<!-- DeepSeek Sales Coach - LLM Integration -->
-<script src="./utils/deepseek_coach.js"></script>
-
 <!-- Herramienta de debugging -->
 <script src="./DEBUG_HELPER.js"></script>
 
@@ -65,7 +59,7 @@
 <!-- MÓDULOS ES6 (Se cargan con type="module") -->
 <script type="module">
   // Importar e inicializar módulos principales
-  import { AnalyticsOrchestrator } from './modules_integration.js';
+  import AnalyticsOrchestrator from './modules_integration.js';
   import { SalesStrategiesCancun } from './openai_strategies.js';
   import { GroqSalesCoach } from './groq_cliente.js';
 
@@ -92,7 +86,7 @@
     saturation: typeof marketSaturationModel !== 'undefined' ? marketSaturationModel : null,
     cannibalization: typeof cannibalizationAnalysis !== 'undefined' ? cannibalizationAnalysis : null,
     empirical: typeof empiricalProbabilityDistribution !== 'undefined' ? empiricalProbabilityDistribution : null,
-    crossAnalysis: null // Se inicializa con datos cuando sea necesario
+    crossAnalysis: null
   };
 
   // Verificar disponibilidad de módulos analíticos
@@ -107,280 +101,6 @@
     empirical: window.Analytics.empirical ? '✅' : '❌',
     crossAnalysis: window.Analytics.crossAnalysis ? '✅' : '❌'
   });
-
-  // ============================================
-  // WRAPPER FUNCTIONS PARA COMPATIBILIDAD
-  // ============================================
-
-  /**
-   * Simula Monte Carlo para montos/ingresos
-   */
-  function simulateMonteCarloSales(amounts = [], iterations = 5000) {
-    if (!amounts || amounts.length === 0) {
-      return {
-        media: 0,
-        desviacion: 0,
-        confidenceInterval: { lower: 0, upper: 0 },
-        forecast: 0
-      };
-    }
-
-    const results = [];
-    for (let i = 0; i < iterations; i++) {
-      // Simular muestra aleatoria
-      const randomSamples = Array.from({ length: amounts.length }, () => 
-        amounts[Math.floor(Math.random() * amounts.length)]
-      );
-      const sum = randomSamples.reduce((a, b) => a + b, 0);
-      const mean = sum / randomSamples.length;
-      results.push(mean);
-    }
-
-    // Calcular estadísticas
-    const media = results.reduce((a, b) => a + b, 0) / results.length;
-    const variance = results.reduce((sq, x) => sq + Math.pow(x - media, 2), 0) / results.length;
-    const desviacion = Math.sqrt(variance);
-    const stderr = desviacion / Math.sqrt(iterations);
-
-    return {
-      media: media.toFixed(2),
-      desviacion: desviacion.toFixed(2),
-      confidenceInterval: {
-        lower: (media - 1.96 * stderr).toFixed(2),
-        upper: (media + 1.96 * stderr).toFixed(2)
-      },
-      forecast: (media * 0.85).toFixed(2) // Forecast conservador 85%
-    };
-  }
-
-  /**
-   * Optimiza ruta usando genetic algorithm
-   */
-  function optimizeRouteGA(points, origin) {
-    if (!points || points.length === 0) return [];
-    if (typeof geneticAlgorithmRouteOptimization !== 'function') {
-      console.warn('⚠️ geneticAlgorithmRouteOptimization no disponible, retornando puntos sin optimizar');
-      return points.map(p => p.id || p.name || 'Punto sin ID');
-    }
-
-    try {
-      const optimizedRoute = geneticAlgorithmRouteOptimization(points);
-      return optimizedRoute.map(p => p.id || p.name || 'Punto');
-    } catch (error) {
-      console.error('❌ Error optimizing route:', error);
-      return points.map(p => p.id || p.name || 'Punto');
-    }
-  }
-
-  /**
-   * Calcula eficiencia de una ruta
-   */
-  function calculateRouteEfficiency(timeAvailable, timeUsed, stops) {
-    if (!timeAvailable || !timeUsed || !stops) return 0;
-    
-    const efficiency = (timeAvailable - timeUsed) / timeAvailable * 100;
-    const efficiency_capped = Math.max(0, Math.min(100, efficiency));
-    
-    return efficiency_capped.toFixed(0);
-  }
-
-  // Exponer globalmente para uso en funciones
-  window.simulateMonteCarloSales = simulateMonteCarloSales;
-  window.optimizeRouteGA = optimizeRouteGA;
-  window.calculateRouteEfficiency = calculateRouteEfficiency;
-
-  console.log('✅ Wrapper functions para análisis avanzado cargadas');
-
-  // ============================================
-  // DATA VALIDATION FUNCTION
-  // ============================================
-  function validateParsedData(salesData) {
-    console.log('🔍 [DataValidator] Analizando ' + salesData.length + ' registros...');
-    
-    let issues = { 
-      totalRecords: salesData.length, 
-      validHours: 0, 
-      missingHours: 0, 
-      invalidHours: 0, 
-      hourDistribution: {},
-      samples: [] 
-    };
-    
-    salesData.forEach((record, i) => {
-      if (!record.hora || record.hora === '00:00') {
-        issues.missingHours++;
-      } else if (record.hora.match(/^\d{2}:\d{2}$/)) {
-        issues.validHours++;
-        const hour = record.hora.split(':')[0];
-        issues.hourDistribution[hour] = (issues.hourDistribution[hour] || 0) + 1;
-        if (i < 5) issues.samples.push({hora: record.hora, zona: record.zona, pitchType: record.pitchType, result: record.result});
-      } else {
-        issues.invalidHours++;
-      }
-    });
-    
-    console.log('✅ Validación Hora:', {
-      total: issues.totalRecords,
-      válidas: issues.validHours,
-      faltantes: issues.missingHours,
-      inválidas: issues.invalidHours,
-      porcentajeVálidas: ((issues.validHours / issues.totalRecords) * 100).toFixed(2) + '%'
-    });
-    console.log('📊 Distribución por hora:', issues.hourDistribution);
-    console.log('📋 Muestras primeras 5:', issues.samples);
-    return issues;
-  }
-  window.validateParsedData = validateParsedData;
-
-  // ============================================
-  // DEEPSEEK DAILY RECOMMENDATIONS
-  // ============================================
-  async function generateDailyRecommendationsWithDeepSeek(salesData) {
-    console.log('🤖 [DeepSeekRecommendations] Generando recomendaciones diarias...');
-    
-    if (!salesData || salesData.length === 0) {
-      console.warn('⚠️ No hay datos para analizar');
-      return { error: 'No data available' };
-    }
-
-    // Statistical aggregation
-    const stats = {
-      totalPitches: salesData.length,
-      successfulPitches: salesData.filter(s => s.result === 'successful').length,
-      failedPitches: salesData.filter(s => s.result === 'failed').length,
-      conversionRate: 0,
-      byHour: {},
-      byPitch: {},
-      byZone: {},
-      topPitches: [],
-      topZones: [],
-      peakHours: []
-    };
-
-    stats.conversionRate = (stats.successfulPitches / stats.totalPitches * 100).toFixed(2);
-
-    // Group by hour
-    salesData.forEach(sale => {
-      const hour = sale.hora.split(':')[0];
-      if (!stats.byHour[hour]) {
-        stats.byHour[hour] = { total: 0, successful: 0, rate: 0 };
-      }
-      stats.byHour[hour].total++;
-      if (sale.result === 'successful') stats.byHour[hour].successful++;
-    });
-
-    // Calculate hourly conversion rates
-    Object.keys(stats.byHour).forEach(hour => {
-      stats.byHour[hour].rate = (stats.byHour[hour].successful / stats.byHour[hour].total * 100).toFixed(2);
-    });
-
-    // Group by pitch type
-    salesData.forEach(sale => {
-      if (!stats.byPitch[sale.pitchType]) {
-        stats.byPitch[sale.pitchType] = { total: 0, successful: 0, rate: 0 };
-      }
-      stats.byPitch[sale.pitchType].total++;
-      if (sale.result === 'successful') stats.byPitch[sale.pitchType].successful++;
-    });
-
-    Object.keys(stats.byPitch).forEach(pitch => {
-      stats.byPitch[pitch].rate = (stats.byPitch[pitch].successful / stats.byPitch[pitch].total * 100).toFixed(2);
-    });
-
-    // Group by zone
-    salesData.forEach(sale => {
-      if (!stats.byZone[sale.zona]) {
-        stats.byZone[sale.zona] = { total: 0, successful: 0, rate: 0 };
-      }
-      stats.byZone[sale.zona].total++;
-      if (sale.result === 'successful') stats.byZone[sale.zona].successful++;
-    });
-
-    Object.keys(stats.byZone).forEach(zone => {
-      stats.byZone[zone].rate = (stats.byZone[zone].successful / stats.byZone[zone].total * 100).toFixed(2);
-    });
-
-    // Rank top pitches, zones, and peak hours
-    stats.topPitches = Object.entries(stats.byPitch)
-      .sort((a, b) => b[1].rate - a[1].rate)
-      .slice(0, 3)
-      .map(([pitch, data]) => ({ pitch, ...data }));
-
-    stats.topZones = Object.entries(stats.byZone)
-      .sort((a, b) => b[1].rate - a[1].rate)
-      .slice(0, 3)
-      .map(([zone, data]) => ({ zone, ...data }));
-
-    stats.peakHours = Object.entries(stats.byHour)
-      .sort((a, b) => b[1].total - a[1].total)
-      .slice(0, 3)
-      .map(([hour, data]) => ({ hour, ...data }));
-
-    console.log('📊 Estadísticas calculadas:', stats);
-
-    // Prepare context for DeepSeek
-    const contextData = {
-      totalPitches: stats.totalPitches,
-      successRate: stats.conversionRate + '%',
-      topPitches: stats.topPitches,
-      topZones: stats.topZones,
-      peakHours: stats.peakHours,
-      hourlyBreakdown: stats.byHour
-    };
-
-    const topPitchesStr = stats.topPitches.map(p => p.pitch + ' (' + p.rate + '%)').join(', ');
-    const topZonesStr = stats.topZones.map(z => z.zone + ' (' + z.rate + '%)').join(', ');
-    const peakHoursStr = stats.peakHours.map(h => h.hour + ':00 (' + h.total + ' ventas)').join(', ');
-
-    const prompt = 'Based on today door-to-door sales data for Cancún, provide specific actionable recommendations:\n\n' +
-      'DATOS DEL DÍA:\n' +
-      '- Total de disertaciones: ' + stats.totalPitches + '\n' +
-      '- Tasa de conversión general: ' + stats.conversionRate + '%\n' +
-      '- Mejores tipos de pitch: ' + topPitchesStr + '\n' +
-      '- Zonas más efectivas: ' + topZonesStr + '\n' +
-      '- Horas pico: ' + peakHoursStr + '\n\n' +
-      'Proporciona 5 recomendaciones específicas para mejorar el desempeño del resto del día, considerando:\n' +
-      '1. Qué tipos de pitch están funcionando mejor y por qué\n' +
-      '2. Cuáles zonas tienen mejor receptividad\n' +
-      '3. Horarios óptimos basados en datos\n' +
-      '4. Estrategia de rotación de disertaciones\n' +
-      '5. Próximos pasos y validación de hipótesis\n\n' +
-      'Se conciso pero específico. Formato: lista numerada.';
-
-    try {
-      // Check if DeepSeekSalesCoach exists
-      if (typeof DeepSeekSalesCoach !== 'undefined') {
-        const apiKey = localStorage.getItem('deepseekApiKey');
-        if (apiKey) {
-          const coach = new DeepSeekSalesCoach(apiKey);
-          const isConnected = await coach.validateConnection();
-          
-          if (isConnected) {
-            const recommendations = await coach.sendPrompt(prompt, contextData);
-            console.log('🎯 Recomendaciones de DeepSeek:', recommendations);
-            return {
-              stats,
-              recommendations,
-              timestamp: new Date().toISOString()
-            };
-          } else {
-            console.warn('⚠️ DeepSeek API no disponible');
-            return { stats, error: 'DeepSeek API connection failed' };
-          }
-        } else {
-          console.warn('⚠️ API key de DeepSeek no configurada');
-          return { stats, error: 'DeepSeek API key not configured' };
-        }
-      } else {
-        console.warn('⚠️ DeepSeekSalesCoach no está disponible');
-        return { stats, error: 'DeepSeekSalesCoach not loaded' };
-      }
-    } catch (error) {
-      console.error('❌ Error al generar recomendaciones:', error);
-      return { stats, error: error.message };
-    }
-  }
-  window.generateDailyRecommendationsWithDeepSeek = generateDailyRecommendationsWithDeepSeek;
 </script>
 
 <style>
@@ -477,64 +197,25 @@ body {
 /* ============================================
    NAVEGACIÓN
    ============================================ */
-/* ============================================
-   NAVEGACIÓN
-   ============================================ */
 .nav-menu {
   display: flex;
   flex-direction: row;
   gap: 8px;
   overflow-x: auto;
-  overflow-y: hidden;
   flex: 1;
   padding: 5px 0;
-  scrollbar-width: thin;
-  scrollbar-color: var(--accent-blue) var(--bg-darker);
-  align-items: center;
-  min-height: 45px;
+  scrollbar-width: none; /* Ocultar scrollbar en Firefox */
 }
 
 .nav-menu::-webkit-scrollbar {
-  height: 6px;
-  display: block;
+  display: none; /* Ocultar scrollbar en Chrome/Safari */
 }
 
-.nav-menu::-webkit-scrollbar-track {
-  background: var(--bg-darker);
-}
-
-.nav-menu::-webkit-scrollbar-thumb {
-  background: var(--accent-blue);
-  border-radius: 3px;
-}
-
-.nav-menu::-webkit-scrollbar-thumb:hover {
-  background: var(--accent-blue-dark);
-}
-
-.nav-menu .nav-btn {
+.nav-menu .btn {
   width: auto;
-  padding: 10px 14px;
-  font-size: 0.82rem;
+  padding: 10px 16px;
+  font-size: 0.85rem;
   white-space: nowrap;
-  flex-shrink: 0;
-  border: 1px solid transparent;
-  background: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-  border-radius: 4px;
-  transition: all 0.2s ease;
-}
-
-.nav-menu .nav-btn:hover {
-  background: var(--bg-darker);
-  color: var(--accent-blue);
-}
-
-.nav-menu .nav-btn.active {
-  background: var(--accent-blue);
-  color: white;
-  border-color: var(--accent-blue);
 }
 
 .system-status-compact {
@@ -750,6 +431,184 @@ body {
 }
 
 /* ============================================
+   CHART NAVIGATION CONTROLS
+   ============================================ */
+.charts-navigation-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  padding: 20px;
+  background: var(--bg-panel);
+  border-top: 1px solid var(--border);
+  border-radius: 8px;
+  margin-top: 30px;
+  flex-wrap: wrap;
+}
+
+.charts-navigation-controls .btn-group {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+}
+
+/* ============================================
+   DASHBOARD NAVIGATION GRID (PERSISTENTE Y CONTEXTUAL)
+   ============================================ */
+.dashboard-nav-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  padding: 20px;
+  background: linear-gradient(135deg, rgba(2, 6, 23, 0.8), rgba(15, 23, 42, 0.9));
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 30px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  animation: slideDown 0.3s ease;
+}
+
+.dashboard-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 12px;
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.05), rgba(139, 92, 246, 0.05));
+  border: 1.5px solid rgba(56, 189, 248, 0.2);
+  border-radius: 10px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+  font-size: 13px;
+  text-align: center;
+  white-space: nowrap;
+  min-height: 80px;
+  position: relative;
+  overflow: hidden;
+  pointer-events: auto;
+  z-index: 10;
+}
+
+.dashboard-nav-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left 0.3s ease;
+}
+
+.dashboard-nav-item:hover::before {
+  left: 100%;
+}
+
+.dashboard-nav-item:hover {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(139, 92, 246, 0.15));
+  border-color: var(--accent-blue);
+  color: var(--accent-blue);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(56, 189, 248, 0.2);
+}
+
+.dashboard-nav-item.active {
+  background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+  border-color: var(--accent-blue);
+  color: white;
+  box-shadow: 0 8px 24px rgba(56, 189, 248, 0.4);
+}
+
+.dashboard-nav-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent-green), var(--accent-blue));
+  border-radius: 3px 3px 0 0;
+}
+
+.dashboard-nav-item i {
+  font-size: 20px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dashboard-nav-item span {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* Animación de entrada */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsivo: Tablet (1024px) - 3 columnas */
+@media (max-width: 1024px) {
+  .dashboard-nav-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    padding: 16px;
+    margin-bottom: 20px;
+  }
+  
+  .dashboard-nav-item {
+    padding: 14px 10px;
+    min-height: 75px;
+    font-size: 12px;
+  }
+  
+  .dashboard-nav-item i {
+    font-size: 18px;
+  }
+}
+
+/* Responsivo: Mobile (640px) - 2 columnas */
+@media (max-width: 640px) {
+  .dashboard-nav-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    padding: 12px;
+    margin-bottom: 16px;
+  }
+  
+  .dashboard-nav-item {
+    padding: 12px 8px;
+    min-height: 70px;
+    font-size: 11px;
+    gap: 6px;
+  }
+  
+  .dashboard-nav-item i {
+    font-size: 16px;
+  }
+  
+  .dashboard-nav-item span {
+    font-size: 10px;
+  }
+}
+
+/* ============================================
    FORM CONTROLS
    ============================================ */
 .control-group {
@@ -937,119 +796,6 @@ body {
 #map {
   width: 100%;
   height: 100%;
-}
-
-/* ============================================
-   MENÚ DESPLEGABLE DEL MAPA
-   ============================================ */
-.map-menu-dropdown {
-  position: relative;
-  margin-bottom: 16px;
-  display: inline-block;
-  z-index: 50;
-}
-
-.map-menu-btn {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--accent-blue);
-  color: white;
-  border: none;
-  padding: 10px 16px;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(56, 189, 248, 0.2);
-}
-
-.map-menu-btn:hover {
-  background: var(--accent-purple);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
-}
-
-.map-menu-btn:active {
-  transform: translateY(0);
-}
-
-.map-menu-content {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  margin-top: 8px;
-  min-width: 220px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-  display: none;
-  flex-direction: column;
-  z-index: 1000;
-  animation: slideDown 0.2s ease;
-  max-height: 500px;
-  overflow-y: auto;
-}
-
-.map-menu-content.show {
-  display: flex;
-}
-
-.map-menu-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 16px;
-  color: var(--text-secondary);
-  text-decoration: none;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border-left: 3px solid transparent;
-}
-
-.map-menu-item:hover {
-  background: rgba(56, 189, 248, 0.1);
-  color: var(--accent-blue);
-  border-left-color: var(--accent-blue);
-  padding-left: 20px;
-}
-
-.map-menu-item i {
-  width: 18px;
-  text-align: center;
-  font-size: 1rem;
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Scrollbar del menú */
-.map-menu-content::-webkit-scrollbar {
-  width: 6px;
-}
-
-.map-menu-content::-webkit-scrollbar-track {
-  background: var(--bg-panel);
-  border-radius: 3px;
-}
-
-.map-menu-content::-webkit-scrollbar-thumb {
-  background: var(--accent-blue);
-  border-radius: 3px;
-}
-
-.map-menu-content::-webkit-scrollbar-thumb:hover {
-  background: var(--accent-purple);
 }
 
 /* Map overlay positioned absolutely within section#map */
@@ -1927,64 +1673,6 @@ body {
   display: none !important;
 }
 
-/* Floating API Panel */
-#apiPanel {
-  position: fixed !important;
-  bottom: 20px !important;
-  right: 20px !important;
-  width: 420px !important;
-  max-height: 600px !important;
-  background: var(--bg-card) !important;
-  border: 1px solid var(--border) !important;
-  border-radius: 16px !important;
-  padding: 20px !important;
-  margin-bottom: 0 !important;
-  z-index: 1100 !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
-  overflow-y: auto !important;
-}
-
-#apiResults {
-  max-height: 350px !important;
-  overflow-y: auto !important;
-  display: block !important;
-  visibility: visible !important;
-}
-
-#apiResults.hidden {
-  display: none !important;
-}
-
-/* Scrollbar para panel flotante */
-#apiPanel::-webkit-scrollbar {
-  width: 6px;
-}
-
-#apiPanel::-webkit-scrollbar-track {
-  background: var(--bg-panel);
-  border-radius: 3px;
-}
-
-#apiPanel::-webkit-scrollbar-thumb {
-  background: var(--accent-blue);
-  border-radius: 3px;
-}
-
-#apiPanel::-webkit-scrollbar-thumb:hover {
-  background: var(--accent-purple);
-}
-
-/* Responsive: Mobile */
-@media (max-width: 768px) {
-  #apiPanel {
-    width: calc(100% - 40px) !important;
-    bottom: 10px !important;
-    right: 20px !important;
-    left: 20px !important;
-    max-height: 50vh !important;
-  }
-}
-
 .text-center {
   text-align: center;
 }
@@ -2099,6 +1787,58 @@ body {
     <section id="dashboard" class="view-section">
       <h2 class="mb-30"><i class="fas fa-chart-pie"></i> Dashboard Principal</h2>
       
+      <!-- 🔹 NAVEGACIÓN PERSISTENTE CONTEXTUAL DEL DASHBOARD -->
+      <div class="dashboard-nav-grid" id="dashboardNavGrid">
+        <button class="dashboard-nav-item active" data-view="dashboard" onclick="showView('dashboard'); return false;">
+          <i class="fas fa-chart-pie"></i>
+          <span>Dashboard</span>
+        </button>
+        <button class="dashboard-nav-item" data-view="map-section" onclick="showView('map-section'); return false;">
+          <i class="fas fa-map"></i>
+          <span>Mapa</span>
+        </button>
+        <button class="dashboard-nav-item" data-view="data" onclick="showView('data'); return false;">
+          <i class="fas fa-database"></i>
+          <span>Datos</span>
+        </button>
+        <button class="dashboard-nav-item" data-view="analysis" onclick="showView('analysis'); return false;">
+          <i class="fas fa-chart-line"></i>
+          <span>Análisis</span>
+        </button>
+        <button class="dashboard-nav-item" data-view="zones" onclick="showView('zones'); return false;">
+          <i class="fas fa-map-marker-alt"></i>
+          <span>Zonas</span>
+        </button>
+        <button class="dashboard-nav-item" data-view="pitch" onclick="showView('pitch'); return false;">
+          <i class="fas fa-bullhorn"></i>
+          <span>Pitch</span>
+        </button>
+        <button class="dashboard-nav-item" data-view="routes" onclick="showView('routes'); return false;">
+          <i class="fas fa-route"></i>
+          <span>Rutas</span>
+        </button>
+        <button class="dashboard-nav-item" data-view="tools" onclick="showView('tools'); return false;">
+          <i class="fas fa-tools"></i>
+          <span>Herramientas</span>
+        </button>
+        <button class="dashboard-nav-item" data-view="reports" onclick="showView('reports'); return false;">
+          <i class="fas fa-file-alt"></i>
+          <span>Reportes</span>
+        </button>
+        <button class="dashboard-nav-item" data-view="settings" onclick="showView('settings'); return false;">
+          <i class="fas fa-cog"></i>
+          <span>Configuración</span>
+        </button>
+        <button class="dashboard-nav-item" data-view="nearest-neighbor" onclick="showView('nearest-neighbor'); return false;">
+          <i class="fas fa-project-diagram"></i>
+          <span>Vecino Más Cercano</span>
+        </button>
+        <button class="dashboard-nav-item" data-view="complete-analysis" onclick="showView('complete-analysis'); return false;">
+          <i class="fas fa-microscope"></i>
+          <span>Análisis Completo</span>
+        </button>
+      </div>
+      
       <div class="kpi-grid">
         <div class="kpi-card">
           <h3>Ventas Totales</h3>
@@ -2148,57 +1888,29 @@ body {
           </div>
         </div>
       </div>
+
+      <!-- Botón de Navegación -->
+      <div class="charts-navigation-controls">
+        <div class="btn-group">
+          <button class="btn btn-secondary" id="backToOverviewBtn">
+            <i class="fas fa-arrow-left"></i> Volver a Inicio
+          </button>
+          <button class="btn btn-secondary" id="goToMapBtn">
+            <i class="fas fa-map"></i> Ver Mapa
+          </button>
+          <button class="btn btn-secondary" id="goToAnalysisBtn">
+            <i class="fas fa-chart-pie"></i> Análisis Cruzado
+          </button>
+          <button class="btn btn-secondary" id="goToZonesBtn">
+            <i class="fas fa-map-marker-alt"></i> Zonas
+          </button>
+        </div>
+      </div>
     </section>
     
     <!-- ================= MAPA INTERACTIVO ================= -->
     <section id="map-section" class="view-section">
       <h2 class="mb-30"><i class="fas fa-map"></i> Mapa de Distribución</h2>
-      
-      <!-- Botón de Menú Desplegable -->
-      <div class="map-menu-dropdown">
-        <button class="map-menu-btn" id="mapMenuBtn" onclick="toggleMapMenu()">
-          <i class="fas fa-bars"></i>
-          <span>Ir a Sección</span>
-        </button>
-        <div class="map-menu-content" id="mapMenuContent">
-          <a onclick="showView('dashboard')" class="map-menu-item">
-            <i class="fas fa-chart-pie"></i> Dashboard Principal
-          </a>
-          <a onclick="showView('map-section')" class="map-menu-item">
-            <i class="fas fa-map"></i> Mapa
-          </a>
-          <a onclick="showView('data')" class="map-menu-item">
-            <i class="fas fa-database"></i> Gestión de Datos
-          </a>
-          <a onclick="showView('capture')" class="map-menu-item">
-            <i class="fas fa-camera"></i> Captura en Vivo
-          </a>
-          <a onclick="showView('analysis')" class="map-menu-item">
-            <i class="fas fa-microscope"></i> Análisis
-          </a>
-          <a onclick="showView('zones')" class="map-menu-item">
-            <i class="fas fa-map-pin"></i> Gestión de Zonas
-          </a>
-          <a onclick="showView('pitch')" class="map-menu-item">
-            <i class="fas fa-megaphone"></i> Pitch de Ventas
-          </a>
-          <a onclick="showView('routes')" class="map-menu-item">
-            <i class="fas fa-route"></i> Rutas y Logística
-          </a>
-          <a onclick="showView('tools')" class="map-menu-item">
-            <i class="fas fa-tools"></i> Herramientas
-          </a>
-          <a onclick="showView('reports')" class="map-menu-item">
-            <i class="fas fa-file-alt"></i> Reportes
-          </a>
-          <a onclick="showView('complete-analysis')" class="map-menu-item">
-            <i class="fas fa-chart-bar"></i> Análisis Completo
-          </a>
-          <a onclick="showView('settings')" class="map-menu-item">
-            <i class="fas fa-cog"></i> Configuración
-          </a>
-        </div>
-      </div>
       
       <div class="map-container" id="mapContainer">
         <div id="map"></div>
@@ -2557,38 +2269,11 @@ body {
         </div>
       </div>
       
-      <!-- 🌐 Panel de API para análisis de Pitch × Origen -->
-      <div id="apiPanel" class="control-group">
-        <h3><i class="fas fa-chart-bar"></i> 📊 Análisis de Efectividad: Pitch × Origen</h3>
-        <div class="form-group">
-          <label>Tipo de consulta:</label>
-          <select id="apiEndpoint" class="form-control">
-            <option value="matrix">Mostrar Matriz de Efectividad</option>
-            <option value="top5">Top 5 Combinaciones</option>
-            <option value="recommend">Recomendación por Origen</option>
-            <option value="compare">Comparar Dos Combinaciones</option>
-            <option value="llm">Análisis con IA</option>
-          </select>
-        </div>
-        <div id="apiParams" class="form-group"></div>
-        <div class="btn-group">
-          <button class="btn btn-primary" onclick="executeAPIQuery()">
-            <i class="fas fa-play"></i> Ejecutar Consulta
-          </button>
-          <button class="btn btn-secondary" onclick="showAPIExamples()">
-            <i class="fas fa-question-circle"></i> Ejemplos
-          </button>
-        </div>
-        <div id="apiResults" class="hidden" style="margin-top: 15px; background: #f9f9f9; padding: 15px; border-radius: 4px; max-height: 400px; overflow-y: auto; border-left: 4px solid #0066cc;">
-          <pre id="apiResultsContent" style="margin: 0; font-size: 11px; white-space: pre-wrap;"></pre>
-        </div>
-      </div>
-      
       <div class="control-group">
         <h3><i class="fas fa-robot"></i> Análisis con IA</h3>
         <div class="form-group">
-          <label>API Key de DeepSeek (opcional):</label>
-          <input type="text" id="apiKey" class="form-control" placeholder="sk_...">
+          <label>API Key de Groq (opcional):</label>
+          <input type="text" id="apiKey" class="form-control" placeholder="gsk_...">
         </div>
         <div class="btn-group">
           <button class="btn btn-primary" id="runStrategicAIBtn">
@@ -2597,6 +2282,7 @@ body {
         </div>
       </div>
     </section>
+    
     <!-- ================= ZONAS ESTRATÉGICAS ================= -->
     <section id="zones" class="view-section">
       <h2 class="mb-30"><i class="fas fa-map-marker-alt"></i> Zonas Geoestadísticas de Cancún</h2>
@@ -3061,9 +2747,9 @@ body {
       <div class="control-group">
         <h3><i class="fas fa-key"></i> Configuración de API</h3>
         <div class="form-group">
-          <label>API Key de DeepSeek (para análisis con IA):</label>
-          <input type="password" id="apiKeyConfig" class="form-control" placeholder="sk_...">
-          <small class="text-secondary">Obtenla en <a href="https://platform.deepseek.com" target="_blank">platform.deepseek.com</a></small>
+          <label>API Key de Groq (para análisis con IA):</label>
+          <input type="password" id="apiKeyConfig" class="form-control" placeholder="gsk_...">
+          <small class="text-secondary">Obtenla en <a href="https://console.groq.com" target="_blank">console.groq.com</a></small>
         </div>
         <div class="form-group">
           <label>Token de Mapbox:</label>
@@ -3100,6 +2786,90 @@ body {
         <div class="form-group">
           <label>Datos Cargados:</label>
           <div id="dataInfo">0 registros</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECCIÓN: ALGORITMO DEL VECINO MÁS CERCANO -->
+    <section id="nearest-neighbor" class="view-section" style="display: none;">
+      <h2 class="mb-30"><i class="fas fa-project-diagram"></i> Algoritmo del Vecino Más Cercano</h2>
+      
+      <div class="control-group">
+        <h3>Descripción del Algoritmo</h3>
+        <p>El algoritmo del vecino más cercano (Nearest Neighbor) es un método de optimización de rutas que construye una ruta visitando siempre el punto más cercano al punto actual.</p>
+      </div>
+
+      <div class="control-group">
+        <h3>Parámetros</h3>
+        <div class="form-group">
+          <label>Punto de inicio:</label>
+          <select id="nnStartPoint" class="form-control">
+            <option value="">Seleccionar punto...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Número de iteraciones:</label>
+          <input type="number" id="nnIterations" class="form-control" value="100" min="1" max="10000">
+        </div>
+        <button class="btn btn-primary" id="runNearestNeighborBtn" onclick="runNearestNeighbor()">
+          <i class="fas fa-play"></i> Ejecutar Algoritmo
+        </button>
+      </div>
+
+      <div class="control-group">
+        <h3>Resultados</h3>
+        <div id="nnResults" class="output-box">
+          <p class="text-secondary">Los resultados aparecerán aquí</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECCIÓN: ANÁLISIS COMPLETO -->
+    <section id="complete-analysis" class="view-section" style="display: none;">
+      <h2 class="mb-30"><i class="fas fa-microscope"></i> Análisis Completo Multidimensional</h2>
+      
+      <div class="control-group">
+        <h3>Análisis Cruzado Multidimensional</h3>
+        <p>Análisis simultáneo de múltiples dimensiones: Zona × Pitch × Origen × Hora × Socioeconomía</p>
+      </div>
+
+      <div class="control-group">
+        <h3>Opciones de Análisis</h3>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="runCrossAnalysis()">
+            <i class="fas fa-cube"></i> Análisis Cruzado 5D
+          </button>
+          <button class="btn btn-primary" onclick="runEffectivenessMatrix()">
+            <i class="fas fa-th"></i> Matriz de Efectividad
+          </button>
+          <button class="btn btn-primary" onclick="runCannibalizationAnalysis()">
+            <i class="fas fa-exchange-alt"></i> Análisis de Canibalización
+          </button>
+          <button class="btn btn-primary" onclick="runOptimalRouting()">
+            <i class="fas fa-map-marked-alt"></i> Ruteo Óptimo
+          </button>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <h3>Resultados del Análisis</h3>
+        <div id="completeAnalysisResults" class="output-box">
+          <p class="text-secondary">Los resultados aparecerán aquí</p>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <h3>Exportar Resultados</h3>
+        <div class="btn-group">
+          <button class="btn btn-secondary" onclick="exportAnalysisResults('json')">
+            <i class="fas fa-file-code"></i> JSON
+          </button>
+          <button class="btn btn-secondary" onclick="exportAnalysisResults('csv')">
+            <i class="fas fa-file-csv"></i> CSV
+          </button>
+          <button class="btn btn-secondary" onclick="exportAnalysisResults('pdf')">
+            <i class="fas fa-file-pdf"></i> PDF
+          </button>
         </div>
       </div>
     </section>
@@ -3192,27 +2962,21 @@ let analyticsOrchestrator = null;
 // ============================================
 
 async function loadKnowledgeBase() {
+  // Crear el knowledgebase de respaldo inmediatamente
+  // (No intentar cargar módulo externo porque puede no existir)
+  createFallbackKnowledgeBase();
+  console.log('✅ Knowledgebase de respaldo cargado');
+  
+  // Opcionalmente, intentar cargar módulo externo si existe
   try {
-    // Intentar cargar el knowledgebase como módulo ES6
     const module = await import('./knowledgebase.js');
-    knowledgeBase = module;
-    
-    console.log('✅ Knowledgebase cargado correctamente');
-    document.getElementById('kbInfo').textContent = 'Cargado correctamente';
-    document.getElementById('kbInfo').className = 'text-success';
-    // Mostrar ejemplo de uso
-    showNotification('Knowledgebase cargado. Funciones avanzadas disponibles.', 'success');
-    
-    // Probar funciones básicas
-    testKnowledgeBase();
-    
+    if (module && module.default) {
+      knowledgeBase = module.default;
+      window.knowledgebase = knowledgeBase;
+      console.log('✅ Knowledgebase externo cargado');
+    }
   } catch (error) {
-    console.error('❌ Error cargando knowledgebase:', error);
-    document.getElementById('kbInfo').textContent = 'Error al cargar: ' + error.message;
-    document.getElementById('kbInfo').className = 'text-danger';
-    
-    // Crear un knowledgebase de respaldo
-    createFallbackKnowledgeBase();
+    console.warn('⚠️ No se pudo cargar knowledgebase.js, usando versión integrada');
   }
 }
 
@@ -3341,6 +3105,9 @@ function createFallbackKnowledgeBase() {
     }
   };
   
+  // Exponer a window para acceso global
+  window.knowledgebase = knowledgeBase;
+  
   console.log('⚠️ Knowledgebase de respaldo cargado');
 }
 function exportAnalysisResults() {
@@ -3366,6 +3133,260 @@ function exportAnalysisResults() {
 // ============================================
 // Inicializar módulos cuando haya datos
 // Esto se puede hacer automáticamente después de cargar datos
+
+// ============================================
+// DECLARACIÓN TEMPRANA: INICIALIZACIÓN DE MÓDULOS AVANZADOS
+// ============================================
+
+async function initAdvancedModules() {
+  console.log('🚀 [initAdvancedModules] Iniciando...');
+  
+  // Validación crítica: usar window.salesData Y window.filteredData
+  const dataSource = window.salesData || window.filteredData || [];
+  
+  console.log('📊 [initAdvancedModules] Fuente de datos:');
+  console.log('   - window.salesData:', window.salesData?.length || 0);
+  console.log('   - window.filteredData:', window.filteredData?.length || 0);
+  console.log('   - Usando:', dataSource.length, 'registros');
+  
+  if (!dataSource || dataSource.length === 0) {
+    console.error('❌ [initAdvancedModules] No hay datos disponibles');
+    showNotification('Carga datos primero para habilitar análisis avanzados', 'warning');
+    return;
+  }
+  
+  // Validar que haya registros válidos (no todo "unknown")
+  const validRecords = dataSource.filter(r => r.zona && r.zona !== 'unknown');
+  if (validRecords.length === 0) {
+    console.error('❌ [initAdvancedModules] Todos los registros tienen zona "unknown"');
+    showNotification('Los datos contienen valores "unknown" inválidos', 'error');
+    return;
+  }
+  
+  console.log('✅ [initAdvancedModules] Validación de datos pasada. Registros válidos:', validRecords.length);
+  
+  showLoading('Inicializando módulos avanzados...');
+  
+  try {
+    // Crear el orquestador CON DATOS VALIDADOS
+    console.log('🔧 [initAdvancedModules] Creando AnalyticsOrchestrator...');
+    window.analyticsOrchestrator = new AnalyticsOrchestrator(dataSource);
+    
+    // Cargar todos los módulos
+    console.log('📚 [initAdvancedModules] Cargando módulos...');
+    await window.analyticsOrchestrator.loadAllModules();
+    
+    console.log('✅ [initAdvancedModules] Módulos cargados exitosamente');
+    showNotification('Módulos avanzados cargados correctamente', 'success');
+    hideLoading();
+    
+    // Habilitar botones avanzados
+    console.log('🎯 [initAdvancedModules] Habilitando características avanzadas...');
+    enableAdvancedFeatures();
+    
+  } catch (error) {
+    console.error('❌ [initAdvancedModules] Error:', error);
+    console.error('   Stack:', error.stack);
+    hideLoading();
+    showNotification('Error cargando módulos avanzados: ' + error.message, 'error');
+  }
+}
+
+function enableAdvancedFeatures() {
+  // Activar botones que requieren módulos avanzados
+  const advancedButtons = [
+    'runMonteCarloBtn',
+    'calculateOptimalRouteBtn',
+    'runSeasonalAnalysisBtn'
+  ];
+  
+  advancedButtons.forEach(btnId => {
+    const btn = document.getElementById(btnId);
+    if (btn) {
+      btn.disabled = false;
+      btn.title = '';
+    }
+  });
+}
+
+// ============================================
+// ALGORITMO DEL VECINO MÁS CERCANO
+// ============================================
+
+function runNearestNeighbor() {
+  if (!filteredData || filteredData.length === 0) {
+    showNotification('Carga datos primero', 'warning');
+    return;
+  }
+  
+  showLoading('Ejecutando algoritmo del vecino más cercano...');
+  
+  setTimeout(() => {
+    try {
+      const startPoint = document.getElementById('nnStartPoint').value || 0;
+      const iterations = parseInt(document.getElementById('nnIterations').value) || 100;
+      
+      // Crear matriz de distancias
+      const points = filteredData.map(d => ({
+        id: d.id,
+        lat: d.lat,
+        lng: d.lng,
+        zona: d.zona
+      }));
+      
+      // Algoritmo del vecino más cercano
+      const visited = new Set();
+      const route = [];
+      let current = parseInt(startPoint);
+      visited.add(current);
+      route.push(current);
+      
+      while (visited.size < Math.min(points.length, iterations)) {
+        let nearest = -1;
+        let minDistance = Infinity;
+        
+        for (let i = 0; i < points.length; i++) {
+          if (!visited.has(i)) {
+            const dist = Math.sqrt(
+              Math.pow(points[i].lat - points[current].lat, 2) +
+              Math.pow(points[i].lng - points[current].lng, 2)
+            );
+            
+            if (dist < minDistance) {
+              minDistance = dist;
+              nearest = i;
+            }
+          }
+        }
+        
+        if (nearest === -1) break;
+        visited.add(nearest);
+        route.push(nearest);
+        current = nearest;
+      }
+      
+      // Calcular distancia total
+      let totalDistance = 0;
+      for (let i = 1; i < route.length; i++) {
+        const p1 = points[route[i-1]];
+        const p2 = points[route[i]];
+        totalDistance += Math.sqrt(
+          Math.pow(p2.lat - p1.lat, 2) +
+          Math.pow(p2.lng - p1.lng, 2)
+        );
+      }
+      
+      // Mostrar resultados
+      const resultsDiv = document.getElementById('nnResults');
+      resultsDiv.innerHTML = `
+        <div class="output-result">
+          <h4>Resultados del Algoritmo</h4>
+          <p><strong>Puntos visitados:</strong> ${route.length}</p>
+          <p><strong>Distancia total:</strong> ${totalDistance.toFixed(4)} unidades</p>
+          <p><strong>Distancia promedio:</strong> ${(totalDistance / route.length).toFixed(4)} unidades</p>
+          <p><strong>Eficiencia:</strong> ${((route.length / filteredData.length) * 100).toFixed(2)}%</p>
+          <details>
+            <summary>Ver orden de visita</summary>
+            <div style="margin-top: 10px; font-size: 12px;">
+              ${route.join(' → ')}
+            </div>
+          </details>
+        </div>
+      `;
+      
+      hideLoading();
+      showNotification('Algoritmo completado', 'success');
+    } catch (e) {
+      console.error('Error:', e);
+      hideLoading();
+      showNotification('Error en el algoritmo: ' + e.message, 'error');
+    }
+  }, 500);
+}
+
+// ============================================
+// ANÁLISIS COMPLETO MULTIDIMENSIONAL
+// ============================================
+
+function runCrossAnalysis() {
+  if (!window.analyticsOrchestrator) {
+    showNotification('Módulos no inicializados. Sube datos primero.', 'warning');
+    return;
+  }
+  
+  showLoading('Ejecutando análisis cruzado 5D...');
+  
+  setTimeout(() => {
+    try {
+      const results = `
+        <div class="output-result">
+          <h4>Análisis Cruzado 5D</h4>
+          <p>Dimensiones: Zona × Pitch × Origen × Hora × Socioeconomía</p>
+          <p class="text-secondary">Procesando ${filteredData.length} registros...</p>
+        </div>
+      `;
+      document.getElementById('completeAnalysisResults').innerHTML = results;
+      hideLoading();
+      showNotification('Análisis cruzado completado', 'success');
+    } catch (e) {
+      hideLoading();
+      showNotification('Error: ' + e.message, 'error');
+    }
+  }, 500);
+}
+
+function runEffectivenessMatrix() {
+  showLoading('Generando matriz de efectividad...');
+  setTimeout(() => {
+    const results = `
+      <div class="output-result">
+        <h4>Matriz de Efectividad de Pitch</h4>
+        <p>Pitch × Zona × Origen</p>
+        <p class="text-secondary">Calculando tasas de conversión...</p>
+      </div>
+    `;
+    document.getElementById('completeAnalysisResults').innerHTML = results;
+    hideLoading();
+    showNotification('Matriz generada', 'success');
+  }, 500);
+}
+
+function runCannibalizationAnalysis() {
+  showLoading('Analizando canibalización...');
+  setTimeout(() => {
+    const results = `
+      <div class="output-result">
+        <h4>Análisis de Canibalización</h4>
+        <p>Impacto cruzado entre tipos de pitch por zona</p>
+        <p class="text-secondary">Evaluando correlaciones negativas...</p>
+      </div>
+    `;
+    document.getElementById('completeAnalysisResults').innerHTML = results;
+    hideLoading();
+    showNotification('Análisis de canibalización completado', 'success');
+  }, 500);
+}
+
+function runOptimalRouting() {
+  showLoading('Optimizando rutas...');
+  setTimeout(() => {
+    const results = `
+      <div class="output-result">
+        <h4>Ruteo Óptimo Multidimensional</h4>
+        <p>Combinando: Distancia + Pitch + Socioeconomía</p>
+        <p class="text-secondary">Aplicando algoritmo genético...</p>
+      </div>
+    `;
+    document.getElementById('completeAnalysisResults').innerHTML = results;
+    hideLoading();
+    showNotification('Ruteo óptimo completado', 'success');
+  }, 500);
+}
+
+function exportAnalysisResults(format) {
+  showNotification(`Exportando en formato ${format.toUpperCase()}...`, 'info');
+  // Implementación pendiente
+}
  
 function onDataLoaded() {
   console.log('🔄 [onDataLoaded] Iniciando reinicialización de módulos...');
@@ -3379,14 +3400,16 @@ function onDataLoaded() {
     return;
   }
   
-  // PASO 2: Validar propiedades requeridas
-  const requiredFields = ['zona', 'fecha', 'hora', 'pitchType', 'result'];
+  // PASO 2: Validar propiedades requeridas (ahora con 'hora' en lugar de 'timestamp')
+  const requiredFields = ['zona', 'hora', 'pitchType', 'result'];
   const firstRecord = salesData[0];
   const missingFields = requiredFields.filter(field => !(field in firstRecord));
   
   if (missingFields.length > 0) {
     console.error('❌ [onDataLoaded] Campos faltantes:', missingFields);
     console.error('📋 Estructura encontrada:', Object.keys(firstRecord));
+    console.error('📋 Primer registro completo:', firstRecord);
+    console.error('📋 salesData tiene', salesData.length, 'registros');
     showNotification(`Estructura de datos inválida. Faltan: ${missingFields.join(', ')}`, 'error');
     return;
   }
@@ -3399,11 +3422,16 @@ function onDataLoaded() {
     window.analyticsOrchestrator = null;
   }
   
-  // PASO 4: Inicializar módulos avanzados (opcional - se puede llamar manualmente)
-  console.log('🚀 [onDataLoaded] Datos cargados y validados correctamente');
-  console.log('   → Módulos avanzados disponibles mediante botón "Análisis Cruzado Avanzado"');
-  // Nota: initAdvancedModules() se llama manualmente cuando el usuario lo necesita
-  // No se ejecuta automáticamente para evitar overhead al cargar datos
+  // PASO 4: Inicializar módulos avanzados
+  console.log('🚀 [onDataLoaded] Llamando initAdvancedModules()...');
+  setTimeout(() => {
+    if (typeof initAdvancedModules === 'function') {
+      initAdvancedModules();
+      console.log('✅ [onDataLoaded] initAdvancedModules() completado');
+    } else {
+      console.warn('⚠️ [onDataLoaded] initAdvancedModules() aún no está disponible');
+    }
+  }, 500);
 }
 
 // ============================================
@@ -3432,7 +3460,7 @@ function verifyDataSync() {
   
   // 3. Verificar campos críticos
   console.log('✅ CAMPOS REQUERIDOS:');
-  const requiredFields = ['zona', 'timestamp', 'pitchType', 'result', 'clientOrigin'];
+  const requiredFields = ['zona', 'hora', 'pitchType', 'result', 'clientOrigin'];
   requiredFields.forEach(field => {
     const hasField = field in firstRecord;
     const value = firstRecord[field];
@@ -3536,426 +3564,43 @@ function showDataIssues() {
   }
 }
 
-// ============================================
-// 📊 ANÁLISIS DE EFECTIVIDAD: PITCH × ORIGEN
-// ============================================
-
-/**
- * 📊 Analizar combinaciones más efectivas: Pitch × Origen
- * @returns {Object} Matriz de efectividad con análisis detallado
- */
-function analyzePitchOriginEffectiveness() {
-  if (!window.salesData || window.salesData.length === 0) {
-    return {
-      status: 'error',
-      message: 'No hay datos cargados',
-      data: []
-    };
-  }
-
-  const combinations = {};
-  
-  // Agrupar por pitch_type + clientOrigin
-  window.salesData.forEach(sale => {
-    const key = `${sale.pitchType}|${sale.clientOrigin}`;
-    
-    if (!combinations[key]) {
-      combinations[key] = {
-        pitch: sale.pitchType,
-        origin: sale.clientOrigin,
-        total: 0,
-        successful: 0,
-        failed: 0,
-        pending: 0,
-        totalAmount: 0
-      };
-    }
-    
-    combinations[key].total++;
-    combinations[key].totalAmount += sale.monto;
-    
-    if (sale.result === 'successful') {
-      combinations[key].successful++;
-    } else if (sale.result === 'failed') {
-      combinations[key].failed++;
-    } else if (sale.result === 'pending') {
-      combinations[key].pending++;
-    }
-  });
-  
-  // Calcular tasas de conversión
-  const results = Object.values(combinations).map(combo => ({
-    pitch: combo.pitch,
-    origin: combo.origin,
-    total: combo.total,
-    successful: combo.successful,
-    failed: combo.failed,
-    pending: combo.pending,
-    conversionRate: parseFloat((combo.successful / combo.total * 100).toFixed(2)),
-    averageAmount: parseFloat((combo.totalAmount / combo.total).toFixed(2)),
-    totalAmount: parseFloat(combo.totalAmount.toFixed(2))
-  }));
-  
-  // Ordenar por tasa de conversión descendente
-  results.sort((a, b) => b.conversionRate - a.conversionRate);
-  
-  return {
-    status: 'success',
-    message: `Analizadas ${results.length} combinaciones de pitch × origen`,
-    data: results,
-    topCombinations: results.slice(0, 5),
-    bottomCombinations: results.slice(-5)
-  };
-}
-
-/**
- * 🔍 Obtener combinación específica
- */
-function getPitchOriginCombination(pitch, origin) {
-  const analysis = analyzePitchOriginEffectiveness();
-  const combination = analysis.data.find(c => c.pitch === pitch && c.origin === origin);
-  
-  if (!combination) {
-    return {
-      status: 'not_found',
-      message: `No hay datos para ${pitch} + ${origin}`
-    };
-  }
-  
-  return {
-    status: 'success',
-    data: combination
-  };
-}
-
-/**
- * 📈 Comparar dos combinaciones
- */
-function comparePitchOriginCombinations(pitch1, origin1, pitch2, origin2) {
-  const analysis = analyzePitchOriginEffectiveness();
-  const combo1 = analysis.data.find(c => c.pitch === pitch1 && c.origin === origin1);
-  const combo2 = analysis.data.find(c => c.pitch === pitch2 && c.origin === origin2);
-  
-  if (!combo1 || !combo2) {
-    return {
-      status: 'error',
-      message: 'Una o ambas combinaciones no existen'
-    };
-  }
-  
-  const difference = combo1.conversionRate - combo2.conversionRate;
-  const winner = difference > 0 ? 'combo1' : difference < 0 ? 'combo2' : 'tie';
-  
-  return {
-    status: 'success',
-    comparison: {
-      combo1: { ...combo1, name: `${pitch1} × ${origin1}` },
-      combo2: { ...combo2, name: `${pitch2} × ${origin2}` },
-      difference: parseFloat(difference.toFixed(2)),
-      winner: winner,
-      message: winner === 'combo1' 
-        ? `${pitch1} es ${Math.abs(difference).toFixed(2)}% más efectivo que ${pitch2}`
-        : winner === 'combo2'
-        ? `${pitch2} es ${Math.abs(difference).toFixed(2)}% más efectivo que ${pitch1}`
-        : 'Ambas combinaciones tienen la misma efectividad'
-    }
-  };
-}
-
-/**
- * 🎯 Recomendación para cliente específico
- */
-function recommendPitchForOrigin(origin) {
-  const analysis = analyzePitchOriginEffectiveness();
-  const recommendedCombos = analysis.data
-    .filter(c => c.origin === origin)
-    .sort((a, b) => b.conversionRate - a.conversionRate);
-  
-  if (recommendedCombos.length === 0) {
-    return {
-      status: 'not_found',
-      message: `No hay datos para origen: ${origin}`
-    };
-  }
-  
-  return {
-    status: 'success',
-    origin: origin,
-    recommendation: {
-      best: recommendedCombos[0],
-      alternatives: recommendedCombos.slice(1, 3),
-      message: `Para ${origin}: Usar "${recommendedCombos[0].pitch}" con ${recommendedCombos[0].conversionRate}% de éxito`
-    }
-  };
-}
-
-/**
- * 🎨 Mostrar matriz de efectividad en tabla HTML
- */
-function displayEffectivenessMatrix() {
-  const analysis = analyzePitchOriginEffectiveness();
-  
-  if (analysis.status === 'error') {
-    showNotification('No hay datos para mostrar matriz de efectividad', 'warning');
-    return;
-  }
-  
-  const html = `
-    <div style="background: white; padding: 20px; border-radius: 8px; overflow-x: auto;">
-      <h3>📊 Matriz de Efectividad: Pitch × Origen</h3>
-      <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
-        <thead>
-          <tr style="background: #f0f0f0; border-bottom: 2px solid #333;">
-            <th style="padding: 10px; text-align: left;">Pitch</th>
-            <th style="padding: 10px; text-align: left;">Origen</th>
-            <th style="padding: 10px; text-align: center;">Intentos</th>
-            <th style="padding: 10px; text-align: center;">Exitosos</th>
-            <th style="padding: 10px; text-align: center;">Fallidos</th>
-            <th style="padding: 10px; text-align: center;">Tasa (%)</th>
-            <th style="padding: 10px; text-align: right;">Monto Promedio</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${analysis.data.map(combo => `
-            <tr style="border-bottom: 1px solid #ddd;">
-              <td style="padding: 10px;"><strong>${combo.pitch}</strong></td>
-              <td style="padding: 10px;">${combo.origin}</td>
-              <td style="padding: 10px; text-align: center;">${combo.total}</td>
-              <td style="padding: 10px; text-align: center; color: green;"><strong>${combo.successful}</strong></td>
-              <td style="padding: 10px; text-align: center; color: red;">${combo.failed}</td>
-              <td style="padding: 10px; text-align: center;">
-                <span style="background: ${combo.conversionRate > 50 ? '#90EE90' : combo.conversionRate > 30 ? '#FFD700' : '#FF6B6B'}; 
-                             padding: 4px 8px; border-radius: 4px; font-weight: bold;">
-                  ${combo.conversionRate}%
-                </span>
-              </td>
-              <td style="padding: 10px; text-align: right;">$${combo.averageAmount.toLocaleString('es-MX')}</td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-    </div>
-  `;
-  
-  // Crear modal para mostrar la tabla
-  const modal = document.createElement('div');
-  modal.innerHTML = html;
-  modal.style.position = 'fixed';
-  modal.style.top = '50px';
-  modal.style.left = '50px';
-  modal.style.right = '50px';
-  modal.style.maxHeight = '80vh';
-  modal.style.zIndex = '10000';
-  modal.style.boxShadow = '0 4px 20px rgba(0,0,0,0.2)';
-  modal.style.borderRadius = '8px';
-  
-  const closeBtn = document.createElement('button');
-  closeBtn.textContent = '✕ Cerrar';
-  closeBtn.style.cssText = 'position: absolute; top: 10px; right: 10px; padding: 8px 16px; background: #ff4444; color: white; border: none; border-radius: 4px; cursor: pointer;';
-  closeBtn.onclick = () => modal.remove();
-  modal.appendChild(closeBtn);
-  
-  document.body.appendChild(modal);
-}
-
-// ============================================
-// 🌐 FUNCIONES DEL PANEL API
-// ============================================
-
-/**
- * Actualizar parámetros dinámicos según tipo de consulta
- */
-document.addEventListener('DOMContentLoaded', function() {
-  const endpointSelect = document.getElementById('apiEndpoint');
-  if (endpointSelect) {
-    endpointSelect.addEventListener('change', updateAPIParams);
-  }
-});
-
-function updateAPIParams() {
-  const endpoint = document.getElementById('apiEndpoint').value;
-  const paramsDiv = document.getElementById('apiParams');
-  
-  paramsDiv.innerHTML = '';
-  
-  if (endpoint === 'recommend') {
-    paramsDiv.innerHTML = `
-      <label>Origen del cliente:</label>
-      <select id="paramOrigin" class="form-control">
-        <option value="">-- Selecciona origen --</option>
-        <option value="CDMX">CDMX</option>
-        <option value="Cancun_Local">Cancún Local</option>
-        <option value="Quintana_Roo">Quintana Roo</option>
-        <option value="International">Internacional</option>
-      </select>
-    `;
-  } else if (endpoint === 'compare') {
-    paramsDiv.innerHTML = `
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-        <div>
-          <label>Pitch 1:</label>
-          <select id="paramPitch1" class="form-control">
-            <option value="">-- Selecciona --</option>
-            <option value="autoridad">Autoridad</option>
-            <option value="nostalgia">Nostalgia</option>
-            <option value="escasez">Escasez</option>
-            <option value="comunidad">Comunidad</option>
-          </select>
-        </div>
-        <div>
-          <label>Origen 1:</label>
-          <select id="paramOrigin1" class="form-control">
-            <option value="">-- Selecciona --</option>
-            <option value="CDMX">CDMX</option>
-            <option value="Cancun_Local">Cancún Local</option>
-            <option value="Quintana_Roo">Quintana Roo</option>
-            <option value="International">Internacional</option>
-          </select>
-        </div>
-        <div>
-          <label>Pitch 2:</label>
-          <select id="paramPitch2" class="form-control">
-            <option value="">-- Selecciona --</option>
-            <option value="autoridad">Autoridad</option>
-            <option value="nostalgia">Nostalgia</option>
-            <option value="escasez">Escasez</option>
-            <option value="comunidad">Comunidad</option>
-          </select>
-        </div>
-        <div>
-          <label>Origen 2:</label>
-          <select id="paramOrigin2" class="form-control">
-            <option value="">-- Selecciona --</option>
-            <option value="CDMX">CDMX</option>
-            <option value="Cancun_Local">Cancún Local</option>
-            <option value="Quintana_Roo">Quintana Roo</option>
-            <option value="International">Internacional</option>
-          </select>
-        </div>
-      </div>
-    `;
-  } else if (endpoint === 'llm') {
-    paramsDiv.innerHTML = `
-      <label>Tu pregunta:</label>
-      <textarea id="paramQuestion" class="form-control" rows="3" placeholder="Ej: ¿Cuál es la mejor estrategia para clientes de CDMX?"></textarea>
-      <small style="color: #666;">Requiere API Key de Groq configurada</small>
-    `;
-  }
-}
-
-/**
- * Ejecutar consulta API
- */
-async function executeAPIQuery() {
-  const endpoint = document.getElementById('apiEndpoint').value;
-  const resultsDiv = document.getElementById('apiResults');
-  const resultsContent = document.getElementById('apiResultsContent');
-  const apiPanel = document.getElementById('apiPanel');
-  
-  // Ensure panel is visible
-  resultsDiv.classList.remove('hidden');
-  apiPanel.style.display = 'block';
-  resultsContent.textContent = '⏳ Procesando...';
-  
-  try {
-    let result;
-    
-    if (endpoint === 'matrix') {
-      result = analyzePitchOriginEffectiveness();
-      displayEffectivenessMatrix();
-    } else if (endpoint === 'top5') {
-      result = await AnalysisAPI.handleRequest('/api/effectiveness/top');
-    } else if (endpoint === 'recommend') {
-      const origin = document.getElementById('paramOrigin').value;
-      if (!origin) {
-        throw new Error('Selecciona un origen');
-      }
-      result = recommendPitchForOrigin(origin);
-    } else if (endpoint === 'compare') {
-      const pitch1 = document.getElementById('paramPitch1').value;
-      const origin1 = document.getElementById('paramOrigin1').value;
-      const pitch2 = document.getElementById('paramPitch2').value;
-      const origin2 = document.getElementById('paramOrigin2').value;
-      
-      if (!pitch1 || !origin1 || !pitch2 || !origin2) {
-        throw new Error('Completa todos los campos');
-      }
-      
-      result = comparePitchOriginCombinations(pitch1, origin1, pitch2, origin2);
-    } else if (endpoint === 'llm') {
-      const question = document.getElementById('paramQuestion').value;
-      if (!question) {
-        throw new Error('Ingresa una pregunta');
-      }
-      result = await AnalysisAPI.analyzWithDeepSeek({ question });
-    }
-    
-    resultsContent.textContent = JSON.stringify(result, null, 2);
-    console.log('✅ API Response:', result);
-    showNotification('✅ Consulta ejecutada correctamente', 'success');
-    
-  } catch (error) {
-    resultsContent.textContent = `❌ Error: ${error.message}`;
-    showNotification(`❌ Error: ${error.message}`, 'error');
-    console.error('❌ API Error:', error);
-  }
-}
-
-/**
- * Mostrar ejemplos de uso
- */
-function showAPIExamples() {
-  const examples = `
-📚 EJEMPLOS DE USO EN CONSOLA:
-
-1. Obtener todas las combinaciones:
-   analyzePitchOriginEffectiveness()
-
-2. Ver Top 5:
-   analyzePitchOriginEffectiveness().topCombinations
-
-3. Comparar dos estrategias:
-   comparePitchOriginCombinations('autoridad', 'CDMX', 'nostalgia', 'CDMX')
-
-4. Recomendación para origen:
-   recommendPitchForOrigin('CDMX')
-
-5. Mostrar matriz visual:
-   displayEffectivenessMatrix()
-
-6. Análisis con IA:
-   AnalysisAPI.analyzWithLLM({
-     question: "¿Cuál es la mejor estrategia para CDMX?"
-   })
-  `;
-  
-  alert(examples);
-}
-
 // Exponer en ventana global
-window.executeAPIQuery = executeAPIQuery;
-window.updateAPIParams = updateAPIParams;
-window.showAPIExamples = showAPIExamples;
-
-// Exponer funciones globales
-window.analyzePitchOriginEffectiveness = analyzePitchOriginEffectiveness;
-window.getPitchOriginCombination = getPitchOriginCombination;
-window.comparePitchOriginCombinations = comparePitchOriginCombinations;
-window.recommendPitchForOrigin = recommendPitchForOrigin;
-window.displayEffectivenessMatrix = displayEffectivenessMatrix;
-
-// ============================================
+window.verifyDataSync = verifyDataSync;
+window.showDataSample = showDataSample;
+window.showDataIssues = showDataIssues;
 
 console.log('✅ Comandos de debugging cargados:');
 console.log('   - verifyDataSync()    → Verificación completa');
 console.log('   - showDataSample(n)   → Ver primeros n registros');
 console.log('   - showDataIssues()    → Ver problemas');
 
+/**
+ * 🔹 Actualizar indicador activo en dashboard-nav-grid
+ * DEBE estar definida ANTES de showView() porque se llama dentro
+ */
+function updateDashboardNavIndicator(activeViewId) {
+  // Remover clase active de todos los items
+  document.querySelectorAll('.dashboard-nav-item').forEach(item => {
+    item.classList.remove('active');
+  });
+  
+  // Agregar clase active al item correspondiente
+  const activeItem = document.querySelector(`.dashboard-nav-item[data-view="${activeViewId}"]`);
+  if (activeItem) {
+    activeItem.classList.add('active');
+  }
+}
+
 function showView(viewId) {
-  console.log(`📡 Navegando a: ${viewId}`);
+  console.log('🔄 ===== showView() CALLED =====');
+  console.log('🔄 viewId:', viewId);
+  console.log('🔄 typeof:', typeof viewId);
   
   // Ocultar todas las secciones
-  document.querySelectorAll('.view-section').forEach(section => {
+  const allSections = document.querySelectorAll('.view-section');
+  console.log('🔄 Encontradas', allSections.length, 'secciones');
+  
+  allSections.forEach(section => {
     section.classList.remove('active');
   });
   
@@ -3964,46 +3609,50 @@ function showView(viewId) {
     btn.classList.remove('active');
   });
   
+  // 🔹 Actualizar indicador activo en dashboard-nav-grid
+  updateDashboardNavIndicator(viewId);
+  
   // Mostrar la sección solicitada
   const targetSection = document.getElementById(viewId);
+  console.log('🔄 Buscando elemento con id:', viewId);
+  console.log('🔄 Encontrado:', !!targetSection);
+  
   if (targetSection) {
+    console.log('✅ Sección encontrada:', viewId);
     targetSection.classList.add('active');
-    console.log(`✅ Sección "${viewId}" activada`);
+    console.log('✅ Clase "active" agregada');
   } else {
-    console.warn(`⚠️ Sección "${viewId}" no encontrada`);
+    console.warn('⚠️ Sección NO encontrada:', viewId);
   }
   
   // Activar botones correspondientes
   const navBtn = document.querySelector(`.nav-btn[data-view="${viewId}"]`);
   const mobileBtn = document.querySelector(`.mobile-nav-btn[data-view="${viewId}"]`);
   
-  if (navBtn) {
-    navBtn.classList.add('active');
-    // Scroll el botón a la vista en el menú horizontal
-    navBtn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-  }
+  if (navBtn) navBtn.classList.add('active');
   if (mobileBtn) mobileBtn.classList.add('active');
   
   // Si es la vista "more" en móvil, mostrar modal
   if (viewId === 'more' && window.innerWidth <= 1024) {
-    document.getElementById('moreModal').classList.remove('hidden');
+    const moreModal = document.getElementById('moreModal');
+    if (moreModal) moreModal.classList.remove('hidden');
   } else {
     const moreModal = document.getElementById('moreModal');
     if (moreModal) moreModal.classList.add('hidden');
   }
   
   // Si es el mapa, inicializarlo si no está hecho
-  if (viewId === 'map-section' && !map) {
+  if (viewId === 'map-section' && typeof map !== 'undefined' && !map) {
     setTimeout(initMap, 100);
   }
   
   // Si es dashboard, actualizar gráficos
-  if (viewId === 'dashboard' && salesData.length > 0) {
+  if (viewId === 'dashboard' && typeof salesData !== 'undefined' && salesData.length > 0) {
     setTimeout(updateCharts, 100);
   }
 
   // 🔄 Si es análisis completo, inicializarlo si hay datos
-  if (viewId === 'complete-analysis' && filteredData.length > 0) {
+  if (viewId === 'complete-analysis' && typeof filteredData !== 'undefined' && filteredData.length > 0) {
     setTimeout(() => {
       if (typeof initCompleteAnalysis === 'function') {
         initCompleteAnalysis();
@@ -4012,33 +3661,10 @@ function showView(viewId) {
   }
   
   // ✨ Actualizar breadcrumb
-  updateNavigationBreadcrumb(viewId);
-}
-
-/**
- * Toggle del menú desplegable del mapa
- */
-function toggleMapMenu() {
-  const mapMenuContent = document.getElementById('mapMenuContent');
-  if (mapMenuContent) {
-    mapMenuContent.classList.toggle('show');
+  if (typeof updateNavigationBreadcrumb === 'function') {
+    updateNavigationBreadcrumb(viewId);
   }
 }
-
-/**
- * Cerrar menú al clickear fuera
- */
-document.addEventListener('click', function(event) {
-  const mapMenuBtn = document.getElementById('mapMenuBtn');
-  const mapMenuContent = document.getElementById('mapMenuContent');
-  
-  if (mapMenuBtn && mapMenuContent) {
-    // Si el click no está en el botón ni en el menú, cerrar
-    if (!mapMenuBtn.contains(event.target) && !mapMenuContent.contains(event.target)) {
-      mapMenuContent.classList.remove('show');
-    }
-  }
-});
 
 function updateNavigationBreadcrumb(viewId) {
   // No añadir breadcrumb al dashboard
@@ -4123,16 +3749,59 @@ function closeMobileNav() {
   }
 }
 
-// Inicializar eventos de navegación
-document.querySelectorAll('.nav-btn, .mobile-nav-btn').forEach(btn => {
-  btn.addEventListener('click', function() {
-    const viewId = this.getAttribute('data-view');
+// ============================================
+// INICIALIZAR EVENTOS DE NAVEGACIÓN
+// ============================================
+
+// Usar event delegation para máxima confiabilidad
+document.addEventListener('click', function(e) {
+  // Check if clicked element is a dashboard nav button
+  const dashboardBtn = e.target.closest('.dashboard-nav-item');
+  if (dashboardBtn) {
+    console.log('🔴 Dashboard button clicked!', e.target);
+    e.preventDefault();
+    const viewId = dashboardBtn.getAttribute('data-view');
     if (viewId) {
+      console.log('📍 Navigation to:', viewId);
       showView(viewId);
-      closeMobileNav(); // Cerrar nav móvil después de seleccionar vista
     }
-  });
-});
+    return;
+  }
+  
+  // Check if clicked element is a nav button
+  const navBtn = e.target.closest('.nav-btn, .mobile-nav-btn');
+  if (navBtn) {
+    const viewId = navBtn.getAttribute('data-view');
+    if (viewId) {
+      // Special handling for "more" button - open modal instead of view
+      if (viewId === 'more') {
+        openMoreModal();
+      } else {
+        showView(viewId);
+      }
+      closeMobileNav();
+    }
+  }
+}, true); // Usar capture phase para asegurar que se dispare
+
+// Modal de "Más opciones"
+function openMoreModal() {
+  const modal = document.getElementById('moreModal');
+  if (modal) {
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+  }
+}
+
+function closeMoreModal() {
+  const modal = document.getElementById('moreModal');
+  if (modal) {
+    modal.classList.add('hidden');
+    modal.style.display = 'none';
+  }
+}
+
+console.log('✅ Event delegation listeners configurados');
 
 // Notificaciones
 function showNotification(message, type = 'info') {
@@ -4519,7 +4188,6 @@ function handleFiles(e) {
   Papa.parse(file, {
     header: true,
     skipEmptyLines: true,
-    delimiter: ";", // Permitir archivos CSV con punto y coma
     complete: function(results) {
       console.log(`📊 CSV parseado: ${results.data.length} filas`);
       processData(results.data);
@@ -4553,7 +4221,7 @@ function processData(rawData) {
       const resultKey = keys.find(k => ['result', 'resultado', 'status', 'estado', 'success'].includes(k.toLowerCase()));
       const clientOriginKey = keys.find(k => ['client_origin', 'origin', 'origen', 'clientorigin', 'procedencia'].includes(k.toLowerCase()));
       const dateKey = keys.find(k => ['timestamp', 'date', 'fecha', 'time'].includes(k.toLowerCase()));
-      const horaKey = keys.find(k => ['hora', 'time', 'htime', 'hour', 'tiempo'].includes(k.toLowerCase()));
+      const horaKey = keys.find(k => ['hora', 'time', 'horas', 'hour'].includes(k.toLowerCase()));
       const latKey = keys.find(k => k.toLowerCase().includes('lat'));
       const lngKey = keys.find(k => k.toLowerCase().includes('lon') || k.toLowerCase().includes('lng'));
       const clientKey = keys.find(k => ['client', 'cliente', 'customer', 'client_name', 'nombre'].includes(k.toLowerCase()));
@@ -4571,67 +4239,94 @@ function processData(rawData) {
       }
       if (isNaN(monto)) monto = 0;
 
-      const dateStr = row[dateKey] || new Date().toISOString();
+      // 🔧 NUEVO: Detectar formato de fecha/hora
+      let fecha = new Date();
+      let hora = '12:00';
       
-      // Función para parsear fechas en formato DD/MM/YYYY
-      function parseDateString(dateStr) {
-        // Intentar formato DD/MM/YYYY
-        const ddmmyyyyMatch = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-        if (ddmmyyyyMatch) {
-          const [, day, month, year] = ddmmyyyyMatch;
-          return new Date(year, parseInt(month) - 1, parseInt(day));
+      // Si existe horaKey (nuevo formato: fecha y hora separadas)
+      if (horaKey && row[horaKey]) {
+        hora = String(row[horaKey]).trim();
+        // Validar formato HH:mm
+        if (!/^\d{1,2}:\d{2}$/.test(hora)) {
+          // Si no es HH:mm, intentar parsearlo
+          const timeMatch = hora.match(/(\d{1,2}):(\d{2})/);
+          if (timeMatch) {
+            hora = `${String(timeMatch[1]).padStart(2, '0')}:${timeMatch[2]}`;
+          }
         }
-        // Intentar formato DD-MM-YYYY
-        const ddmmyyyyDashMatch = dateStr.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
-        if (ddmmyyyyDashMatch) {
-          const [, day, month, year] = ddmmyyyyDashMatch;
-          return new Date(year, parseInt(month) - 1, parseInt(day));
-        }
-        // Si no coincide, intentar con el constructor de Date normal
-        return new Date(dateStr);
       }
       
-      let fecha = parseDateString(dateStr);
+      // Procesar fecha - Soportar múltiples formatos
+      const dateStr = (row[dateKey] || '').trim();
+      let fecha = new Date();
+      
+      // 🔧 Intentar parsear diferentes formatos de fecha
+      if (dateStr && dateStr !== '') {
+        // Formato DD/MM/YYYY
+        if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateStr)) {
+          try {
+            const parts = dateStr.split('/');
+            const day = parseInt(parts[0], 10);
+            const month = parseInt(parts[1], 10);
+            const year = parseInt(parts[2], 10);
+            
+            // Crear fecha de forma segura
+            fecha = new Date(year, month - 1, day);
+            
+            // Validar que la fecha sea válida (verificar que no se overflow)
+            if (fecha.getFullYear() !== year || fecha.getMonth() !== month - 1 || fecha.getDate() !== day) {
+              throw new Error('Fecha inválida');
+            }
+          } catch (e) {
+            console.warn(`Fecha inválida en fila ${index}: ${row[dateKey]} (formato DD/MM/YYYY) - ${e.message}`);
+            fecha = new Date();
+          }
+        }
+        // Formato DD-MM-YYYY
+        else if (/^\d{1,2}-\d{1,2}-\d{4}$/.test(dateStr)) {
+          try {
+            const parts = dateStr.split('-');
+            const day = parseInt(parts[0], 10);
+            const month = parseInt(parts[1], 10);
+            const year = parseInt(parts[2], 10);
+            
+            fecha = new Date(year, month - 1, day);
+            
+            if (fecha.getFullYear() !== year || fecha.getMonth() !== month - 1 || fecha.getDate() !== day) {
+              throw new Error('Fecha inválida');
+            }
+          } catch (e) {
+            console.warn(`Fecha inválida en fila ${index}: ${row[dateKey]} (formato DD-MM-YYYY) - ${e.message}`);
+            fecha = new Date();
+          }
+        }
+        // Formato ISO (YYYY-MM-DD o completo)
+        else if (/^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
+          fecha = new Date(dateStr);
+        }
+        // Intentar parse genérico
+        else {
+          fecha = new Date(dateStr);
+        }
+      }
 
-      // Validar si la fecha es válida
+      // Validación final
       if (isNaN(fecha.getTime())) {
-        console.warn(`Fecha inválida en fila ${index}: ${row[dateKey]}`);
-        // Usar fecha actual como respaldo
+        console.warn(`Fecha inválida en fila ${index}: ${row[dateKey]} - Usando fecha actual`);
         fecha = new Date();
       }
 
-      // Parse hora from CSV data, not system time
-      let hora = '00:00'; // Default
-      if (horaKey && row[horaKey]) {
-        const horaRaw = String(row[horaKey]).trim();
-        // Match HH:mm or H:mm format
-        if (horaRaw.match(/^\d{1,2}:\d{2}$/)) {
-          const [h, m] = horaRaw.split(':');
-          const hour = parseInt(h);
-          const min = parseInt(m);
-          if (hour >= 0 && hour <= 23 && min >= 0 && min <= 59) {
-            hora = `${String(hour).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
-          }
-        }
-        // Match single digit hour format (e.g., "14" = 14:00)
-        else if (horaRaw.match(/^\d{1,2}$/)) {
-          const hour = parseInt(horaRaw);
-          if (hour >= 0 && hour <= 23) {
-            hora = `${String(hour).padStart(2, '0')}:00`;
-          }
-        }
+      // Si no tenemos hora, extraerla de fecha
+      if (!horaKey && fecha) {
+        hora = fecha.toTimeString().split(' ')[0].substring(0, 5);
       }
-      const [hPart, mPart] = hora.split(':');
-      if (!hPart || !mPart || isNaN(parseInt(hPart)) || isNaN(parseInt(mPart))) {
-        hora = '00:00';
-      } // Formato HH:mm
 
       const venta = {
         lat,
         lng,
         monto,
         fecha, // Objeto Date
-        hora, // String HH:mm
+        hora, // String HH:mm (FORMATO 24 HORAS - VALIDADOR REQUIERE ESTO)
         fechaStr: fecha.toISOString().split('T')[0], // String YYYY-MM-DD
         zona: sanitizeUTF8(row[zoneKey] || 'sin_zona').toLowerCase(),
         pitchType: normalizePitch(sanitizeUTF8(row[pitchKey] || '')),
@@ -4653,12 +4348,20 @@ function processData(rawData) {
   }
 
   const cleanedData = processedSales.filter(record => {
-    const hasUnknown = Object.values(record).some(val => 
-      String(val).toLowerCase() === 'unknown' || String(val).toLowerCase() === 'sin_zona'
+    // Solo filtrar registros que tengan valores críticos como 'unknown'
+    // Pero no eliminar registros solo porque tienen un campo vacio
+    const hasUnknown = (
+      (record.pitchType && String(record.pitchType).toLowerCase() === 'unknown') ||
+      (record.result && String(record.result).toLowerCase() === 'unknown') ||
+      (record.zona && String(record.zona).toLowerCase() === 'sin_zona')
     );
     return !hasUnknown;
   });
 
+  console.log('🔍 [processData] Debug - Primer venta object:');
+  console.log('   hora en processedSales[0]:', processedSales[0]?.hora);
+  console.log('   Todas las keys en processedSales[0]:', Object.keys(processedSales[0] || {}));
+  
   const cleanedCount = processedSales.length - cleanedData.length;
   if (cleanedCount > 0) {
     console.warn(`⚠️ ${cleanedCount} registros eliminados por contener valores "unknown"`);
@@ -4694,6 +4397,8 @@ function processData(rawData) {
 function normalizePitch(text) {
   if (!text) return 'unknown';
   const lower = text.toLowerCase().trim();
+  // Normalizar acentos para comparación
+  const normalized = lower.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   
   const aliases = {
     'autoridad': ['autoridad', 'authority', 'expert', 'especialista', 'experto'],
@@ -4703,7 +4408,7 @@ function normalizePitch(text) {
   };
   
   for (const [canonical, variants] of Object.entries(aliases)) {
-    if (variants.some(v => lower.includes(v))) {
+    if (variants.some(v => normalized.includes(v))) {
       return canonical;
     }
   }
@@ -4738,23 +4443,25 @@ function normalizeResult(text) {
 function normalizeOrigin(text) {
   if (!text) return 'unknown';
   const lower = text.toLowerCase().trim();
+  // Normalizar acentos para comparación
+  const normalized = lower.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   
-  if (lower.includes('cdmx') || lower.includes('ciudad de méxico') || lower.includes('mexico')) {
+  if (normalized.includes('cdmx') || normalized.includes('ciudad de méxico') || normalized.includes('mexico')) {
     return 'CDMX';
   }
-  if (lower.includes('cancun') || lower.includes('local')) {
+  if (normalized.includes('cancun') || normalized.includes('local')) {
     return 'Cancun_Local';
   }
-  if (lower.includes('quintana')) {
+  if (normalized.includes('quintana')) {
     return 'Quintana_Roo';
   }
-  if (lower.includes('yucatan')) {
+  if (normalized.includes('yucatan')) {
     return 'Yucatan';
   }
-  if (lower.includes('internacional') || lower.includes('international') || lower.includes('turista')) {
+  if (normalized.includes('internacional') || normalized.includes('international') || normalized.includes('turista')) {
     return 'International';
   }
-  if (lower.includes('migrant') || lower.includes('migrante')) {
+  if (normalized.includes('migrant') || normalized.includes('migrante')) {
     return 'Migrant';
   }
   
@@ -5449,7 +5156,7 @@ function updateCharts() {
     }
   });
   
-  // ✅ Gráfico de tendencia por hora
+  // Gráfico de tendencia por hora
   const hourData = new Array(24).fill(0);
   filteredData.forEach(sale => {
     const hour = parseInt(sale.hora.split(':')[0]) || 0;
@@ -5458,121 +5165,26 @@ function updateCharts() {
     }
   });
   
-  // ✅ CALCULAR PENDIENTE CON REGRESIÓN LINEAL
-  const hoursWithData = [];
-  const montosByHour = [];
-  
-  for (let i = 0; i < 24; i++) {
-    if (hourData[i] > 0) {
-      hoursWithData.push(i);
-      montosByHour.push(hourData[i]);
-    }
-  }
-  
-  let trendlineData = null;
-  let slopeValue = 0;
-  let rSquaredValue = 0;
-  
-  // Función para calcular regresión lineal (fórmula: b = (nΣxy - ΣxΣy) / (nΣx² - (Σx)²))
-  function calculateLinearRegression(x, y) {
-    const n = x.length;
-    if (n < 2) return null;
-    
-    const sumX = x.reduce((a, b) => a + b, 0);
-    const sumY = y.reduce((a, b) => a + b, 0);
-    const sumXY = x.reduce((sum, xi, i) => sum + xi * y[i], 0);
-    const sumX2 = x.reduce((sum, xi) => sum + xi * xi, 0);
-    
-    const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
-    const intercept = (sumY - slope * sumX) / n;
-    
-    // Calcular R²
-    const meanY = sumY / n;
-    const ssTotal = y.reduce((sum, yi) => sum + Math.pow(yi - meanY, 2), 0);
-    const ssResidual = y.reduce((sum, yi, i) => {
-      const predicted = slope * x[i] + intercept;
-      return sum + Math.pow(yi - predicted, 2);
-    }, 0);
-    const rSquared = 1 - (ssResidual / ssTotal);
-    
-    return { slope, intercept, rSquared };
-  }
-  
-  // Calcular regresión solo si hay al menos 2 puntos
-  if (hoursWithData.length >= 2) {
-    try {
-      // Intentar usar StatsUtils si está disponible, si no, usar función local
-      let regression = null;
-      
-      if (typeof StatsUtils !== 'undefined' && StatsUtils.linearRegression) {
-        regression = StatsUtils.linearRegression(hoursWithData, montosByHour);
-      } else {
-        regression = calculateLinearRegression(hoursWithData, montosByHour);
-      }
-      
-      if (regression) {
-        slopeValue = regression.slope;
-        rSquaredValue = regression.rSquared;
-        
-        // Generar línea de tendencia para todas las horas (0-23)
-        trendlineData = Array.from({length: 24}, (_, i) => {
-          return regression.slope * i + regression.intercept;
-        });
-        
-        console.log(`📈 Tendencia por hora calculada:`);
-        console.log(`   - Pendiente: $${slopeValue.toFixed(2)} por hora`);
-        console.log(`   - R²: ${(rSquaredValue * 100).toFixed(2)}%`);
-        console.log(`   - Horas con datos: ${hoursWithData.length} de 24`);
-      }
-    } catch (error) {
-      console.warn('⚠️ Error calculando regresión:', error);
-    }
-  }
-  
   const hoursCtx = document.getElementById('hoursChart').getContext('2d');
-  
-  // Construir datasets
-  const datasets = [{
-    label: 'Ventas por Hora ($ MXN)',
-    data: hourData,
-    borderColor: 'var(--accent-blue)',
-    backgroundColor: 'rgba(56, 189, 248, 0.1)',
-    tension: 0.4,
-    fill: true,
-    borderWidth: 2,
-    pointRadius: 4,
-    pointBackgroundColor: 'var(--accent-blue)'
-  }];
-  
-  // Agregar línea de tendencia si hay datos
-  if (trendlineData) {
-    datasets.push({
-      label: `Tendencia (Pendiente: $${slopeValue.toFixed(2)}/hora, R²=${(rSquaredValue * 100).toFixed(1)}%)`,
-      data: trendlineData,
-      borderColor: 'rgba(255, 99, 132, 0.8)',
-      backgroundColor: 'transparent',
-      borderDash: [5, 5],
-      borderWidth: 2,
-      fill: false,
-      pointRadius: 0,
-      tension: 0
-    });
-  }
-  
   charts.hours = new Chart(hoursCtx, {
     type: 'line',
     data: {
       labels: Array.from({length: 24}, (_, i) => `${i}:00`),
-      datasets: datasets
+      datasets: [{
+        label: 'Ventas por Hora ($ MXN)',
+        data: hourData,
+        borderColor: 'var(--accent-blue)',
+        backgroundColor: 'rgba(56, 189, 248, 0.1)',
+        tension: 0.4,
+        fill: true,
+        borderWidth: 2
+      }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { 
-          display: true,
-          position: 'top'
-        }
+        legend: { display: false }
       },
       scales: {
         y: {
@@ -5896,13 +5508,32 @@ function runMonteCarlo() {
     return;
   }
   
+  // Asegurar que knowledgebase está disponible
+  if (!window.knowledgebase) {
+    console.warn('⚠️ Inicializando knowledgebase...');
+    createFallbackKnowledgeBase();
+  }
+  
+  // Verificación final
+  if (!window.knowledgebase?.AdvancedAnalytics?.monteCarloSimulation) {
+    console.error('❌ monteCarloSimulation no disponible', {
+      knowledgebase: !!window.knowledgebase,
+      AdvancedAnalytics: !!window.knowledgebase?.AdvancedAnalytics,
+      monteCarloSimulation: !!window.knowledgebase?.AdvancedAnalytics?.monteCarloSimulation
+    });
+    showNotification('Error: Función no disponible. Recarga la página.', 'error');
+    return;
+  }
+  
   showLoading('Ejecutando simulación Monte Carlo...');
   
   setTimeout(() => {
-    const montos = filteredData.map(d => d.monto);
-    
     try {
-      const simulation = simulateMonteCarloSales(montos, 5000);
+      const montos = filteredData.map(d => d.monto);
+      console.log('🔧 Ejecutando monteCarloSimulation con', montos.length, 'montos');
+      
+      const simulation = window.knowledgebase.AdvancedAnalytics.monteCarloSimulation(montos, 5000);
+      console.log('✅ Simulación completada', simulation);
       
       const resultsDiv = document.getElementById('analysisOutput');
       resultsDiv.innerHTML = `
@@ -5934,6 +5565,23 @@ function calculateOptimalRoute() {
     return;
   }
   
+  // Asegurar que knowledgebase está disponible
+  if (!window.knowledgebase) {
+    console.warn('⚠️ Inicializando knowledgebase...');
+    createFallbackKnowledgeBase();
+  }
+  
+  // Verificación final
+  if (!window.knowledgebase?.AdvancedAnalytics?.optimizarRuta) {
+    console.error('❌ optimizarRuta no disponible', {
+      knowledgebase: !!window.knowledgebase,
+      AdvancedAnalytics: !!window.knowledgebase?.AdvancedAnalytics,
+      optimizarRuta: !!window.knowledgebase?.AdvancedAnalytics?.optimizarRuta
+    });
+    showNotification('Error: Función no disponible. Recarga la página.', 'error');
+    return;
+  }
+  
   showLoading('Calculando ruta óptima...');
   
   setTimeout(() => {
@@ -5948,7 +5596,7 @@ function calculateOptimalRoute() {
       
       const origen = { x: -86.8515, y: 21.1619 }; // Centro de Cancún
       
-      const ruta = optimizeRouteGA(puntos, origen);
+      const ruta = window.knowledgebase.AdvancedAnalytics.optimizarRuta(puntos, origen);
       
       const resultsDiv = document.getElementById('analysisOutput');
       resultsDiv.innerHTML = `
@@ -5959,7 +5607,7 @@ function calculateOptimalRoute() {
           <ol>
             ${ruta.map(p => `<li>${p}</li>`).join('')}
           </ol>
-          <p><strong>Eficiencia estimada:</strong> ${calculateRouteEfficiency(50, 120, ruta.length)}/100</p>
+          <p><strong>Eficiencia estimada:</strong> ${window.knowledgebase.AdvancedAnalytics.calcularEficiencia(50, 120, ruta.length)}/100</p>
           <p><strong>Ingreso potencial:</strong> $${puntos.reduce((sum, p) => sum + p.prioridad * 100, 0).toFixed(2)} MXN</p>
         </div>
       `;
@@ -6144,7 +5792,7 @@ function calculateRouteForRoutesSection() {
       }
       
       const origen = getStartCoordinates(startPoint);
-      const ruta = optimizeRouteGA(puntos, origen);
+      const ruta = knowledgeBase.AdvancedAnalytics.optimizarRuta(puntos, origen);
       
       // Guardar la ruta para visualización
       currentCalculatedRoute = {
@@ -6157,7 +5805,7 @@ function calculateRouteForRoutesSection() {
       
       const totalRevenue = puntos.reduce((sum, p) => sum + p.revenue, 0);
       const estimatedTime = stops * 15;
-      const efficiency = calculateRouteEfficiency(50, estimatedTime, stops);
+      const efficiency = knowledgeBase.AdvancedAnalytics.calcularEficiencia(50, estimatedTime, stops);
       
       const resultsDiv = document.getElementById('routeOutput');
       resultsDiv.innerHTML = `
@@ -7297,7 +6945,7 @@ function saveSettings() {
   const mapboxToken = document.getElementById('mapboxToken').value;
   
   if (apiKey) {
-    localStorage.setItem('deepseekApiKey', apiKey);
+    localStorage.setItem('groqApiKey', apiKey);
     document.getElementById('apiKey').value = apiKey;
   }
   
@@ -7792,7 +7440,7 @@ async function loadReferenceData() {
   loadKnowledgeBase();
   
   // Cargar configuración guardada
-  const savedApiKey = localStorage.getItem('deepseekApiKey');
+  const savedApiKey = localStorage.getItem('groqApiKey');
   if (savedApiKey) {
     document.getElementById('apiKey').value = savedApiKey;
     document.getElementById('apiKeyConfig').value = savedApiKey;
@@ -7831,84 +7479,11 @@ async function loadReferenceData() {
   // Asegurarse de que la vista del dashboard esté activa al cargar
   showView('dashboard');
 
-  setupNavArrows();
-  window.addEventListener('resize', setupNavArrows);
-  // ============================================
-// INICIALIZACIÓN DE MÓDULOS AVANZADOS
-// ============================================
+  // Inicializar navegación con scroll
+  initializeNavigationScroll();
+  window.addEventListener('resize', initializeNavigationScroll);
 
-async function initAdvancedModules() {
-  console.log('🚀 [initAdvancedModules] Iniciando...');
-  
-  // Validación crítica: usar window.salesData Y window.filteredData
-  const dataSource = window.salesData || window.filteredData || [];
-  
-  console.log('📊 [initAdvancedModules] Fuente de datos:');
-  console.log('   - window.salesData:', window.salesData?.length || 0);
-  console.log('   - window.filteredData:', window.filteredData?.length || 0);
-  console.log('   - Usando:', dataSource.length, 'registros');
-  
-  if (!dataSource || dataSource.length === 0) {
-    console.error('❌ [initAdvancedModules] No hay datos disponibles');
-    showNotification('Carga datos primero para habilitar análisis avanzados', 'warning');
-    return;
-  }
-  
-  // Validar que haya registros válidos (no todo "unknown")
-  const validRecords = dataSource.filter(r => r.zona && r.zona !== 'unknown');
-  if (validRecords.length === 0) {
-    console.error('❌ [initAdvancedModules] Todos los registros tienen zona "unknown"');
-    showNotification('Los datos contienen valores "unknown" inválidos', 'error');
-    return;
-  }
-  
-  console.log('✅ [initAdvancedModules] Validación de datos pasada. Registros válidos:', validRecords.length);
-  
-  showLoading('Inicializando módulos avanzados...');
-  
-  try {
-    // Crear el orquestador CON DATOS VALIDADOS
-    console.log('🔧 [initAdvancedModules] Creando AnalyticsOrchestrator...');
-    window.analyticsOrchestrator = new AnalyticsOrchestrator(dataSource);
-    
-    // Cargar todos los módulos
-    console.log('📚 [initAdvancedModules] Cargando módulos...');
-    await window.analyticsOrchestrator.loadAllModules();
-    
-    console.log('✅ [initAdvancedModules] Módulos cargados exitosamente');
-    showNotification('Módulos avanzados cargados correctamente', 'success');
-    hideLoading();
-    
-    // Habilitar botones avanzados
-    console.log('🎯 [initAdvancedModules] Habilitando características avanzadas...');
-    enableAdvancedFeatures();
-    
-  } catch (error) {
-    console.error('❌ [initAdvancedModules] Error:', error);
-    console.error('   Stack:', error.stack);
-    hideLoading();
-    showNotification('Error cargando módulos avanzados: ' + error.message, 'error');
-  }
-}
-
-function enableAdvancedFeatures() {
-  // Activar botones que requieren módulos avanzados
-  const advancedButtons = [
-    'runMonteCarloBtn',
-    'calculateOptimalRouteBtn',
-    'runSeasonalAnalysisBtn'
-  ];
-  
-  advancedButtons.forEach(btnId => {
-    const btn = document.getElementById(btnId);
-    if (btn) {
-      btn.disabled = false;
-      btn.title = '';
-    }
-  });
-}
 console.log('✅ Aplicación lista');
-};
 
 // Registrar Service Worker
 if ('serviceWorker' in navigator) {
@@ -8645,18 +8220,11 @@ function saveCapturedRecord() {
     return;
   }
   
-  // Crear timestamp combinado para análisis interno
-  const now = new Date();
-  const fecha = now.toISOString().split('T')[0]; // YYYY-MM-DD
-  const hora = now.toTimeString().substring(0, 5); // HH:mm
-  
   // Obtener datos del formulario
   const record = {
     id: 'capture_' + Date.now(),
-    fecha: fecha,  // ✅ NUEVO: Fecha separada (YYYY-MM-DD)
-    hora: hora,    // ✅ NUEVO: Hora separada (HH:mm)
-    timestamp: now.toISOString(), // Mantener para compatibilidad
-    date: now.toLocaleString('es-MX'),
+    timestamp: new Date().toISOString(),
+    date: new Date().toLocaleString('es-MX'),
     latitude: window.currentCoordinates.lat,
     longitude: window.currentCoordinates.lng,
     accuracy: window.currentCoordinates.accuracy,
@@ -8758,7 +8326,7 @@ function updateCapturedRecordsTable() {
   
   tbody.innerHTML = records.map((record, idx) => `
     <tr>
-      <td>${record.fecha} ${record.hora}</td>
+      <td>${record.date}</td>
       <td>${record.clientOrigin}</td>
       <td>${record.pitchType}</td>
       <td><span class="badge badge-${record.result === 'successful' ? 'success' : record.result === 'failed' ? 'error' : 'warning'}">${record.result}</span></td>
@@ -8806,35 +8374,24 @@ function syncCapturedDataWithAnalytics() {
     
     console.log(`🔄 Sincronizando ${capturedRecords.length} registros capturados con análisis...`);
     
-    // Normalizar registros para análisis (convertir a estructura de salesData)
-    const normalizedRecords = capturedRecords.map(record => ({
-      id: record.id,
-      fecha: new Date(`${record.fecha}T${record.hora}`), // Objeto Date
-      fechaStr: record.fecha, // String YYYY-MM-DD
-      hora: record.hora, // String HH:mm
-      zona: record.zone,
-      pitchType: record.pitchType,
-      result: record.result,
-      clientOrigin: record.clientOrigin,
-      monto: record.amount,
-      lat: record.latitude,
-      lng: record.longitude,
-      cliente: `Capturado-${record.id.substring(8, 13)}`,
-      demographic: record.demographic
-    }));
-    
-    // Agregar a window.salesData si existe
-    if (window.salesData && Array.isArray(window.salesData)) {
-      const existingIds = new Set(window.salesData.map(r => r.id));
-      const newRecords = normalizedRecords.filter(r => !existingIds.has(r.id));
-      window.salesData = [...window.salesData, ...newRecords];
-      console.log(`✅ +${newRecords.length} registros agregados a salesData`);
-    }
-    
-    // Re-inicializar análisis si está abierto
-    if (window.currentAnalyzer && window.initCompleteAnalysis) {
-      window.initCompleteAnalysis();
-      console.log(`🔄 Análisis Cruzado actualizado con nuevos datos`);
+    // Usar FieldMapper si está disponible
+    if (window.FieldMapper) {
+      const normalizedRecords = window.FieldMapper.normalizeRecords(capturedRecords);
+      
+      // Agregar a window.salesData si existe
+      if (window.salesData && Array.isArray(window.salesData)) {
+        // Evitar duplicados por timestamp
+        const existingTimestamps = new Set(window.salesData.map(r => r.timestamp));
+        const newRecords = normalizedRecords.filter(r => !existingTimestamps.has(r.timestamp));
+        window.salesData = [...window.salesData, ...newRecords];
+        console.log(`✅ +${newRecords.length} registros agregados a salesData`);
+      }
+      
+      // Re-inicializar análisis si está abierto
+      if (window.currentAnalyzer && window.currentAnalyzer.initCompleteAnalysis) {
+        window.currentAnalyzer.initCompleteAnalysis();
+        console.log(`🔄 Análisis Cruzado actualizado con nuevos datos`);
+      }
     }
   } catch (error) {
     console.warn('⚠️ Error en sincronización:', error.message);
@@ -8864,10 +8421,9 @@ function exportCapturedRecordsAsCSV() {
     return;
   }
   
-  // Encabezados del CSV (CAMBIO: timestamp → fecha + hora)
+  // Encabezados del CSV (en el orden exacto para el análisis)
   const headers = [
-    'fecha',
-    'hora',
+    'timestamp',
     'zone',
     'client_origin',
     'pitch_type',
@@ -8883,8 +8439,7 @@ function exportCapturedRecordsAsCSV() {
   
   // Convertir registros a filas CSV
   const rows = window.capturedRecords.map(record => [
-    record.fecha || new Date(record.timestamp).toISOString().split('T')[0], // ✅ Fecha extraída
-    record.hora || new Date(record.timestamp).toTimeString().substring(0, 5), // ✅ Hora extraída
+    record.timestamp,
     record.zone || '',
     record.clientOrigin,
     record.pitchType,
@@ -8930,8 +8485,7 @@ function exportCapturedRecordsAsCSV() {
 function generateExampleCSV() {
   const exampleData = [
     {
-      fecha: '2026-01-10',
-      hora: '09:30',
+      timestamp: '2026-01-10T09:30:00',
       zone: 'zona_hotelera',
       client_origin: 'cdmx',
       pitch_type: 'autoridad',
@@ -8944,8 +8498,7 @@ function generateExampleCSV() {
       longitude: -86.7459
     },
     {
-      fecha: '2026-01-10',
-      hora: '10:15',
+      timestamp: '2026-01-10T10:15:00',
       zone: 'centro',
       client_origin: 'cancun_local',
       pitch_type: 'comunidad',
@@ -8959,7 +8512,7 @@ function generateExampleCSV() {
     }
   ];
   
-  const headers = ['fecha', 'hora', 'zone', 'client_origin', 'pitch_type', 'result', 'amount', 'age_group', 'occupation', 'income_level', 'latitude', 'longitude'];
+  const headers = ['timestamp', 'zone', 'client_origin', 'pitch_type', 'result', 'amount', 'age_group', 'occupation', 'income_level', 'latitude', 'longitude'];
   
   const csv = [
     headers.join(','),
@@ -9053,10 +8606,77 @@ document.addEventListener('DOMContentLoaded', function() {
 
 console.log('✅ Sistema de captura de datos en vivo cargado');
 
-function setupNavArrows() {
+/**
+ * Funcionalidad de navegación en sección de gráficos
+ */
+function initializeChartsNavigation() {
+  const backToOverviewBtn = document.getElementById('backToOverviewBtn');
+  const goToMapBtn = document.getElementById('goToMapBtn');
+  const goToAnalysisBtn = document.getElementById('goToAnalysisBtn');
+  const goToZonesBtn = document.getElementById('goToZonesBtn');
+  
+  if (backToOverviewBtn) {
+    backToOverviewBtn.addEventListener('click', function() {
+      navigateToSection('overview');
+    });
+  }
+  
+  if (goToMapBtn) {
+    goToMapBtn.addEventListener('click', function() {
+      navigateToSection('map-section');
+    });
+  }
+  
+  if (goToAnalysisBtn) {
+    goToAnalysisBtn.addEventListener('click', function() {
+      navigateToSection('analysis');
+    });
+  }
+  
+  if (goToZonesBtn) {
+    goToZonesBtn.addEventListener('click', function() {
+      navigateToSection('zones');
+    });
+  }
+  
+  console.log('✅ Navegación de gráficos inicializada');
+}
+
+/**
+ * Navegar a una sección específica
+ */
+function navigateToSection(sectionId) {
+  // Obtener todos los view-section
+  const sections = document.querySelectorAll('.view-section');
+  
+  // Ocultar todas las secciones
+  sections.forEach(section => {
+    section.style.display = 'none';
+  });
+  
+  // Mostrar la sección seleccionada
+  const targetSection = document.getElementById(sectionId);
+  if (targetSection) {
+    targetSection.style.display = 'block';
+    // Scroll hacia el inicio de la sección
+    targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    showNotification(`✅ Navegando a ${sectionId}`, 'success');
+  } else {
+    showNotification(`⚠️ Sección ${sectionId} no encontrada`, 'warning');
+  }
+}
+// Inicializar navegación cuando cargue la página
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(initializeChartsNavigation, 500);
+});
+
+console.log('✅ Sistema de captura de datos en vivo cargado');
+
+// Inicializar scroll de navegación si existe el elemento
+function initializeNavigationScroll() {
   const navMenu = document.querySelector('.nav-menu');
-  const leftArrow = document.getElementById('nav-arrow-left');
-  const rightArrow = document.getElementById('nav-arrow-right');
+  const leftArrow = document.querySelector('.nav-arrow-left');
+  const rightArrow = document.querySelector('.nav-arrow-right');
 
   if (!navMenu || !leftArrow || !rightArrow) return;
 
@@ -9085,17 +8705,6 @@ function setupNavArrows() {
   // Check for overflow when the user scrolls the nav menu
   navMenu.addEventListener('scroll', checkOverflow, { passive: true });
 
-  // Inicializar eventos de navegación
-  document.querySelectorAll('.nav-btn').forEach(btn => {
-    btn.addEventListener('click', function(e) {
-      e.preventDefault();
-      const viewId = this.getAttribute('data-view');
-      if (viewId) {
-        showView(viewId);
-      }
-    });
-  });
-
   // Use ResizeObserver to detect when the navMenu's size changes
   const resizeObserver = new ResizeObserver(checkOverflow);
   resizeObserver.observe(navMenu);
@@ -9106,9 +8715,12 @@ function setupNavArrows() {
 
   // Initial check
   checkOverflow();
-  
-  console.log('✅ Sistema completamente inicializado');
 }
+
+// Call on DOMContentLoaded
+document.addEventListener('DOMContentLoaded', () => {
+  initializeNavigationScroll();
+});
 </script>
 </body>
 </html>

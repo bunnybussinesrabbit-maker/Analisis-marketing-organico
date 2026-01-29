@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VERIFICATION - Fix Applied</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: #0a0e27;
+            color: #0ff;
+            padding: 20px;
+        }
+        .panel {
+            background: #1a1a2e;
+            border: 2px solid #0ff;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+        }
+        button {
+            background: #0f0;
+            color: #000;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .console {
+            background: #000;
+            border: 1px solid #0f0;
+            padding: 10px;
+            height: 150px;
+            overflow-y: auto;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+        .success { color: #0f0; }
+        .error { color: #f00; }
+        .warning { color: #ff0; }
+        iframe {
+            width: 100%;
+            height: 600px;
+            border: 2px solid #0ff;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>🔍 Verification After Fix</h1>
+
+<div class="panel">
+    <h2>✅ Error Fixed</h2>
+    <p>Removimos el duplicate export de 'testConnection' en groq_cliente.js</p>
+    <button onclick="testNavigation()">Test Navigation Now</button>
+    <div class="console" id="log"></div>
+</div>
+
+<div class="panel">
+    <h2>🖥️ Live App Preview</h2>
+    <iframe id="app" src="http://localhost:8080/index.html?t=" + new Date().getTime() + ""></iframe>
+</div>
+
+<script>
+function log(text, type = 'success') {
+    const el = document.getElementById('log');
+    const entry = document.createElement('div');
+    entry.className = type;
+    entry.textContent = '> ' + text;
+    el.appendChild(entry);
+    el.scrollTop = el.scrollHeight;
+}
+
+function testNavigation() {
+    document.getElementById('log').innerHTML = '';
+    log('Testing navigation...', 'warning');
+    
+    setTimeout(() => {
+        try {
+            const app = document.getElementById('app').contentWindow;
+            
+            if (typeof app.showView === 'function') {
+                log('✅ showView() exists', 'success');
+                
+                // Try to navigate
+                app.showView('dashboard');
+                log('✅ Navigation to dashboard executed', 'success');
+                log('✅ Check if section changed in iframe above', 'success');
+            } else {
+                log('❌ showView() not found', 'error');
+            }
+        } catch (e) {
+            log('❌ Error: ' + e.message, 'error');
+        }
+    }, 1000);
+}
+
+log('Ready. Click "Test Navigation Now" to verify.', 'success');
+</script>
+
+</body>
+</html>
