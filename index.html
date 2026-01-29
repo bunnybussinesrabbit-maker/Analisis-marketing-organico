@@ -27,8 +27,11 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
 
+<!-- External Stylesheet (Extracted Inline Styles) -->
+<link rel="stylesheet" href="./styles.css">
+
 <!-- Mapbox -->
-<link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet' />
+<link href='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css' rel='stylesheet'>
 <script src='https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js'></script>
 
 <!-- Turf.js para cálculos geográficos -->
@@ -175,6 +178,7 @@ body {
   padding-bottom: 0;
   margin-bottom: 0;
   border-bottom: none;
+  min-width: -webkit-fill-available;
   min-width: fit-content;
 }
 
@@ -451,7 +455,6 @@ body {
   gap: 10px;
   flex-wrap: wrap;
   justify-content: center;
-}
 }
 
 /* ============================================
@@ -1713,7 +1716,7 @@ body {
 <!-- LOADING OVERLAY -->
 <div id="loadingOverlay" class="loading-overlay hidden">
   <div class="loading-content">
-    <div class="loading" style="margin: 0 auto 20px;"></div>
+    <div class="loading loading-spinner"></div>
     <p id="loadingText">Procesando...</p>
   </div>
 </div>
@@ -1786,6 +1789,7 @@ body {
     <!-- ================= DASHBOARD ================= -->
     <section id="dashboard" class="view-section">
       <h2 class="mb-30"><i class="fas fa-chart-pie"></i> Dashboard Principal</h2>
+      <button id="btnBackToMenu" class="btn btn-back" aria-label="Regresar al menú principal">REGRESAR</button>
       
       <!-- 🔹 NAVEGACIÓN PERSISTENTE CONTEXTUAL DEL DASHBOARD -->
       <div class="dashboard-nav-grid" id="dashboardNavGrid">
@@ -1919,7 +1923,7 @@ body {
       <!-- Map Overlay - FUERA del mapa para evitar interferencia con Mapbox -->
       <div class="map-overlay" id="mapOverlay">
         <div class="overlay-header" onclick="toggleMapOverlay()">
-          <h4><i class="fas fa-layer-group"></i> Capas</h4>
+          <h3><i class="fas fa-layer-group"></i> Capas</h3>
           <button class="toggle-overlay" id="toggleOverlayBtn">
             <i class="fas fa-chevron-up"></i>
           </button>
@@ -1948,12 +1952,11 @@ body {
         </div>
       </div>
       
-      <!-- REMOVIDO: Panel de Zonas geoestadísticas ahora está en la sección dedicada -->
-      <!--
+      <!-- REMOVIDO: Panel de Zonas geoestadísticas ahora está en la sección dedicada
       <div class="control-group">
         <h3><i class="fas fa-map-marked-alt"></i> Zonas Geoestadísticas</h3>
         <div id="zonesInfo">
-          <!-- Info de zonas se cargará dinámicamente -->
+          Info de zonas se cargará dinámicamente
         </div>
       </div>
       -->
@@ -2025,7 +2028,7 @@ body {
       
       <div class="data-table-container">
         <h3><i class="fas fa-table"></i> Datos de Ventas</h3>
-        <div style="overflow-x: auto;">
+        <div class="table-scrollable">
           <table class="data-table">
             <thead>
               <tr>
@@ -2039,8 +2042,8 @@ body {
             </thead>
             <tbody id="dataTableBody">
               <tr>
-                <td colspan="6" class="text-center" style="padding: 40px;">
-                  <i class="fas fa-database fa-2x mb-20" style="display: block; color: var(--text-secondary);"></i>
+                <td colspan="6" class="text-center table-empty-cell">
+                  <i class="fas fa-database fa-2x mb-20 table-empty-icon"></i>
                   Carga un archivo CSV para ver los datos
                 </td>
               </tr>
@@ -2056,16 +2059,16 @@ body {
       <p class="mb-20">Registra interacciones de ventas con ubicación automática y coordenadas GPS</p>
       
       <!-- ✅ PASO 3: INFORMACIÓN SOBRE FORMATOS SOPORTADOS -->
-      <div style="background: #f0f9ff; padding: 15px; border-radius: 8px; border-left: 4px solid #0284c7; margin-bottom: 20px; font-size: 13px;">
+      <div class="info-box-csv">
         <p><strong>ℹ️ Formatos de CSV soportados:</strong></p>
-        <ul style="margin: 8px 0 0 0; padding-left: 20px;">
-          <li>✅ Headers en español: <code style="background: #e0f2fe; padding: 2px 4px; border-radius: 3px;">tipo_pitch, resultado, monto, zona</code></li>
-          <li>✅ Headers en inglés: <code style="background: #e0f2fe; padding: 2px 4px; border-radius: 3px;">pitch_type, result, amount, zone</code></li>
-          <li>✅ Fechas ISO: <code style="background: #e0f2fe; padding: 2px 4px; border-radius: 3px;">2026-01-10T14:30:00.000Z</code></li>
+        <ul>
+          <li>✅ Headers en español: <code class="code-inline-light">tipo_pitch, resultado, monto, zona</code></li>
+          <li>✅ Headers en inglés: <code class="code-inline-light">pitch_type, result, amount, zone</code></li>
+          <li>✅ Fechas ISO: <code class="code-inline-light">2026-01-10T14:30:00.000Z</code></li>
           <li>✅ Zonas válidas: zona_hotelera, centro, region_237, region_233, sm_91, sm_77</li>
         </ul>
-        <p style="margin-top: 10px; margin-bottom: 0;">
-          <a href="data/PLANTILLA_CSV_ESTANDAR.csv" target="_blank" style="color: #0284c7; text-decoration: none; font-weight: 600;">
+        <p class="link-info-box">
+          <a href="data/PLANTILLA_CSV_ESTANDAR.csv" target="_blank" class="link-info-box a">
             <i class="fas fa-download"></i> Descargar plantilla CSV de ejemplo
           </a>
         </p>
@@ -2074,7 +2077,7 @@ body {
       <!-- Botón para capturar ubicación -->
       <div class="control-group">
         <h3><i class="fas fa-map-pin"></i> Ubicación Actual</h3>
-        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <div class="flex-horizontal">
           <button class="btn btn-primary" id="captureLocationBtn">
             <i class="fas fa-location-arrow"></i> Obtener Ubicación GPS
           </button>
@@ -2085,7 +2088,7 @@ body {
             <i class="fas fa-file-download"></i> Generar CSV con Coordenadas
           </button>
         </div>
-        <div id="locationStatus" style="margin-top: 15px; padding: 10px; background: var(--bg-card); border-radius: 5px; display: none;">
+        <div id="locationStatus" class="location-status-box">
           <p><strong>Ubicación:</strong> <span id="coordsDisplay">—</span></p>
           <p><strong>Zona Detectada:</strong> <span id="zoneDetected">—</span></p>
           <p><strong>Precisión:</strong> <span id="accuracyDisplay">—</span></p>
@@ -2176,7 +2179,7 @@ body {
           </div>
           
           <div class="form-group">
-            <label>Zona/Región <span style="color: red;">*</span>:</label>
+            <label>Zona/Región <span class="required-asterisk">*</span>:</label>
             <select id="captureZone" class="form-control" required>
               <option value="">Selecciona zona...</option>
               <option value="zona_hotelera">Zona Hotelera</option>
@@ -2202,8 +2205,8 @@ body {
       <!-- Tabla de registros capturados -->
       <div class="control-group">
         <h3><i class="fas fa-list"></i> Registros Capturados</h3>
-        <p id="recordsCount" style="color: var(--text-secondary); margin-bottom: 10px;">0 registros</p>
-        <div style="overflow-x: auto;">
+        <p id="recordsCount" class="records-count-info">0 registros</p>
+        <div class="table-scrollable">
           <table class="analysis-table">
             <thead>
               <tr>
@@ -2219,7 +2222,7 @@ body {
             </thead>
             <tbody id="capturedRecordsBody">
               <tr>
-                <td colspan="8" style="text-align: center; padding: 20px; color: var(--text-secondary);">
+                <td colspan="8" class="table-empty-cell">
                   No hay registros capturados aún
                 </td>
               </tr>
@@ -2227,7 +2230,7 @@ body {
           </table>
         </div>
         
-        <div class="btn-group" style="margin-top: 15px;">
+        <div class="btn-group btn-group-spaced">
           <button class="btn btn-primary" id="exportCapturedCSVBtn">
             <i class="fas fa-file-csv"></i> Exportar Registros a CSV
           </button>
@@ -2288,48 +2291,48 @@ body {
       <h2 class="mb-30"><i class="fas fa-map-marker-alt"></i> Zonas Geoestadísticas de Cancún</h2>
       
       <!-- Resumen dinámico de datos por zona -->
-      <div id="zonesSummary" class="kpi-grid mb-30" style="display: none;">
+      <div id="zonesSummary" class="kpi-grid mb-30 zones-summary">
         <!-- Se llena dinámicamente con datos de ventas -->
       </div>
       
       <div class="reports-grid">
         <div class="report-card">
-          <h4><span class="zone-badge zone-237">Región 237</span></h4>
+          <h3><span class="zone-badge zone-237">Región 237</span></h3>
           <p><strong>Perfil:</strong> Zona norte, alta densidad poblacional, procesos de regularización.</p>
           <p><strong>Segmento:</strong> Clase trabajadora, ingresos medios-bajos.</p>
           <p><strong>Estrategia:</strong> Ventas de productos básicos, pagos flexibles.</p>
         </div>
         
         <div class="report-card">
-          <h4><span class="zone-badge zone-233">Región 233</span></h4>
+          <h3><span class="zone-badge zone-233">Región 233</span></h3>
           <p><strong>Perfil:</strong> Población joven, mejor conectividad, inversión pública reciente.</p>
           <p><strong>Segmento:</strong> Familias jóvenes, estudiantes universitarios.</p>
           <p><strong>Estrategia:</strong> Productos tecnológicos, financiamiento educativo.</p>
         </div>
         
         <div class="report-card">
-          <h4><span class="zone-badge zone-91">Supermanzana 91</span></h4>
+          <h3><span class="zone-badge zone-91">Supermanzana 91</span></h3>
           <p><strong>Perfil:</strong> Zona céntrica en transición, propiedades en remate.</p>
           <p><strong>Segmento:</strong> Clase media en transición, propietarios.</p>
           <p><strong>Estrategia:</strong> Productos de renovación hogar, seguros.</p>
         </div>
         
         <div class="report-card">
-          <h4><span class="zone-badge zone-77">Supermanzana 77 (Corales)</span></h4>
+          <h3><span class="zone-badge zone-77">Supermanzana 77 (Corales)</span></h3>
           <p><strong>Perfil:</strong> Crisis habitacional, alta vulnerabilidad, necesidades básicas.</p>
           <p><strong>Segmento:</strong> Población en extrema necesidad.</p>
           <p><strong>Estrategia:</strong> Productos esenciales, precios mínimos, ayuda social.</p>
         </div>
         
         <div class="report-card">
-          <h4><span class="zone-badge zone-centro">Centro (Distrito 1)</span></h4>
+          <h3><span class="zone-badge zone-centro">Centro (Distrito 1)</span></h3>
           <p><strong>Perfil:</strong> Renovación urbana, comercio consolidado, turismo local.</p>
           <p><strong>Segmento:</strong> Comerciantes, turistas, residentes con poder adquisitivo.</p>
           <p><strong>Estrategia:</strong> Productos premium, experiencias, servicios especializados.</p>
         </div>
         
         <div class="report-card">
-          <h4><span class="zone-badge zone-hotelera">Zona Hotelera</span></h4>
+          <h3><span class="zone-badge zone-hotelera">Zona Hotelera</span></h3>
           <p><strong>Perfil:</strong> Turismo internacional, alta rotación, precios premium.</p>
           <p><strong>Segmento:</strong> Turistas internacionales, ejecutivos.</p>
           <p><strong>Estrategia:</strong> Productos de lujo, souvenirs, servicios exclusivos.</p>
@@ -2503,7 +2506,7 @@ body {
       <!-- Resultados de herramientas -->
       <div id="toolResults" class="control-group hidden mt-30">
         <h3><i class="fas fa-clipboard"></i> Resultados del Análisis</h3>
-        <div id="toolOutput" style="background: var(--bg-card); padding: 20px; border-radius: 12px; border: 1px solid var(--border);">
+        <div id="toolOutput" class="tool-output-box">
           <!-- Los resultados se mostrarán aquí -->
         </div>
       </div>
@@ -2542,7 +2545,7 @@ body {
     </section>
     
     <!-- ================= ANÁLISIS COMPLETO DETALLADO ================= -->
-    <section id="complete-analysis" class="view-section">
+    <section id="complete-analysis-detailed" class="view-section">
       <div class="analysis-header">
         <h2><i class="fas fa-microscope"></i> Análisis Completo - Resultados Detallados</h2>
         <p>Exploración interactiva de patrones y cruces de datos: Demográfico × Pitch × Zona | Origen × Pitch × Resultado</p>
@@ -2630,7 +2633,7 @@ body {
               </select>
             </div>
 
-            <div class="filter-group" style="align-self: flex-end;">
+            <div class="filter-group filter-group-align-end">
               <button class="btn btn-primary" id="applyDemFilters">
                 <i class="fas fa-search"></i> Aplicar Filtros
               </button>
@@ -2702,7 +2705,7 @@ body {
               </select>
             </div>
 
-            <div class="filter-group" style="align-self: flex-end;">
+            <div class="filter-group filter-group-align-end">
               <button class="btn btn-primary" id="applyOrigFilters">
                 <i class="fas fa-search"></i> Aplicar Filtros
               </button>
@@ -2791,7 +2794,7 @@ body {
     </section>
 
     <!-- SECCIÓN: ALGORITMO DEL VECINO MÁS CERCANO -->
-    <section id="nearest-neighbor" class="view-section" style="display: none;">
+    <section id="nearest-neighbor" class="view-section">
       <h2 class="mb-30"><i class="fas fa-project-diagram"></i> Algoritmo del Vecino Más Cercano</h2>
       
       <div class="control-group">
@@ -2825,7 +2828,7 @@ body {
     </section>
 
     <!-- SECCIÓN: ANÁLISIS COMPLETO -->
-    <section id="complete-analysis" class="view-section" style="display: none;">
+    <section id="complete-analysis" class="view-section">
       <h2 class="mb-30"><i class="fas fa-microscope"></i> Análisis Completo Multidimensional</h2>
       
       <div class="control-group">
@@ -2878,8 +2881,8 @@ body {
 <!-- NAVEGACIÓN MÓVIL -->
 <div class="mobile-nav">
   <!-- ✅ PASO 6: BADGE DE CONTADOR CAPTURA (MÓVIL) -->
-  <div id="mobileCaptureWidget" style="padding: 12px; background: linear-gradient(90deg, #0284c7, #0369a1); color: white; border-bottom: 2px solid #0369a1; display: none; font-weight: 600; text-align: center; font-size: 13px;">
-    <div style="display: flex; align-items: center; gap: 8px; justify-content: center;">
+  <div id="mobileCaptureWidget" class="mobile-capture-widget">
+    <div class="mobile-capture-widget-flex">
       <i class="fas fa-inbox"></i>
       <span id="mobileCaptureCount">0</span>
       <span>registros</span>
@@ -2911,10 +2914,10 @@ body {
 </div>
 
 <!-- MODAL PARA MÁS OPCIONES (MÓVIL) -->
-<div id="moreModal" class="hidden" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(2, 6, 23, 0.9); z-index: 101; display: flex; align-items: center; justify-content: center;">
-  <div style="background: var(--bg-card); border-radius: 20px; padding: 30px; width: 90%; max-width: 400px;">
-    <h3 style="margin-bottom: 20px;">Opciones</h3>
-    <div style="display: grid; gap: 10px;">
+<div id="moreModal" class="hidden">
+  <div class="modal-content">
+    <h3>Opciones</h3>
+    <div class="modal-options-grid">
       <button class="mobile-nav-btn" onclick="showView('zones'); closeMoreModal();">
         <i class="fas fa-map-marker-alt"></i> Zonas
       </button>
@@ -3728,7 +3731,7 @@ function loadZonesSummary() {
       <div class="change positive">
         <i class="fas fa-chart-line"></i> ${stats.rate}% conversión
       </div>
-      <div class="text-secondary" style="font-size: 0.9rem; margin-top: 8px;">
+      <div class="text-secondary text-secondary-small">
         💰 $${stats.totalAmount.toFixed(0)}
       </div>
     </div>
@@ -8721,6 +8724,35 @@ function initializeNavigationScroll() {
 document.addEventListener('DOMContentLoaded', () => {
   initializeNavigationScroll();
 });
+</script>
+<!-- Back-to-menu handler -->
+<script>
+  function goToMainMenu() {
+    const candidates = ['main', 'home', 'mainMenu', 'menu', 'dashboard-main'];
+    for (const id of candidates) {
+      const el = document.getElementById(id);
+      if (el && el.classList && el.classList.contains('view-section')) {
+        if (typeof showView === 'function') {
+          showView(id);
+        } else {
+          document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+          el.classList.add('active');
+        }
+        return;
+      }
+    }
+
+    const nav = document.querySelector('.nav-menu') || document.getElementById('nav');
+    if (nav) { nav.classList.toggle('visible'); return; }
+
+    if (window.history && window.history.length > 1) { window.history.back(); }
+  }
+
+  document.addEventListener('click', function (e) {
+    if (e.target && e.target.id === 'btnBackToMenu') { e.preventDefault(); goToMainMenu(); }
+  }, false);
+
+  window.goToMainMenu = goToMainMenu;
 </script>
 </body>
 </html>

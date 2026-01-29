@@ -17,12 +17,12 @@ class AnalyticsOrchestrator {
     try {
       // Cargar módulos dinámicamente
       const modulePromises = [
-        this.loadModule('BayesianSalesAnalytics', './analytics_modules/bayesian_analytics.js'),
-        this.loadModule('MonteCarloLogistics', './analytics_modules/montecarlo_logistics.js'),
-        this.loadModule('TimeSeriesForecast', './analytics_modules/timeseries_forecast.js'),
-        this.loadModule('GeneticAlgorithmOptimizer', './analytics_modules/genetic_algorithm.js'),
-        this.loadModule('MarkovDecisionProcess', './analytics_modules/markov_decisions.js'),
-        this.loadModule('MarketSaturationModel', './analytics_modules/market_saturation.js')
+        this.loadModule('BayesianSalesAnalytics', './analytics_module/bayesian_analytics.js'),
+        this.loadModule('MonteCarloLogistics', './analytics_module/montecarlo_logistics.js'),
+        this.loadModule('TimeSeriesForecast', './analytics_module/timeseries_forecast.js'),
+        this.loadModule('GeneticAlgorithmOptimizer', './analytics_module/genetic_algorithm.js'),
+        this.loadModule('MarkovDecisionProcess', './analytics_module/markov_decisions.js'),
+        this.loadModule('MarketSaturationModel', './analytics_module/market_saturation.js')
       ];
       
       await Promise.all(modulePromises);

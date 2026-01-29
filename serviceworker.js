@@ -1,7 +1,7 @@
 // Service Worker para Geo-Suite Cancún PRO
 // Proporciona funcionalidad offline y caché
 
-const CACHE_NAME = 'geo-suite-v3';
+const CACHE_NAME = 'geo-suite-v4';
 const ASSETS_TO_CACHE = [
   // Core
   '/',
@@ -9,6 +9,7 @@ const ASSETS_TO_CACHE = [
   '/manifest.json',
   '/icon-192.png',
   '/icon-512.png',
+  '/styles.css',
   
   // Main modules
   '/groq_cliente.js',
