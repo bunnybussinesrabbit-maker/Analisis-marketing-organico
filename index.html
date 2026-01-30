@@ -7496,7 +7496,8 @@ async function loadReferenceData() {
   initializeNavigationScroll();
   window.addEventListener('resize', initializeNavigationScroll);
 
-console.log('✅ Aplicación lista');
+  console.log('✅ Aplicación lista');
+}; // ✅ Cierre de window.onload
 
 // Registrar Service Worker
 if ('serviceWorker' in navigator) {
@@ -8759,7 +8760,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   document.addEventListener('click', function (e) {
-    if (e.target && e.target.id === 'btnBackToMenu') { e.preventDefault(); goToMainMenu(); }
+    if (e.target && e.target.id === 'btnBackToMenu') { 
+      e.preventDefault(); 
+      goToMainMenu(); 
+    }
   }, false);
 
   window.goToMainMenu = goToMainMenu;
