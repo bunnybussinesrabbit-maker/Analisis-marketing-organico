@@ -37,11 +37,10 @@
 <!-- Turf.js para cálculos geográficos -->
 <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
 
-<!-- Módulos de análisis avanzado (NO son módulos ES6 aún) -->
-<script src="./analytics_module/bayesian_analytics.js"></script>
+<!-- Módulos de análisis avanzado (Los módulos bayesian_analytics.js y genetic_algorithm.js ahora se cargan como ES6) -->
+<!-- Los módulos siguientes aún usan formato global y se cargan aquí -->
 <script src="./analytics_module/montecarlo_logistics.js"></script>
 <script src="./analytics_module/timeseries_forecast.js"></script>
-<script src="./analytics_module/genetic_algorithm.js"></script>
 <script src="./analytics_module/markov_decisions.js"></script>
 <script src="./analytics_module/market_saturation.js"></script>
 <script src="./analytics_module/cannibalization_analysis.js"></script>
@@ -65,45 +64,57 @@
   import AnalyticsOrchestrator from './modules_integration.js';
   import { SalesStrategiesCancun } from './openai_strategies.js';
   import { GroqSalesCoach } from './groq_cliente.js';
+  import bayesianConversionProbability from './analytics_module/bayesian_analytics.js';
+  import geneticAlgorithmRouteOptimization from './analytics_module/genetic_algorithm.js';
 
   // Exponer globalmente para acceso desde HTML
   window.AnalyticsOrchestrator = AnalyticsOrchestrator;
   window.SalesStrategiesCancun = SalesStrategiesCancun;
   window.GroqSalesCoach = GroqSalesCoach;
+  
+  // Exponer funciones analíticas ES6
+  window.bayesianConversionProbability = bayesianConversionProbability;
+  window.geneticAlgorithmRouteOptimization = geneticAlgorithmRouteOptimization;
 
   // Inicializar orquestador global
   window.analyticsOrchestrator = null;
+  function waitForModules(callback, attempts = 0) {
+    if (window.bayesianConversionProbability && window.geneticAlgorithmRouteOptimization) {
+      callback();
+    } else if (attempts < 50) {
+      setTimeout(() => waitForModules(callback, attempts + 1), 100);
+    } else {
+      console.warn('⚠️ Módulos ES6 no disponibles en tiempo esperado');
+      callback(); // Continuar de todas formas
+    }
+  }
 
-  console.log('✅ Módulos ES6 cargados y expuestos globalmente');
-</script>
+  waitForModules(() => {
+    // Crear namespace global para funciones analíticas
+    window.Analytics = {
+      bayesian: window.bayesianConversionProbability || null,
+      monteCarlo: typeof monteCarloLogisticSimulation !== 'undefined' ? monteCarloLogisticSimulation : null,
+      timeSeries: typeof timeSeriesAnalysis !== 'undefined' ? timeSeriesAnalysis : null,
+      genetic: window.geneticAlgorithmRouteOptimization || null,
+      markov: typeof markovDecisionProcess !== 'undefined' ? markovDecisionProcess : null,
+      saturation: typeof marketSaturationModel !== 'undefined' ? marketSaturationModel : null,
+      cannibalization: typeof cannibalizationAnalysis !== 'undefined' ? cannibalizationAnalysis : null,
+      empirical: typeof empiricalProbabilityDistribution !== 'undefined' ? empiricalProbabilityDistribution : null,
+      crossAnalysis: null
+    };
 
-<!-- INICIALIZACIÓN DE ANALYTICS WRAPPER -->
-<script>
-  // Crear namespace global para funciones analíticas
-  window.Analytics = {
-    bayesian: typeof bayesianConversionProbability !== 'undefined' ? bayesianConversionProbability : null,
-    monteCarlo: typeof monteCarloLogisticSimulation !== 'undefined' ? monteCarloLogisticSimulation : null,
-    timeSeries: typeof timeSeriesAnalysis !== 'undefined' ? timeSeriesAnalysis : null,
-    genetic: typeof geneticAlgorithmRouteOptimization !== 'undefined' ? geneticAlgorithmRouteOptimization : null,
-    markov: typeof markovDecisionProcess !== 'undefined' ? markovDecisionProcess : null,
-    saturation: typeof marketSaturationModel !== 'undefined' ? marketSaturationModel : null,
-    cannibalization: typeof cannibalizationAnalysis !== 'undefined' ? cannibalizationAnalysis : null,
-    empirical: typeof empiricalProbabilityDistribution !== 'undefined' ? empiricalProbabilityDistribution : null,
-    crossAnalysis: null
-  };
-
-  // Verificar disponibilidad de módulos analíticos
-  console.log('📊 Analytics wrapper inicializado:', {
-    bayesian: window.Analytics.bayesian ? '✅' : '❌',
-    monteCarlo: window.Analytics.monteCarlo ? '✅' : '❌',
-    timeSeries: window.Analytics.timeSeries ? '✅' : '❌',
-    genetic: window.Analytics.genetic ? '✅' : '❌',
-    markov: window.Analytics.markov ? '✅' : '❌',
-    saturation: window.Analytics.saturation ? '✅' : '❌',
-    cannibalization: window.Analytics.cannibalization ? '✅' : '❌',
-    empirical: window.Analytics.empirical ? '✅' : '❌',
-    crossAnalysis: window.Analytics.crossAnalysis ? '✅' : '❌'
-  });
+    // Verificar disponibilidad de módulos analíticos
+    console.log('📊 Analytics wrapper inicializado (ES6):', {
+      bayesian: window.Analytics.bayesian ? '✅ ES6' : '❌',
+      monteCarlo: window.Analytics.monteCarlo ? '✅' : '❌',
+      timeSeries: window.Analytics.timeSeries ? '✅' : '❌',
+      genetic: window.Analytics.genetic ? '✅ ES6' : '❌',
+      markov: window.Analytics.markov ? '✅' : '❌',
+      saturation: window.Analytics.saturation ? '✅' : '❌',
+      cannibalization: window.Analytics.cannibalization ? '✅' : '❌',
+      empirical: window.Analytics.empirical ? '✅' : '❌',
+      crossAnalysis: window.Analytics.crossAnalysis ? '✅' : '❌'
+    });
 </script>
 
 <style>

@@ -3,7 +3,7 @@
   "version": "2.0.0",
   "description": "Plataforma estratégica de análisis de ventas D2D para Cancún con IA predictiva",
   "main": "index.html",
-  "type": "commonjs",
+  "type": "module",
   "scripts": {
     "start": "npx http-server -p 8080 -c-1 --gzip",
     "dev": "npx nodemon --watch . --ext html,js,json --exec 'npx http-server -p 8080 -c-1'",

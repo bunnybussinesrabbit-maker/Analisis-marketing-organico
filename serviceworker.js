@@ -1,7 +1,7 @@
 // Service Worker para Geo-Suite Cancún PRO
 // Proporciona funcionalidad offline y caché
 
-const CACHE_NAME = 'geo-suite-v4';
+const CACHE_NAME = 'geo-suite-v5-es6-modules';
 const ASSETS_TO_CACHE = [
   // Core
   '/',

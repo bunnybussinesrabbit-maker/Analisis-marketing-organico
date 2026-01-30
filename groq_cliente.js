@@ -349,4 +349,5 @@ if (typeof window !== 'undefined') {
     window.testConnection = testConnection;
 }
 
+export { GroqSalesCoach, createGroqSalesCoach, displayErrorInUI, testConnection };
 export default GroqSalesCoach;

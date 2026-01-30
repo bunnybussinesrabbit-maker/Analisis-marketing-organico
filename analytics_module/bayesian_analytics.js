@@ -1,4 +1,4 @@
-function bayesianConversionProbability(zone, hour, historicalData) {
+export function bayesianConversionProbability(zone, hour, historicalData) {
   // Teorema de Bayes: P(venta|zona,hora) = P(zona,hora|venta) * P(venta) / P(zona,hora)
   
   const totalSales = historicalData.length;
@@ -30,3 +30,5 @@ function bayesianConversionProbability(zone, hour, historicalData) {
   
   return Math.min(0.95, Math.max(0.05, posterior || 0.3));
 }
+
+export default bayesianConversionProbability;

@@ -764,4 +764,5 @@ if (typeof window !== 'undefined') {
     window.initializeAndDisplayStrategies = initializeAndDisplayStrategies;
 }
 
+export { SalesStrategiesCancun, createSalesStrategies, initializeAndDisplayStrategies };
 export default SalesStrategiesCancun;

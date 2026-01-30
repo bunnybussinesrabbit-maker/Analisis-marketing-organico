@@ -1,7 +1,18 @@
 /**
  * Integrador principal de todos los módulos de análisis
  */
-class AnalyticsOrchestrator {
+
+// Importar módulos analíticos ES6
+import bayesianConversionProbability from './analytics_module/bayesian_analytics.js';
+import geneticAlgorithmRouteOptimization from './analytics_module/genetic_algorithm.js';
+
+// Para los módulos que aún usen formato global, mantener su carga dinámica
+// import monteCarloSimulation from './analytics_module/montecarlo_logistics.js';
+// import timeSeriesForecast from './analytics_module/timeseries_forecast.js';
+// import markovDecisions from './analytics_module/markov_decisions.js';
+// import marketSaturation from './analytics_module/market_saturation.js';
+
+export default class AnalyticsOrchestrator {
   constructor(data) {
     this.data = data;
     this.modules = {};
@@ -265,5 +276,3 @@ class AnalyticsOrchestrator {
 if (typeof window !== 'undefined') {
   window.AnalyticsOrchestrator = AnalyticsOrchestrator;
 }
-
-export default AnalyticsOrchestrator;
