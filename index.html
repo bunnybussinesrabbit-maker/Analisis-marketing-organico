@@ -147,7 +147,7 @@
           title = 'Análisis Bayesiano';
           icon = 'fa-brain';
           const firstZone = data[0]?.zona || 'Centro';
-          result = new orch.modules.BayesianSalesAnalytics(data).calculateProbability(firstZone, new Date().getHours());
+          result = orch.modules.BayesianSalesAnalytics(firstZone, new Date().getHours(), data);
           break;
         case 'timeseries':
           title = 'Series Temporales';
@@ -157,12 +157,12 @@
         case 'montecarlo':
           title = 'Simulación Monte Carlo';
           icon = 'fa-dice';
-          result = new orch.modules.MonteCarloLogistics(data).runSimulation();
+          result = orch.modules.MonteCarloLogistics(data);
           break;
         case 'genetic':
           title = 'Optimización Genética';
           icon = 'fa-dna';
-          result = new orch.modules.GeneticRouteOptimization(data).optimize();
+          result = orch.modules.GeneticRouteOptimization(data);
           break;
         case 'markov':
           title = 'Procesos Markov';
@@ -6663,8 +6663,6 @@ function initRunCompleteAnalysisButton() {
       if (!window.analyticsOrchestrator) {
         window.analyticsOrchestrator = new window.AnalyticsOrchestrator(filteredData);
         await window.analyticsOrchestrator.loadAllModules();
-      } else {
-        window.analyticsOrchestrator.data = filteredData;
       }
       
       const analysis = await window.analyticsOrchestrator.runCompleteAnalysis({
