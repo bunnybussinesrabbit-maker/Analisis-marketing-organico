@@ -136,12 +136,12 @@ const FieldMapper = {
     'registro_id': 'id',
     
     // Coordenadas GPS
-    'latitude': 'latitude',
-    'lat': 'latitude',
-    'latitud': 'latitude',
-    'longitude': 'longitude',
-    'lng': 'longitude',
-    'longitud': 'longitude',
+    'latitude': 'lat',
+    'lat': 'lat',
+    'latitud': 'lat',
+    'longitude': 'lng',
+    'lng': 'lng',
+    'longitud': 'lng',
     'accuracy': 'accuracy',
     'precisión': 'accuracy',
     'precision': 'accuracy'
@@ -203,8 +203,8 @@ const FieldMapper = {
       'timestamp': 'timestamp',
       'date': 'timestamp',
       'fecha': 'timestamp',
-      'lat': 'latitude',
-      'lon': 'longitude'
+      'lat': 'lat',
+      'lon': 'lng'
     };
     
     for (const [keyword, canonical] of Object.entries(keywordMap)) {

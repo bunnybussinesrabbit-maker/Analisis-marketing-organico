@@ -100,6 +100,98 @@
 
   // Ejecutar validación al inicio
   window.validateModulesAccess();
+
+  /**
+   * Herramienta para activar análisis desde la UI
+   * @param {string} toolId - Identificador de la herramienta
+   */
+  window.activateTool = function(toolId) {
+    if (!window.analyticsOrchestrator || !window.analyticsOrchestrator.data || window.analyticsOrchestrator.data.length === 0) {
+      if (typeof showNotification === 'function') {
+        showNotification('⚠️ No hay datos cargados para analizar.', 'warning');
+      } else {
+        alert('⚠️ No hay datos cargados para analizar.');
+      }
+      return;
+    }
+
+    const orch = window.analyticsOrchestrator;
+    const data = orch.data;
+    const output = document.getElementById('toolOutput');
+    const resultsContainer = document.getElementById('toolResults');
+
+    if (typeof showLoading === 'function') showLoading(`Ejecutando ${toolId}...`);
+
+    try {
+      let result = null;
+      let title = '';
+      let icon = '';
+
+      switch (toolId) {
+        case 'bayesian':
+          title = 'Análisis Bayesiano';
+          icon = 'fa-brain';
+          const firstZone = data[0]?.zona || 'Centro';
+          result = orch.modules.BayesianSalesAnalytics(firstZone, new Date().getHours(), data);
+          break;
+        case 'timeseries':
+          title = 'Series Temporales';
+          icon = 'fa-chart-line';
+          result = new orch.modules.TimeSeriesForecast(data).analyzeTemporalPatterns();
+          break;
+        case 'montecarlo':
+          title = 'Simulación Monte Carlo';
+          icon = 'fa-dice';
+          result = orch.modules.MonteCarloLogistics(data);
+          break;
+        case 'genetic':
+          title = 'Optimización Genética';
+          icon = 'fa-dna';
+          result = orch.modules.GeneticRouteOptimization(data);
+          break;
+        case 'markov':
+          title = 'Procesos Markov';
+          icon = 'fa-sitemap';
+          result = new orch.modules.MarkovDecisions(data).valueIteration();
+          break;
+        case 'saturation':
+          title = 'Saturación de Mercado';
+          icon = 'fa-chart-area';
+          result = new orch.modules.MarketSaturation(data).calculateAllMetrics();
+          break;
+        case 'cannibalization':
+          title = 'Análisis de Canibalización';
+          icon = 'fa-cut';
+          result = new orch.modules.CannibalizationAnalysis(data).analyze();
+          break;
+        case 'decisiontree':
+          title = 'Árbol de Decisiones';
+          icon = 'fa-tree';
+          result = new orch.modules.CrossDimensionalAnalyzer(data).generateInsights('demographic');
+          break;
+        default:
+          throw new Error('Herramienta no reconocida');
+      }
+
+      // Renderizar resultado
+      if (output) {
+        output.innerHTML = `
+          <div class="control-group">
+            <h4><i class="fas ${icon}"></i> ${title}</h4>
+            <pre style="white-space: pre-wrap; background: var(--bg-panel); padding: 15px; border-radius: 8px; font-size: 0.9rem;">${JSON.stringify(result, null, 2)}</pre>
+          </div>
+        `;
+      }
+      if (resultsContainer) resultsContainer.classList.remove('hidden');
+      if (typeof showNotification === 'function') showNotification(`✅ ${title} completado`, 'success');
+
+    } catch (error) {
+      console.error(`Error en ${toolId}:`, error);
+      if (typeof showNotification === 'function') showNotification(`❌ Error: ${error.message}`, 'error');
+    } finally {
+      if (typeof hideLoading === 'function') hideLoading();
+    }
+  };
 </script>
 
 <style>
