@@ -65,4 +65,30 @@ export class BayesianSalesAnalytics {
 
     return results;
   }
+
+  /**
+   * Ejecución masiva para todas las zonas y horas
+   */
+  calculateZoneHourProbabilities() {
+    const results = {};
+    const zones = [...new Set(this.historicalData.map(d => d.zona))];
+
+    zones.forEach(zone => {
+      results[zone] = {};
+      for (let hour = 8; hour <= 20; hour++) {
+        results[zone][hour] = this.calculateProbability(zone, hour);
+      }
+    });
+
+    return results;
+  }
+}
+
+/**
+ * Función de conveniencia para uso directo (sin instanciar)
+ * Útil para otros módulos que solo necesitan un cálculo rápido
+ */
+export function bayesianConversionProbability(zone, hour, historicalData) {
+  const instance = new BayesianSalesAnalytics(historicalData);
+  return instance.calculateProbability(zone, hour);
 }
