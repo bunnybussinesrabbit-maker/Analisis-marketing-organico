@@ -2550,6 +2550,7 @@ function handleFiles(e) {
   
   Papa.parse(file, {
     header: true,
+	encoding: "ISO-8859-1",
     skipEmptyLines: true,
     complete: function(results) {
       console.log(`📊 CSV parseado: ${results.data.length} filas`);
