@@ -52,13 +52,14 @@
 
   console.log('🚀 Iniciando sistema centralizado de análisis...');
 
-  // 2. Inicializamos el Orquestador
+  // 2. Exponer la clase primero para uso en otros scripts
+  window.AnalyticsOrchestrator = AnalyticsOrchestrator;
+
+  // 3. Inicializamos el Orquestador
   // (Le pasamos los datos procesados si existen, o un array vacío)
   // Prioridad: filteredData > window.capturedRecords > []
   const initialData = window.filteredData || window.capturedRecords || [];
   const orchestrator = new AnalyticsOrchestrator(initialData);
-
-  // 3. Exponemos las herramientas globales (para que los botones del HTML funcionen)
   window.analyticsOrchestrator = orchestrator;
   window.SalesStrategiesCancun = SalesStrategiesCancun;
   window.DeepSeekSalesCoach = DeepSeekSalesCoach;
@@ -106,6 +107,11 @@
    * @param {string} toolId - Identificador de la herramienta
    */
   window.activateTool = function(toolId) {
+    // Sincronizar datos antes de ejecutar si existen en el entorno global
+    if (window.analyticsOrchestrator && window.filteredData) {
+      window.analyticsOrchestrator.data = window.filteredData;
+    }
+
     if (!window.analyticsOrchestrator || !window.analyticsOrchestrator.data || window.analyticsOrchestrator.data.length === 0) {
       if (typeof showNotification === 'function') {
         showNotification('⚠️ No hay datos cargados para analizar.', 'warning');
@@ -116,6 +122,15 @@
     }
 
     const orch = window.analyticsOrchestrator;
+
+    if (!orch.modules) {
+      console.error('❌ Error: Módulos de análisis no cargados en el orquestador.');
+      if (typeof showNotification === 'function') {
+        showNotification('❌ Error: Módulos de análisis no disponibles.', 'error');
+      }
+      return;
+    }
+
     const data = orch.data;
     const output = document.getElementById('toolOutput');
     const resultsContainer = document.getElementById('toolResults');
@@ -3045,7 +3060,6 @@ let routeLayer = null;
 let charts = {};
 let generatedReports = [];
 let currentCalculatedRoute = null;
-let analyticsOrchestrator = null;
 
 
 // ============================================
@@ -3053,12 +3067,12 @@ let analyticsOrchestrator = null;
 // ============================================
 
 function exportAnalysisResults() {
-  if (!analyticsOrchestrator || !analyticsOrchestrator.results) {
+  if (!window.analyticsOrchestrator || !window.analyticsOrchestrator.results) {
     showNotification('No hay resultados para exportar', 'warning');
     return;
   }
   
-  const dataStr = analyticsOrchestrator.exportResults('json');
+  const dataStr = window.analyticsOrchestrator.exportResults('json');
   const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
   
   const exportFileDefaultName = `analisis-completo-${new Date().toISOString().split('T')[0]}.json`;
@@ -3111,7 +3125,7 @@ async function initAdvancedModules() {
   
   try {
         // 1. Centralizamos la creación aquí (Línea 3000 aprox)
-  window.analyticsOrchestrator = new AnalyticsOrchestrator(dataSource);
+  window.analyticsOrchestrator = new window.AnalyticsOrchestrator(dataSource);
 
 // 2. Creamos el puente de compatibilidad inmediatamente 🔗
   window.analyticsOrchestrator.loadAllAnalyticsModules = function() {
@@ -5565,7 +5579,7 @@ function calculateOptimalRoute() {
   // Asegurar que analyticsOrchestrator está disponible
   if (!window.analyticsOrchestrator) {
     console.warn('⚠️ Inicializando AnalyticsOrchestrator...');
-    window.analyticsOrchestrator = new AnalyticsOrchestrator(filteredData);
+    window.analyticsOrchestrator = new window.AnalyticsOrchestrator(filteredData);
   }
   
   // Verificación final
@@ -6641,12 +6655,12 @@ function initRunCompleteAnalysisButton() {
     showLoading('Ejecutando análisis completo...');
     
     try {
-      if (!analyticsOrchestrator) {
-        analyticsOrchestrator = new AnalyticsOrchestrator(filteredData);
-        await analyticsOrchestrator.loadAllModules();
+      if (!window.analyticsOrchestrator) {
+        window.analyticsOrchestrator = new window.AnalyticsOrchestrator(filteredData);
+        await window.analyticsOrchestrator.loadAllModules();
       }
       
-      const analysis = await analyticsOrchestrator.runCompleteAnalysis({
+      const analysis = await window.analyticsOrchestrator.runCompleteAnalysis({
         runBayesian: true,
         runTimeSeries: true,
         runSaturation: true,
@@ -6697,7 +6711,7 @@ function initRunCompleteAnalysisButton() {
 }
 
 function saveAnalysisAsReport() {
-  if (!analyticsOrchestrator) {
+  if (!window.analyticsOrchestrator) {
     showNotification('No hay análisis para guardar', 'warning');
     return;
   }
@@ -6705,7 +6719,7 @@ function saveAnalysisAsReport() {
   const report = {
     id: Date.now(),
     title: `Análisis Completo - ${new Date().toLocaleDateString('es-MX')}`,
-    content: `Análisis: ${JSON.stringify(analyticsOrchestrator.results, null, 2)}`,
+    content: `Análisis: ${JSON.stringify(window.analyticsOrchestrator.results, null, 2)}`,
     type: 'analysis',
     date: new Date().toLocaleDateString('es-MX'),
     timestamp: new Date().toISOString()
@@ -6718,12 +6732,12 @@ function saveAnalysisAsReport() {
 }
 
 function exportAnalysisResults() {
-  if (!analyticsOrchestrator) {
+  if (!window.analyticsOrchestrator) {
     showNotification('No hay datos para exportar', 'warning');
     return;
   }
   
-  const dataStr = analyticsOrchestrator.exportResults();
+  const dataStr = window.analyticsOrchestrator.exportResults();
   const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
   const a = document.createElement('a');
   a.href = dataUri;
@@ -7054,91 +7068,6 @@ function displayOptimalVisitingHours() {
 // CLASE ORQUESTADOR DE ANÁLISIS
 // ============================================
 
-class AnalyticsOrchestrator {
-  constructor(data) {
-    this.data = data;
-    this.results = {};
-  }
-  
-  async loadAllModules() {
-    if (!window.analyticsOrchestrator || !window.analyticsOrchestrator.modules) {
-      throw new Error('Orquestador de análisis no disponible');
-    }
-    console.log('✅ Módulos cargados');
-    return window.analyticsOrchestrator.modules;
-  }
-  
-  async runCompleteAnalysis(options = {}) {
-    const modulesUsed = [];
-    const results = {};
-    
-    if (options.runBayesian !== false && this.data.length > 0) {
-      results.bayesian = this.runBayesianAnalysis();
-      modulesUsed.push('Análisis Bayesiano');
-    }
-    if (options.runTimeSeries !== false && this.data.length > 0) {
-      results.timeseries = this.runTimeSeriesAnalysis();
-      modulesUsed.push('Series de Tiempo');
-    }
-    if (options.runSaturation !== false && this.data.length > 0) {
-      results.saturation = this.runSaturationAnalysis();
-      modulesUsed.push('Saturación de Mercado');
-    }
-    if (options.runMarkov !== false && this.data.length > 0) {
-      results.markov = this.runMarkovAnalysis();
-      modulesUsed.push('Cadenas de Markov');
-    }
-    if (options.runMonteCarlo !== false && this.data.length > 0) {
-      results.montecarlo = this.runMonteCarloAnalysis();
-      modulesUsed.push('Simulación Monte Carlo');
-    }
-    
-    this.results = results;
-    return {modulesUsed, dataPoints: this.data.length, results, timestamp: new Date().toISOString(), success: true};
-  }
-  
-  runBayesianAnalysis() {
-    const zones = [...new Set(this.data.map(d => d.zona))];
-    const analysis = {};
-    zones.forEach(zone => {
-      const zoneData = this.data.filter(d => d.zona === zone);
-      const amounts = zoneData.map(d => d.monto);
-      const media = amounts.reduce((a, b) => a + b, 0) / amounts.length;
-      analysis[zone] = {count: zoneData.length, average: media.toFixed(2)};
-    });
-    return analysis;
-  }
-  
-  runTimeSeriesAnalysis() {
-    const hourly = {};
-    for (let i = 0; i < 24; i++) {
-      hourly[i] = this.data.filter(d => parseInt(d.hora.split(':')[0]) === i).reduce((sum, d) => sum + d.monto, 0);
-    }
-    return {hourlyDistribution: hourly};
-  }
-  
-  runSaturationAnalysis() {
-    const zones = [...new Set(this.data.map(d => d.zona))];
-    const totalSales = this.data.reduce((sum, d) => sum + d.monto, 0);
-    return zones.reduce((acc, zone) => {
-      const zoneSales = this.data.filter(d => d.zona === zone).reduce((sum, d) => sum + d.monto, 0);
-      acc[zone] = {sales: zoneSales.toFixed(2), saturation: (zoneSales / totalSales * 100).toFixed(1)};
-      return acc;
-    }, {});
-  }
-  
-  runMarkovAnalysis() {
-    return {transitions: 'Análisis de transiciones completado'};
-  }
-  
-  runMonteCarloAnalysis() {
-    const montos = this.data.map(d => d.monto);
-    const media = montos.reduce((a, b) => a + b) / montos.length;
-    return {media: media.toFixed(2), iterations: 5000};
-  }
-  
-  exportResults() { return JSON.stringify(this.results, null, 2); }
-}
 
 // ============================================
 // CARGA DE DATOS DE REFERENCIA
