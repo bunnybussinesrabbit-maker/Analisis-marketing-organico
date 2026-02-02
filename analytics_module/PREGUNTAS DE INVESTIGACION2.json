@@ -1,0 +1,69 @@
+{
+  "titulo": "Preguntas de Investigación Pendientes",
+  "categorias": [
+    {
+      "prioridad": "Alta",
+      "preguntas": [
+        "¿Qué peso relativo dar a cada módulo en la optimización de rutas final?",
+        "¿Cómo validar empíricamente que el sistema combinado supera a módulos individuales?",
+        "¿Qué umbral de confianza usar para activar/desactivar módulos automáticamente?"
+      ]
+    },
+    {
+      "prioridad": "Media",
+      "preguntas": [
+        "¿Cómo implementar aprendizaje continuo en el orquestador?",
+        "¿Qué patrones emergen de correlaciones entre resultados de diferentes módulos?",
+        "¿Cómo adaptar los módulos a diferentes industrias/contextos?"
+      ]
+    },
+    {
+      "prioridad": "Baja",
+      "preguntas": [
+        "¿Qué métricas de complejidad computacional son relevantes para cada módulo?",
+        "¿Cómo optimizar el orden de ejecución de módulos?",
+        "¿Qué efectos de red existen entre módulos que analizan los mismos datos?"
+      ]
+    }
+	{
+      "prioridad": "Alta",
+      "preguntas": [
+        ¿como  e declara  la funcion  variable venta?
+		¿en dond se declara "Detectar Zona""?
+      ]
+    }
+  ]
+}
+
+{ PREGUNTA UNO 
+
+PREGUNTAR   SOBRE PAPA PARSE ¿ES UN  SCRIPT Y  SI  ES UN  SCRIPT  DEBE IR DESPUES DE LA LIBRERIA QUE LO LLAMA?
+
+pREGUNTA DOS
+
+cuando  mencionas  esto: "Crearemos un nuevo archivo llamado DataStore.js. Este será el cerebro de tus datos. No guardaremos datos en variables globales sueltas en el HTML."  quieres decir que actualmente asi  esta  sucediendo?? 
+
+PREGUNTA  TRES
+COMO Y DONDESE HACE LA  Transformación y limpieza de datos durante el parsing
+
+como  y  donde se hace la  Validación de esquemas de datos CSV
+
+
+ 5.-preguntar  sobre eso  de "raw" la funcion   mas  larga 
+
+6.- como  puedo  sanitizar para que  key.find e ncuentr 12-25
+ 7.-el  repetimiento de fecha y luego  fechastring" no causara  conflictos 
+
+necesito deshacerme de eso  de tiemestamp o   aprender a manejarlo bien 
+
+hay  una seccion en  mi aplicacion llamada "cross_analysis" como puedo  usar devtools para lograr que en los resultados mostrados en la interfaz ya no aparezca unknown lo cual es  señal de que esa "herramienta funcion  o  modulo" no lo esta rceconociendo y ayudame a encontrar esa funcion o modulo 
+
+8.- se corrigio  geneticj algotithm; verificaremos  bayesian  y to das las demas sale?
+
+a genetic_algorithm  ya quedo 
+b Bayesianconversio
+c Crossanalisis yaquedo
+
+<!-- hay que analizar modules integration-->
+sigamos con las preguntas  de investeigacion dl  parse o de datos 
+

@@ -1,7 +1,7 @@
 // Service Worker para Geo-Suite Cancún PRO
 // Proporciona funcionalidad offline y caché
 
-const CACHE_NAME = 'geo-suite-v3';
+const CACHE_NAME = 'geo-suite-v5-es6-modules';
 const ASSETS_TO_CACHE = [
   // Core
   '/',
@@ -9,11 +9,11 @@ const ASSETS_TO_CACHE = [
   '/manifest.json',
   '/icon-192.png',
   '/icon-512.png',
+  '/styles.css',
   
   // Main modules
-  '/groq_cliente.js',
+  '/dp_cliente.js',
   '/modules_integration.js',
-  '/knowledgebase.js',
   '/openai_strategies.js',
   
   // Analytics modules
@@ -24,8 +24,8 @@ const ASSETS_TO_CACHE = [
   '/analytics_module/markov_decisions.js',
   '/analytics_module/market_saturation.js',
   '/analytics_module/cross_analysis.js',
-  '/analytics_module/canibalizacion.js',
-  '/analytics_module/probabilidad_empirica.js',
+  '/analytics_module/cannibalization_analysis.js',
+  '/analytics_module/empirical_probability.js',
   
   // Scripts
   '/scripts/analyze-csv.js',
@@ -46,39 +46,35 @@ const ASSETS_TO_CACHE = [
 self.addEventListener('install', (event) => {
   console.log('🔧 Service Worker instalando...');
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
+    caches.open(CACHE_NAME).then(async (cache) => { // Use async/await for easier error handling
       console.log('📦 Cacheando assets...');
-      return cache.addAll(ASSETS_TO_CACHE)
-        .then(() => {
-          console.log(`✅ ${ASSETS_TO_CACHE.length} assets cacheados`);
-        })
-        .catch((err) => {
-          console.warn('⚠️ Error cacheando:', err.message);
-          // Cachear solo críticos
-          return cache.addAll(['/', '/index.html', '/manifest.json']);
-        });
+      const failedAssets = [];
+
+      // Try to cache each asset individually to identify failures
+      for (const assetUrl of ASSETS_TO_CACHE) {
+        try {
+          await cache.add(assetUrl); // Use cache.add() for individual assets
+          console.log(`✅ Cached: ${assetUrl}`);
+        } catch (error) {
+          console.warn(`⚠️ Failed to cache: ${assetUrl}`, error);
+          failedAssets.push(assetUrl);
+        }
+      }
+
+      if (failedAssets.length > 0) {
+        console.error(`❌ Some assets failed to cache: ${failedAssets.join(', ')}`);
+        // Fallback for critical assets if the main caching had issues
+        return cache.addAll(['/', '/index.html', '/manifest.json'])
+          .then(() => console.log('✅ Critical assets cached as fallback'))
+          .catch(err => console.error('❌ Failed to cache critical assets:', err));
+      } else {
+        console.log(`✅ All ${ASSETS_TO_CACHE.length} assets cacheados`);
+      }
     })
   );
   self.skipWaiting();
 });
 
-// Activar Service Worker
-self.addEventListener('activate', (event) => {
-  console.log('🚀 Service Worker activado');
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames
-          .filter((cacheName) => cacheName !== CACHE_NAME)
-          .map((cacheName) => {
-            console.log('🗑️ Eliminando caché:', cacheName);
-            return caches.delete(cacheName);
-          })
-      );
-    })
-  );
-  self.clients.claim();
-});
 
 // Fetch - MEJORADO
 self.addEventListener('fetch', (event) => {

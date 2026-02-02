@@ -1,66 +1,104 @@
-function geneticAlgorithmRouteOptimization(points, generations = 100) {
-  // Población inicial
-  let population = Array.from({length: 50}, () => 
+import bayesianConversionProbability from './bayesian_analytics.js';
+
+export default function geneticAlgorithmRouteOptimization(data, options = {}) {
+  const {
+    generations = 100,
+    populationSize = 50
+  } = options;
+
+  if (!data || data.length === 0) {
+    console.warn('⚠️ No hay datos para optimizar');
+    return [];
+  }
+
+  // Construir puntos desde data (autónomo)
+  const points = data.map(d => ({
+    zona: d.zona,
+    hora: parseInt(d.hora),
+    lat: d.lat,
+    lng: d.lng,
+    revenue: d.monto || 0
+  }));
+
+  let population = Array.from({ length: populationSize }, () =>
     [...points].sort(() => Math.random() - 0.5)
   );
-  
-  // Función de aptitud (fitness)
+
   const fitness = (route) => {
     let distance = 0;
     let revenue = 0;
-    let timePenalty = 0;
-    
+
     for (let i = 1; i < route.length; i++) {
-      // Distancia euclidiana
-      distance += Math.sqrt(
-        Math.pow(route[i].lng - route[i-1].lng, 2) +
-        Math.pow(route[i].lat - route[i-1].lat, 2)
-      );
-      
-      // Ingreso ajustado por probabilidad
+      if (route[i].lat && route[i].lng && route[i - 1].lat && route[i - 1].lng) {
+        distance += Math.hypot(
+          route[i].lng - route[i - 1].lng,
+          route[i].lat - route[i - 1].lat
+        );
+      }
+
       const prob = bayesianConversionProbability(
-        route[i].zona, 
-        parseInt(route[i].hora), 
-        filteredData
+        route[i].zona,
+        route[i].hora,
+        data
       );
+
       revenue += route[i].revenue * prob;
-      
-      // Penalización por tiempo
-      timePenalty += i * 0.1; // Penaliza visitas tardías
     }
-    
-    return revenue / (distance + timePenalty);
+
+    return revenue / (distance + 1);
   };
-  
-  // Evolución
+
   for (let gen = 0; gen < generations; gen++) {
-    // Evaluar fitness
-    const scored = population.map(route => ({
-      route,
-      score: fitness(route)
-    })).sort((a, b) => b.score - a.score);
-    
-    // Selección (elitismo)
+    const scored = population
+      .map(route => ({ route, score: fitness(route) }))
+      .sort((a, b) => b.score - a.score);
+
     const elites = scored.slice(0, 10).map(s => s.route);
-    
-    // Cruzamiento (crossover)
     const newPopulation = [...elites];
-    while (newPopulation.length < 50) {
-      const parent1 = elites[Math.floor(Math.random() * elites.length)];
-      const parent2 = elites[Math.floor(Math.random() * elites.length)];
-      
-      const child = orderedCrossover(parent1, parent2);
-      newPopulation.push(mutate(child, 0.1));
+
+    while (newPopulation.length < populationSize) {
+      const p1 = elites[Math.floor(Math.random() * elites.length)];
+      const p2 = elites[Math.floor(Math.random() * elites.length)];
+      newPopulation.push(mutate(orderedCrossover(p1, p2)));
     }
-    
+
     population = newPopulation;
   }
-  
-  // Mejor ruta
-  const best = population.map(route => ({
-    route,
-    score: fitness(route)
-  })).sort((a, b) => b.score - a.score)[0];
-  
-  return best.route;
+
+  return population
+    .map(route => ({ route, score: fitness(route) }))
+    .sort((a, b) => b.score - a.score)[0].route;
+}
+
+function orderedCrossover(parent1, parent2) {
+  const size = parent1.length;
+  const start = Math.floor(Math.random() * size);
+  const end = Math.floor(Math.random() * (size - start)) + start;
+
+  const child = new Array(size).fill(null);
+
+  for (let i = start; i <= end; i++) {
+    child[i] = parent1[i];
+  }
+
+  let idx = 0;
+  for (let i = 0; i < size; i++) {
+    if (child[i] === null) {
+      while (child.includes(parent2[idx])) idx++;
+      child[i] = parent2[idx++];
+    }
+  }
+
+  return child;
+}
+
+function mutate(route, rate = 0.1) {
+  const r = [...route];
+  for (let i = 0; i < r.length; i++) {
+    if (Math.random() < rate) {
+      const j = Math.floor(Math.random() * r.length);
+      [r[i], r[j]] = [r[j], r[i]];
+    }
+  }
+  return r;
 }

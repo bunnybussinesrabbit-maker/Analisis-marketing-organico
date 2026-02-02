@@ -1,24 +1,19 @@
 /**
  * CROSS-DIMENSIONAL ANALYSIS ENGINE
- * Análisis cruzado de múltiples dimensiones para D2D Sales
- * @version 1.1.0 - Con validación y fallbacks para campos faltantes
- * 
- * Soporta análisis sin campos demográficos:
- * - Si hay datos demográficos → Análisis 5D (edad × ocupación × ingreso × pitch × zona)
- * - Si NO hay datos demográficos → Análisis 3D (origen × pitch × zona)
+ * Versión 1.2.0 - Módulo ES6
  */
 
-class CrossDimensionalAnalyzer {
+export default class CrossDimensionalAnalyzer {
   constructor(pitchRecords) {
     if (!Array.isArray(pitchRecords) || pitchRecords.length === 0) {
-      throw new Error('CrossDimensionalAnalyzer: Se requiere un array no vacío de registros');
+      throw new Error('CrossDimensionalAnalyzer: Se requiere un array de registros');
     }
     
     this.records = this.normalizePitchRecords(pitchRecords);
     this.dimensions = this.extractDimensions();
     this.hasDemographicData = this.detectDemographicAvailability();
     
-    console.log(`✅ CrossDimensionalAnalyzer inicializado: ${this.records.length} registros, demográfico: ${this.hasDemographicData}`);
+    console.log(`✅ CrossDimensionalAnalyzer listo: ${this.records.length} registros`);
   }
 
   /**
@@ -316,7 +311,28 @@ class CrossDimensionalAnalyzer {
       return '❌ ESTRATEGIA DÉBIL - Considerar alternativa';
     }
   }
-}
 
-// Export para uso global
-window.CrossDimensionalAnalyzer = CrossDimensionalAnalyzer;
+  /**
+   * Método para exportar datos procesados
+   */
+  exportData(format = 'json') {
+    if (format === 'json') {
+      return {
+        summary: {
+          totalRecords: this.records.length,
+          hasDemographicData: this.hasDemographicData,
+          dimensions: this.dimensions
+        },
+        demographicAnalysis: this.hasDemographicData ? this.generateDemographicMatrix() : null,
+        originAnalysis: this.generateOriginMatrix(),
+        insights: {
+          withDemographics: this.hasDemographicData ? this.generateInsights('demographic') : [],
+          withoutDemographics: this.generateInsights('origin')
+        }
+      };
+    }
+    
+    // Para otros formatos (CSV, etc.)
+    return null;
+  }
+}

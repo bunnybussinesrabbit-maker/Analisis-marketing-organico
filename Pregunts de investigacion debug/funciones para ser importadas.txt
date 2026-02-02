@@ -1,0 +1,8 @@
+funcienes para  ser importadas
+ ^ import bayesianConversionProbability from './analytics_module/bayesian_analytics.js';
+import geneticAlgorithmRouteOptimization from './analytics_module/genetic_algorithm.js';
+import monteCarloLogisticSimulation from './analytics_module/montecarlo_logistics.js';
+import timeSeriesAnalysis from './analytics_module/timeseries_forecast.js';
+import markovDecisionProcess from './analytics_module/markov_decisions.js';
+import marketSaturationModel from './analytics_module/market_saturation.js';
+// (Asegúrate de que los nombres coincidan con el "export default" o "e

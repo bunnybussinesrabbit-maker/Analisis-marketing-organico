@@ -1,0 +1,31 @@
+pREGUNTA UNO 
+
+PREGUNTAR   SOBRE PAPA PARSE ¿ES UN  SCRIPT Y  SI  ES UN  SCRIPT  DEBE IR DESPUES DE LA LIBRERIA QUE LO LLAMA?
+
+pREGUNTA DOS
+cuando  mencionas  esto: "Crearemos un nuevo archivo llamado DataStore.js. Este será el cerebro de tus datos. No guardaremos datos en variables globales sueltas en el HTML."  quieres decir que actualmente asi  esta  sucediendo?? 
+
+PREGUNTA  TRES
+COMO Y DONDESE HACE LA  Transformación y limpieza de datos durante el parsing
+
+como  y  donde se hace la  Validación de esquemas de datos CSV
+
+
+ 5.-preguntar  sobre eso  de "raw" la funcion   mas  larga 
+
+6.- como  puedo  sanitizar para que  key.find e ncuentr 12-25
+ 7.-el  repetimiento de fecha y luego  fechastring" no causara  conflictos 
+
+necesito deshacerme de eso  de tiemestamp o   aprender a manejarlo bien 
+
+hay  una seccion en  mi aplicacion llamada "cross_analysis" como puedo  usar devtools para lograr que en los resultados mostrados en la interfaz ya no aparezca unknown lo cual es  señal de que esa "herramienta funcion  o  modulo" no lo esta rceconociendo y ayudame a encontrar esa funcion o modulo 
+
+8.- se corrigio  geneticj algotithm; verificaremos  bayesian  y to das las demas sale?
+
+a genetic_algorithm  ya quedo 
+b Bayesianconversio
+c Crossanalisis yaquedo
+
+<!-- hay que analizar modules integration-->
+
+

@@ -1,269 +1,130 @@
 /**
- * Integrador principal de todos los módulos de análisis
+ * Integrador principal de todos los módulos de análisis - Geo-Suite Cancún PRO
  */
-class AnalyticsOrchestrator {
-  constructor(data) {
-    this.data = data;
-    this.modules = {};
+
+// 1. Importar módulos analíticos (Asegúrate de que las rutas sean correctas)
+import bayesianConversionProbability from './analytics_module/bayesian_analytics.js';
+import geneticAlgorithmRouteOptimization from './analytics_module/genetic_algorithm.js';
+import monteCarloLogisticSimulation from './analytics_module/montecarlo_logistics.js';
+import timeSeriesAnalysis from './analytics_module/timeseries_forecast.js';
+import markovDecisionProcess from './analytics_module/markov_decisions.js';
+import marketSaturationModel from './analytics_module/market_saturation.js';
+import cannibalizationAnalysis from './analytics_module/cannibalization_analysis.js';
+import CrossDimensionalAnalyzer from './analytics_module/cross_analysis.js';
+import selectZoneByProbability from './analytics_module/empirical_probability.js';
+
+export default class AnalyticsOrchestrator {
+  constructor(data = []) {
+    // Validar y limpiar datos de entrada
+    this.data = Array.isArray(data) ? data : [];
     this.results = {};
-  }
-
-  /**
-   * Cargar todos los módulos
-   */
-  async loadAllModules() {
-    console.log('🔧 Cargando módulos de análisis...');
     
-    try {
-      // Cargar módulos dinámicamente
-      const modulePromises = [
-        this.loadModule('BayesianSalesAnalytics', './analytics_modules/bayesian_analytics.js'),
-        this.loadModule('MonteCarloLogistics', './analytics_modules/montecarlo_logistics.js'),
-        this.loadModule('TimeSeriesForecast', './analytics_modules/timeseries_forecast.js'),
-        this.loadModule('GeneticAlgorithmOptimizer', './analytics_modules/genetic_algorithm.js'),
-        this.loadModule('MarkovDecisionProcess', './analytics_modules/markov_decisions.js'),
-        this.loadModule('MarketSaturationModel', './analytics_modules/market_saturation.js')
-      ];
-      
-      await Promise.all(modulePromises);
-      console.log('✅ Todos los módulos cargados');
-      
-    } catch (error) {
-      console.error('❌ Error cargando módulos:', error);
-      this.loadFallbackModules();
-    }
-  }
-
-  /**
-   * Cargar módulo individual
-   */
-  async loadModule(className, modulePath) {
-    try {
-      const module = await import(modulePath);
-      this.modules[className] = module.default;
-      console.log(`✅ ${className} cargado`);
-    } catch (error) {
-      console.warn(`⚠️ No se pudo cargar ${className}:`, error.message);
-    }
-  }
-
-  /**
-   * Módulos de respaldo
-   */
-  loadFallbackModules() {
-    console.log('🔄 Cargando módulos de respaldo...');
-    
-    // Implementaciones mínimas de respaldo
-    this.modules.BayesianSalesAnalytics = class {
-      calculateZoneHourProbabilities() { return {}; }
+    // 2. Registro de Módulos (Crucial: esto es lo que el index.html busca)
+    // Asignamos las funciones y clases importadas a un objeto accesible
+    this.modules = {
+      TimeSeriesForecast: timeSeriesAnalysis,
+      MonteCarloLogistics: monteCarloLogisticSimulation, // Función directa
+      BayesianSalesAnalytics: bayesianConversionProbability,
+      CannibalizationAnalysis: cannibalizationAnalysis, // Clase
+      CrossDimensionalAnalyzer: CrossDimensionalAnalyzer, // Clase
+      ZoneSelector: selectZoneByProbability,
+      GeneticRouteOptimization: geneticAlgorithmRouteOptimization,
+      MarketSaturation: marketSaturationModel,
+      MarkovDecisions: markovDecisionProcess
     };
-    
-    this.modules.MonteCarloLogistics = class {
-      simulateRoute() { return {}; }
-    };
-    
-    // ... otros módulos mínimos
+
+    console.log('✅ AnalyticsOrchestrator instanciado correctamente.');
+    console.log('📦 Módulos vinculados:', Object.keys(this.modules));
   }
 
   /**
-   * Ejecutar análisis completo
+   * Ejecuta el flujo completo de análisis asíncrono
+   * @param {Object} options - Filtros para ejecutar solo ciertos análisis
    */
   async runCompleteAnalysis(options = {}) {
-    console.log('🚀 Iniciando análisis completo...');
+    console.log('🚀 Iniciando orquestación de análisis...');
     
-    const analysis = {
+    if (this.data.length === 0) {
+      console.warn('⚠️ No hay datos cargados para analizar.');
+      return { error: 'No data', results: {} };
+    }
+
+    // Inicializar estructura de resultados
+    this.results = {
       timestamp: new Date().toISOString(),
-      dataPoints: this.data.length,
-      modulesUsed: [],
+      recordCount: this.data.length,
       results: {}
     };
-    
-    // 1. Análisis Bayesiano
-    if (this.modules.BayesianSalesAnalytics && options.runBayesian !== false) {
-      console.log('🔮 Ejecutando análisis bayesiano...');
-      const bayesian = new this.modules.BayesianSalesAnalytics(this.data);
-      analysis.results.bayesian = bayesian.calculateZoneHourProbabilities();
-      analysis.modulesUsed.push('BayesianSalesAnalytics');
-    }
-    
-    // 2. Series Temporales
-    if (this.modules.TimeSeriesForecast && options.runTimeSeries !== false) {
-      console.log('📈 Ejecutando análisis de series temporales...');
-      const timeSeries = new this.modules.TimeSeriesForecast(this.data);
-      analysis.results.timeSeries = timeSeries.analyzeTemporalPatterns();
-      analysis.modulesUsed.push('TimeSeriesForecast');
-    }
-    
-    // 3. Saturación de Mercado
-    if (this.modules.MarketSaturationModel && options.runSaturation !== false) {
-      console.log('🏪 Ejecutando análisis de saturación...');
-      const saturation = new this.modules.MarketSaturationModel(this.data);
-      analysis.results.saturation = saturation.calculateAllMetrics();
-      analysis.modulesUsed.push('MarketSaturationModel');
-    }
-    
-    // 4. Procesos de Markov
-    if (this.modules.MarkovDecisionProcess && options.runMarkov !== false) {
-      console.log('🎲 Ejecutando procesos de Markov...');
-      const mdp = this.modules.MarkovDecisionProcess.createSalesMDP(this.data, {});
-      analysis.results.markov = mdp.valueIteration();
-      analysis.modulesUsed.push('MarkovDecisionProcess');
-    }
-    
-    console.log(`✅ Análisis completo terminado. Módulos usados: ${analysis.modulesUsed.length}`);
-    
-    this.results = analysis;
-    return analysis;
-  }
 
-  /**
-   * Optimizar ruta usando todos los módulos
-   */
-  async optimizeRouteWithAllModules(routePoints, constraints) {
-    console.log('🗺️ Optimizando ruta con todos los módulos...');
-    
-    const optimizations = [];
-    
-    // Usar cada módulo para optimizar
-    if (this.modules.GeneticAlgorithmOptimizer) {
-      const ga = new this.modules.GeneticAlgorithmOptimizer();
-      optimizations.push({
-        method: 'genetic',
-        result: ga.optimize(routePoints, constraints.startPoint, constraints)
-      });
-    }
-    
-    if (this.modules.MonteCarloLogistics) {
-      const mc = new this.modules.MonteCarloLogistics(this.data);
-      const route = { points: routePoints, start: constraints.startPoint };
-      optimizations.push({
-        method: 'monteCarlo',
-        result: mc.simulateRoute(route, constraints)
-      });
-    }
-    
-    // Combinar resultados
-    const combined = this.combineOptimizations(optimizations);
-    
-    return {
-      optimizations,
-      combined,
-      recommendations: this.generateRouteRecommendations(combined, constraints)
-    };
-  }
-
-  /**
-   * Combinar múltiples optimizaciones
-   */
-  combineOptimizations(optimizations) {
-    if (optimizations.length === 0) return null;
-    
-    // Promediar resultados
-    const routes = optimizations
-      .filter(o => o.result && o.result.route)
-      .map(o => o.result.route);
-    
-    if (routes.length === 0) return null;
-    
-    // Encontrar ruta consenso (simplificado)
-    return routes[0]; // Por ahora, devolver la primera
-  }
-
-  /**
-   * Generar recomendaciones
-   */
-  generateRouteRecommendations(route, constraints) {
-    const recommendations = [];
-    
-    if (!route) return recommendations;
-    
-    // Análisis de eficiencia
-    const totalDistance = this.calculateRouteDistance(route);
-    const totalTime = this.estimateRouteTime(route);
-    
-    if (totalDistance > (constraints.maxDistance || 50)) {
-      recommendations.push({
-        type: 'WARNING',
-        message: `Ruta muy larga (${totalDistance.toFixed(1)} km). Considerar dividir en dos días.`,
-        priority: 'HIGH'
-      });
-    }
-    
-    if (totalTime > (constraints.maxTime || 480)) {
-      recommendations.push({
-        type: 'WARNING',
-        message: `Tiempo estimado excesivo (${Math.round(totalTime / 60)} horas). Reducir puntos.`,
-        priority: 'HIGH'
-      });
-    }
-    
-    // Recomendaciones basadas en análisis anteriores
-    if (this.results.bayesian) {
-      recommendations.push({
-        type: 'INFO',
-        message: 'Usar probabilidades bayesianas para priorizar puntos',
-        priority: 'MEDIUM'
-      });
-    }
-    
-    if (this.results.timeSeries) {
-      recommendations.push({
-        type: 'INFO',
-        message: 'Considerar patrones horarios para programación',
-        priority: 'MEDIUM'
-      });
-    }
-    
-    return recommendations;
-  }
-
-  /**
-   * Utilidades
-   */
-  calculateRouteDistance(route) {
-    // Implementación simplificada
-    return route.length * 2; // km por punto
-  }
-
-  estimateRouteTime(route) {
-    // 15 min por punto + 2 min/km
-    return route.length * 15 + this.calculateRouteDistance(route) * 2;
-  }
-
-  /**
-   * Exportar resultados
-   */
-  exportResults(format = 'json') {
-    if (format === 'json') {
-      return JSON.stringify(this.results, null, 2);
-    }
-    
-    if (format === 'csv') {
-      return this.convertToCSV(this.results);
-    }
-    
-    return this.results;
-  }
-
-  convertToCSV(obj) {
-    // Implementación básica
-    const rows = [];
-    
-    for (const [key, value] of Object.entries(obj)) {
-      if (typeof value === 'object') {
-        rows.push(`${key},${JSON.stringify(value)}`);
-      } else {
-        rows.push(`${key},${value}`);
+    try {
+      // --- Ejecución: Monte Carlo (Función) ---
+      if (options.runMonteCarlo !== false) {
+        console.log('🎲 Ejecutando: Monte Carlo...');
+        // Llamada directa a la función exportada en montecarlo_logistics.js
+        this.results.results.monteCarlo = this.modules.MonteCarloLogistics(this.data);
       }
+
+      // --- Ejecución: Canibalización (Clase) ---
+      if (options.runCannibalization !== false) {
+        console.log('📉 Ejecutando: Análisis de Canibalización...');
+        // Instanciamos la clase con los datos
+        const cannibalInstance = new this.modules.CannibalizationAnalysis(this.data);
+        this.results.results.cannibalization = cannibalInstance.analyze();
+      }
+
+      // --- Ejecución: Bayesiano (Función) ---
+      if (options.runBayesian !== false) {
+        console.log('📊 Ejecutando: Análisis Bayesiano...');
+        // Ejemplo con zona por defecto 'Centro' si no hay datos
+        const firstZone = this.data[0]?.zona || 'Centro';
+        this.results.results.bayesian = this.modules.BayesianSalesAnalytics(
+          firstZone, 
+          new Date().getHours(), 
+          this.data
+        );
+      }
+
+      // Se pueden agregar más módulos aquí siguiendo el mismo patrón...
+
+      console.log('✅ Análisis completo finalizado con éxito.');
+      return this.results;
+
+    } catch (error) {
+      console.error('❌ Error crítico en el Orquestador:', error);
+      throw error;
     }
-    
-    return rows.join('\n');
+  }
+
+  /**
+   * Genera insights estratégicos basados en los resultados acumulados
+   */
+  generateInsights() {
+    const insights = [];
+    const r = this.results.results;
+
+    if (r?.monteCarlo?.riskScore > 0.5) {
+      insights.push({
+        type: 'WARNING',
+        message: 'Riesgo logístico elevado detectado por simulación.',
+        priority: 'HIGH'
+      });
+    }
+
+    if (r?.cannibalization?.conflicts?.length > 0) {
+      insights.push({
+        type: 'DANGER',
+        message: `Conflicto de zonas detectado en ${r.cannibalization.conflicts.length} puntos.`,
+        priority: 'CRITICAL'
+      });
+    }
+
+    return insights;
+  }
+
+  /**
+   * Alias de compatibilidad para versiones anteriores del código
+   */
+  async loadAllAnalyticsModules() {
+    return await this.runCompleteAnalysis();
   }
 }
-
-// Exponer para compatibilidad
-if (typeof window !== 'undefined') {
-  window.AnalyticsOrchestrator = AnalyticsOrchestrator;
-}
-
-export default AnalyticsOrchestrator;
