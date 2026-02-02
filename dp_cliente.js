@@ -5,8 +5,8 @@
  * @author Geo-Suite Cancún PRO
  */
 
-class GroqSalesCoach {
-    constructor(apiKey, baseURL = "https://api.groq.com/openai/v1") {
+class DeepSeekSalesCoach {
+    constructor(apiKey, baseURL = "https://api.deepseek.com/chat/completions") {
         this.apiKey = apiKey;
         this.baseURL = baseURL;
         this.systemPrompt = `Eres un coach experto en ventas de cambaceo (puerta en puerta) en Cancún, México.
@@ -40,7 +40,7 @@ COMO COACH DE VENTAS, TU ROL ES:
 4. Ofrecer scripts y diálogos realistas
 5. Enfocarse en resultados medibles`;
 
-        this.model = "llama-3.1-8b-instant";
+        this.model = "deepseek-chat";
         this.temperature = 0.7;
         this.maxTokens = 2000;
     }
@@ -55,12 +55,17 @@ COMO COACH DE VENTAS, TU ROL ES:
         }
 
         try {
-            const response = await fetch(`${this.baseURL}/models`, {
-                method: "GET",
+            const response = await fetch(`${this.baseURL}`, {
+                method: "POST",
                 headers: {
                     "Authorization": `Bearer ${this.apiKey}`,
                     "Content-Type": "application/json"
-                }
+                },
+                body: JSON.stringify({
+                    model: this.model,
+                    messages: [{ role: "user", content: "test" }],
+                    max_tokens: 10
+                })
             });
 
             if (!response.ok) {
@@ -69,8 +74,8 @@ COMO COACH DE VENTAS, TU ROL ES:
 
             return {
                 success: true,
-                message: "Conexión establecida correctamente",
-                models: await response.json()
+                message: "Conexión establecida correctamente con ",
+                models: { data: [{ id: this.model }] }
             };
         } catch (error) {
             throw new Error(`Error de validación: ${error.message}`);
@@ -102,7 +107,7 @@ COMO COACH DE VENTAS, TU ROL ES:
         }
 
         try {
-            const response = await fetch(`${this.baseURL}/chat/completions`, {
+            const response = await fetch(this.baseURL, {
                 method: "POST",
                 headers: {
                     "Authorization": `Bearer ${this.apiKey}`,
@@ -121,8 +126,7 @@ COMO COACH DE VENTAS, TU ROL ES:
                         }
                     ],
                     temperature: temperature,
-                    max_tokens: maxTokens,
-                    stream: false
+                    max_tokens: maxTokens
                 })
             });
 
@@ -282,12 +286,12 @@ EL PLAN DEBE INCLUIR:
 
 /**
  * Factory function para crear instancias del cliente
- * @param {string} apiKey - API Key de Groq/OpenAI/DeepSeek
+ * @param {string} apiKey - API Key de Groq/OpenAI/
  * @param {Object} config - Configuración adicional
- * @returns {GroqSalesCoach} Instancia del cliente
+ * @returns {DeepSeekSalesCoach} Instancia del cliente
  */
-export function createGroqSalesCoach(apiKey, config = {}) {
-    return new GroqSalesCoach(apiKey, config.baseURL);
+export function createDeepSeekSalesCoach(apiKey, config = {}) {
+    return new DeepSeekSalesCoach(apiKey, config.baseURL);
 }
 
 /**
@@ -317,7 +321,7 @@ export function displayErrorInUI(error, elementId = 'error-container') {
 
 /**
  * Función para probar la conexión y mostrar resultado en UI
- * @param {GroqSalesCoach} coach - Instancia del coach
+ * @param {DeepSeekSalesCoach} coach - Instancia del coach
  * @param {string} resultElementId - ID del elemento para mostrar resultados
  */
 export async function testConnection(coach, resultElementId = 'connection-test-result') {
@@ -343,11 +347,11 @@ export async function testConnection(coach, resultElementId = 'connection-test-r
 
 // Exponer globalmente para compatibilidad con scripts tradicionales
 if (typeof window !== 'undefined') {
-    window.GroqSalesCoach = GroqSalesCoach;
-    window.createGroqSalesCoach = createGroqSalesCoach;
+    window.DeepSeekSalesCoach = DeepSeekSalesCoach;
+    window.createDeepSeekSalesCoach = createDeepSeekSalesCoach;
     window.displayErrorInUI = displayErrorInUI;
     window.testConnection = testConnection;
 }
 
-export { GroqSalesCoach, createGroqSalesCoach, displayErrorInUI, testConnection };
-export default GroqSalesCoach;
+export { DeepSeekSalesCoach, };
+export default DeepSeekSalesCoach;

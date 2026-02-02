@@ -1,0 +1,13 @@
+Papa.parse(file, {
+header: true,
+skipEmptyLines: true,
+complete: function(results) {
+console.log(📊 CSV parseado: ${results.data.length} filas);
+processData(results.data);
+hideLoading();
+},
+error: function(err) {
+showNotification('Error al leer el archivo: ' + err.message, 'error');
+hideLoading();
+}
+}

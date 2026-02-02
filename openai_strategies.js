@@ -4,11 +4,11 @@
  * @author Geo-Suite Cancún PRO
  */
 
-import { createGroqSalesCoach, displayErrorInUI, testConnection } from './groq_cliente.js';
+import { createDeepSeekSalesCoach, displayErrorInUI, testConnection } from './dp_cliente.js';
 
 class SalesStrategiesCancun {
     constructor(apiKey = null) {
-        this.apiKey = apiKey || localStorage.getItem('groqApiKey');
+        this.apiKey = apiKey || localStorage.getItem('deepseekApiKey');
         this.coach = null;
         this.strategiesCache = new Map();
         
@@ -74,7 +74,7 @@ class SalesStrategiesCancun {
         }
 
         try {
-            this.coach = createGroqSalesCoach(this.apiKey);
+            this.coach = createDeepSeekSalesCoach(this.apiKey);
             await testConnection(this.coach, 'strategies-connection-result');
             console.log('✅ SalesStrategiesCancun inicializado correctamente');
             return true;
@@ -764,5 +764,5 @@ if (typeof window !== 'undefined') {
     window.initializeAndDisplayStrategies = initializeAndDisplayStrategies;
 }
 
-export { SalesStrategiesCancun, createSalesStrategies, initializeAndDisplayStrategies };
+export { SalesStrategiesCancun, };
 export default SalesStrategiesCancun;

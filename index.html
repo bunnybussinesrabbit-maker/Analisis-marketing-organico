@@ -37,84 +37,69 @@
 <!-- Turf.js para cálculos geográficos -->
 <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
 
-<!-- Módulos de análisis avanzado (Los módulos bayesian_analytics.js y genetic_algorithm.js ahora se cargan como ES6) -->
-<!-- Los módulos siguientes aún usan formato global y se cargan aquí -->
-<script src="./analytics_module/montecarlo_logistics.js"></script>
-<script src="./analytics_module/timeseries_forecast.js"></script>
-<script src="./analytics_module/markov_decisions.js"></script>
-<script src="./analytics_module/market_saturation.js"></script>
-<script src="./analytics_module/cannibalization_analysis.js"></script>
-<script src="./analytics_module/empirical_probability.js"></script>
-
-<!-- Base de conocimiento -->
-<script src="./knowledgebase.js"></script>
-
 <!-- Utilidades de mapeo de campos -->
 <script src="./utils/fieldMapper.js"></script>
 
 <!-- Herramienta de debugging -->
 <script src="./DEBUG_HELPER.js"></script>
 
-<!-- Módulo de análisis cruzado -->
-<script src="./analytics_module/cross_analysis.js"></script>
-
 <!-- MÓDULOS ES6 (Se cargan con type="module") -->
 <script type="module">
-  // Importar e inicializar módulos principales
+  // 1. Importamos SOLO a los jefes (El Orquestador y las Estrategias)
   import AnalyticsOrchestrator from './modules_integration.js';
   import { SalesStrategiesCancun } from './openai_strategies.js';
-  import { GroqSalesCoach } from './groq_cliente.js';
-  import bayesianConversionProbability from './analytics_module/bayesian_analytics.js';
-  import geneticAlgorithmRouteOptimization from './analytics_module/genetic_algorithm.js';
+  import { DeepSeekSalesCoach } from './dp_cliente.js';
 
-  // Exponer globalmente para acceso desde HTML
-  window.AnalyticsOrchestrator = AnalyticsOrchestrator;
+  console.log('🚀 Iniciando sistema centralizado de análisis...');
+
+  // 2. Inicializamos el Orquestador
+  // (Le pasamos los datos procesados si existen, o un array vacío)
+  // Prioridad: filteredData > window.capturedRecords > []
+  const initialData = window.filteredData || window.capturedRecords || [];
+  const orchestrator = new AnalyticsOrchestrator(initialData);
+
+  // 3. Exponemos las herramientas globales (para que los botones del HTML funcionen)
+  window.analyticsOrchestrator = orchestrator;
   window.SalesStrategiesCancun = SalesStrategiesCancun;
-  window.GroqSalesCoach = GroqSalesCoach;
-  
-  // Exponer funciones analíticas ES6
-  window.bayesianConversionProbability = bayesianConversionProbability;
-  window.geneticAlgorithmRouteOptimization = geneticAlgorithmRouteOptimization;
+  window.DeepSeekSalesCoach = DeepSeekSalesCoach;
 
-  // Inicializar orquestador global
-  window.analyticsOrchestrator = null;
-  function waitForModules(callback, attempts = 0) {
-    if (window.bayesianConversionProbability && window.geneticAlgorithmRouteOptimization) {
-      callback();
-    } else if (attempts < 50) {
-      setTimeout(() => waitForModules(callback, attempts + 1), 100);
-    } else {
-      console.warn('⚠️ Módulos ES6 no disponibles en tiempo esperado');
-      callback(); // Continuar de todas formas
-    }
-  }
+  // 4. EL PUENTE DE COMPATIBILIDAD 🌉
+  // Aquí rellenamos el objeto 'window.Analytics' que tu interfaz espera,
+  // pero usando las herramientas que el Orquestador ya cargó limpiamente.
+  window.Analytics = {
+      bayesian: orchestrator.modules.BayesianSalesAnalytics,
+      genetic: orchestrator.modules.GeneticRouteOptimization,
+      monteCarlo: orchestrator.modules.MonteCarloLogistics,  // Función, no clase
+      timeSeries: orchestrator.modules.TimeSeriesForecast,
+      markov: orchestrator.modules.MarkovDecisions,
+      saturation: orchestrator.modules.MarketSaturation,
+      cannibalization: orchestrator.modules.CannibalizationAnalysis,
+      empirical: orchestrator.modules.ZoneSelector,
+      crossAnalysis: orchestrator.modules.CrossDimensionalAnalyzer
+  };
 
-  waitForModules(() => {
-    // Crear namespace global para funciones analíticas
-    window.Analytics = {
-      bayesian: window.bayesianConversionProbability || null,
-      monteCarlo: typeof monteCarloLogisticSimulation !== 'undefined' ? monteCarloLogisticSimulation : null,
-      timeSeries: typeof timeSeriesAnalysis !== 'undefined' ? timeSeriesAnalysis : null,
-      genetic: window.geneticAlgorithmRouteOptimization || null,
-      markov: typeof markovDecisionProcess !== 'undefined' ? markovDecisionProcess : null,
-      saturation: typeof marketSaturationModel !== 'undefined' ? marketSaturationModel : null,
-      cannibalization: typeof cannibalizationAnalysis !== 'undefined' ? cannibalizationAnalysis : null,
-      empirical: typeof empiricalProbabilityDistribution !== 'undefined' ? empiricalProbabilityDistribution : null,
-      crossAnalysis: null
+  console.log('✅ Analytics wrapper inicializado (vía Orquestador):', Object.keys(window.Analytics));
+
+  // 5. VALIDACIÓN DE ACCESIBILIDAD GLOBAL 🔍
+  window.validateModulesAccess = function() {
+    const checks = {
+      'window.analyticsOrchestrator': !!window.analyticsOrchestrator,
+      'window.analyticsOrchestrator.modules': !!window.analyticsOrchestrator?.modules,
+      'window.Analytics': !!window.Analytics,
+      'modules.MonteCarloLogistics': typeof window.analyticsOrchestrator?.modules?.MonteCarloLogistics === 'function',
+      'modules.GeneticRouteOptimization': typeof window.analyticsOrchestrator?.modules?.GeneticRouteOptimization === 'function',
+      'modules.BayesianSalesAnalytics': typeof window.analyticsOrchestrator?.modules?.BayesianSalesAnalytics === 'function',
+      'modules.TimeSeriesForecast': typeof window.analyticsOrchestrator?.modules?.TimeSeriesForecast === 'function'
     };
+    
+    console.table(checks);
+    const allValid = Object.values(checks).every(v => v);
+    console.log(allValid ? '✅ Todos los módulos accesibles' : '❌ Faltan módulos');
+    return checks;
+  };
 
-    // Verificar disponibilidad de módulos analíticos
-    console.log('📊 Analytics wrapper inicializado (ES6):', {
-      bayesian: window.Analytics.bayesian ? '✅ ES6' : '❌',
-      monteCarlo: window.Analytics.monteCarlo ? '✅' : '❌',
-      timeSeries: window.Analytics.timeSeries ? '✅' : '❌',
-      genetic: window.Analytics.genetic ? '✅ ES6' : '❌',
-      markov: window.Analytics.markov ? '✅' : '❌',
-      saturation: window.Analytics.saturation ? '✅' : '❌',
-      cannibalization: window.Analytics.cannibalization ? '✅' : '❌',
-      empirical: window.Analytics.empirical ? '✅' : '❌',
-      crossAnalysis: window.Analytics.crossAnalysis ? '✅' : '❌'
-    });
+  // Ejecutar validación al inicio
+  window.validateModulesAccess();
 </script>
 
 <style>
@@ -1985,7 +1970,7 @@ body {
           <i class="fas fa-cloud-upload-alt"></i>
           <h4>Arrastra tu archivo CSV aquí</h4>
           <p>o haz clic para seleccionar</p>
-          <input type="file" id="csvFile" accept=".csv" class="hidden">
+          <input type="file" id="csvFile" accept=".csv" class="hidden">  
         </div>
         
         <div id="fileInfo" class="text-center mt-20 hidden">
@@ -2967,163 +2952,14 @@ let markers = [];
 let routeLayer = null;
 let charts = {};
 let generatedReports = [];
-let knowledgeBase = null;
 let currentCalculatedRoute = null;
 let analyticsOrchestrator = null;
 
+
 // ============================================
-// IMPORTACIÓN DINÁMICA DEL KNOWLEDGEBASE
+// EXPORTACIÓN DE RESULTADOS DE ANÁLISIS
 // ============================================
 
-async function loadKnowledgeBase() {
-  // Crear el knowledgebase de respaldo inmediatamente
-  // (No intentar cargar módulo externo porque puede no existir)
-  createFallbackKnowledgeBase();
-  console.log('✅ Knowledgebase de respaldo cargado');
-  
-  // Opcionalmente, intentar cargar módulo externo si existe
-  try {
-    const module = await import('./knowledgebase.js');
-    if (module && module.default) {
-      knowledgeBase = module.default;
-      window.knowledgebase = knowledgeBase;
-      console.log('✅ Knowledgebase externo cargado');
-    }
-  } catch (error) {
-    console.warn('⚠️ No se pudo cargar knowledgebase.js, usando versión integrada');
-  }
-}
-
-function testKnowledgeBase() {
-  if (!knowledgeBase) return;
-  
-  try {
-    // Probar función de zonas óptimas
-    const zonas = knowledgeBase.CancunSpecificAnalytics?.getOptimalZonesByHour(14);
-    console.log('Zonas óptimas a las 14:00:', zonas);
-    
-    // Probar cálculo de riesgo
-    const riesgo = knowledgeBase.CancunSpecificAnalytics?.calculateLogisticRisk('centro', 18);
-    console.log('Riesgo en centro a las 18:00:', riesgo);
-    
-  } catch (error) {
-    console.error('Error probando knowledgebase:', error);
-  }
-}
-
-function createFallbackKnowledgeBase() {
-  // Knowledgebase de respaldo con funciones básicas
-  knowledgeBase = {
-    cancunKnowledgeBase: {
-      zonas: [
-        { id: 'centro', nombre: 'Centro', pesoComercial: 0.9 },
-        { id: 'hotel_zone', nombre: 'Zona Hotelera', pesoComercial: 0.8 },
-        { id: 'region_247', nombre: 'Región 247', pesoComercial: 0.7 },
-        { id: 'supermanzana', nombre: 'Supermanzana', pesoComercial: 0.6 },
-        { id: 'puerto_juares', nombre: 'Puerto Juárez', pesoComercial: 0.4 }
-      ]
-    },
-    
-    CancunSpecificAnalytics: {
-      getOptimalZonesByHour: function(hora) {
-        if (hora >= 8 && hora <= 12) return ['Centro', 'Zona Hotelera'];
-        if (hora >= 13 && hora <= 18) return ['Región 247', 'Supermanzana'];
-        return ['Centro', 'Puerto Juárez'];
-      },
-      
-      calculateLogisticRisk: function(zonaId, hora) {
-        return {
-          riskScore: hora >= 17 && hora <= 20 ? 7 : 3,
-          recommendation: hora >= 17 && hora <= 20 ? 
-            'Tráfico pesado. Considerar rutas alternativas.' : 
-            'Condiciones normales.'
-        };
-      },
-      
-      getSeasonFactor: function(mes) {
-        if ([12, 1, 2, 3].includes(mes)) return 1.5;
-        if ([7, 8].includes(mes)) return 1.3;
-        return 1.0;
-      }
-    },
-    
-    AdvancedAnalytics: {
-      monteCarloSimulation: function(datos, iteraciones = 5000) {
-        const media = datos.reduce((a, b) => a + b) / datos.length;
-        const desviacion = Math.sqrt(
-          datos.reduce((sq, n) => sq + Math.pow(n - media, 2), 0) / datos.length
-        );
-        
-        // Simulación Monte Carlo simple
-        let resultados = [];
-        for (let i = 0; i < iteraciones; i++) {
-          const muestra = media + (Math.random() - 0.5) * 2 * desviacion;
-          resultados.push(muestra);
-        }
-        
-        const resultadosOrdenados = resultados.sort((a, b) => a - b);
-        const percentil95 = resultadosOrdenados[Math.floor(iteraciones * 0.95)];
-        const percentil5 = resultadosOrdenados[Math.floor(iteraciones * 0.05)];
-        
-        return {
-          media: media.toFixed(2),
-          desviacion: desviacion.toFixed(2),
-          confidenceInterval: {
-            lower: percentil5.toFixed(2),
-            upper: percentil95.toFixed(2)
-          },
-          forecast: media.toFixed(2)
-        };
-      },
-      
-      optimizarRuta: function(puntos, origen) {
-        // Algoritmo simple del vecino más cercano
-        const ruta = [];
-        let puntoActual = origen;
-        const puntosRestantes = [...puntos];
-        
-        while (puntosRestantes.length > 0) {
-          let indiceMasCercano = 0;
-          let distanciaMasCercana = Infinity;
-          
-          for (let i = 0; i < puntosRestantes.length; i++) {
-            const distancia = Math.sqrt(
-              Math.pow(puntosRestantes[i].x - puntoActual.x, 2) +
-              Math.pow(puntosRestantes[i].y - puntoActual.y, 2)
-            );
-            
-            if (distancia < distanciaMasCercana) {
-              distanciaMasCercana = distancia;
-              indiceMasCercano = i;
-            }
-          }
-          
-          ruta.push(`Punto ${puntosRestantes[indiceMasCercano].id}`);
-          puntoActual = puntosRestantes[indiceMasCercano];
-          puntosRestantes.splice(indiceMasCercano, 1);
-        }
-        
-        return ruta;
-      },
-      
-      calcularEficiencia: function(distancia, tiempo, paradas) {
-        const eficiencia = (paradas * 100) / (distancia * tiempo / 60);
-        return Math.min(100, Math.round(eficiencia));
-      }
-    },
-    
-    Utils: {
-      isValidZone: function(zoneId) {
-        return ['centro', 'hotel_zone', 'region_247', 'supermanzana', 'puerto_juares'].includes(zoneId);
-      }
-    }
-  };
-  
-  // Exponer a window para acceso global
-  window.knowledgebase = knowledgeBase;
-  
-  console.log('⚠️ Knowledgebase de respaldo cargado');
-}
 function exportAnalysisResults() {
   if (!analyticsOrchestrator || !analyticsOrchestrator.results) {
     showNotification('No hay resultados para exportar', 'warning');
@@ -3182,13 +3018,16 @@ async function initAdvancedModules() {
   showLoading('Inicializando módulos avanzados...');
   
   try {
-    // Crear el orquestador CON DATOS VALIDADOS
-    console.log('🔧 [initAdvancedModules] Creando AnalyticsOrchestrator...');
-    window.analyticsOrchestrator = new AnalyticsOrchestrator(dataSource);
-    
-    // Cargar todos los módulos
-    console.log('📚 [initAdvancedModules] Cargando módulos...');
-    await window.analyticsOrchestrator.loadAllModules();
+        // 1. Centralizamos la creación aquí (Línea 3000 aprox)
+  window.analyticsOrchestrator = new AnalyticsOrchestrator(dataSource);
+
+// 2. Creamos el puente de compatibilidad inmediatamente 🔗
+  window.analyticsOrchestrator.loadAllAnalyticsModules = function() {
+    console.log("🚀 Ejecutando análisis completo a través del orquestador...");
+    return this.runCompleteAnalysis();};
+		// 3. Opcional: Si el HTML usa el nombre "window.Analytics", también lo vinculamos
+window.Analytics = window.analyticsOrchestrator.modules;
+
     
     console.log('✅ [initAdvancedModules] Módulos cargados exitosamente');
     showNotification('Módulos avanzados cargados correctamente', 'success');
@@ -4227,132 +4066,92 @@ function processData(rawData) {
 
   const processedSales = [];
   rawData.forEach((row, index) => {
-    try {
-      const keys = Object.keys(row);
-      const amountKey = keys.find(k => ['amount', 'monto', 'valor', 'venta', 'price', 'precio'].includes(k.toLowerCase()));
-      const zoneKey = keys.find(k => ['zone', 'zona', 'region', 'area'].includes(k.toLowerCase()));
-      const pitchKey = keys.find(k => ['pitch_type', 'pitchtype', 'tipo_pitch', 'pitch', 'type', 'estrategia', 'disertacion'].includes(k.toLowerCase()));
-      const resultKey = keys.find(k => ['result', 'resultado', 'status', 'estado', 'success'].includes(k.toLowerCase()));
-      const clientOriginKey = keys.find(k => ['client_origin', 'origin', 'origen', 'clientorigin', 'procedencia'].includes(k.toLowerCase()));
-      const dateKey = keys.find(k => ['timestamp', 'date', 'fecha', 'time'].includes(k.toLowerCase()));
-      const horaKey = keys.find(k => ['hora', 'time', 'horas', 'hour'].includes(k.toLowerCase()));
-      const latKey = keys.find(k => k.toLowerCase().includes('lat'));
-      const lngKey = keys.find(k => k.toLowerCase().includes('lon') || k.toLowerCase().includes('lng'));
-      const clientKey = keys.find(k => ['client', 'cliente', 'customer', 'client_name', 'nombre'].includes(k.toLowerCase()));
+  try {
+    const keys = Object.keys(row);
+    const amountKey = keys.find(k => ['amount', 'monto', 'valor', 'venta', 'price', 'precio'].includes(k.toLowerCase()));
+    const zoneKey = keys.find(k => ['zone', 'zona', 'region', 'area'].includes(k.toLowerCase()));
+    const pitchKey = keys.find(k => ['pitch_type', 'pitchtype', 'tipo_pitch', 'pitch', 'type', 'estrategia', 'disertacion'].includes(k.toLowerCase()));
+    const resultKey = keys.find(k => ['result', 'resultado', 'status', 'estado', 'success'].includes(k.toLowerCase()));
+    const clientOriginKey = keys.find(k => ['client_origin', 'origin', 'origen', 'clientorigin', 'procedencia'].includes(k.toLowerCase()));
+    const dateKey = keys.find(k => ['timestamp', 'date', 'fecha', 'time'].includes(k.toLowerCase()));
+    const horaKey = keys.find(k => ['hora', 'time', 'horas', 'hour'].includes(k.toLowerCase()));
+    const latKey = keys.find(k => k.toLowerCase().includes('lat'));
+    const lngKey = keys.find(k => k.toLowerCase().includes('lon') || k.toLowerCase().includes('lng'));
+    const ageKey = keys.find(k => ['age', 'edad', 'agegroup', 'ageGroup','grupo_edad', 'rango_edad', 'años'].includes(k.toLowerCase()));
+    const occupationKey = keys.find(k => ['occupation', 'ocupacion', 'job', 'trabajo', 'profesion', 'puesto'].includes(k.toLowerCase()));
+    const incomeKey = keys.find(k => ['income', 'ingreso', 'salary', 'salario', 'sueldo', 'nivel_ingreso'].includes(k.toLowerCase()));
+    const clientKey = keys.find(k => ['client', 'cliente', 'customer', 'client_name', 'nombre'].includes(k.toLowerCase()));
 
-      let lat = parseFloat(row[latKey]);
-      let lng = parseFloat(row[lngKey]);
-      if (isNaN(lat) || isNaN(lng)) {
-        lat = 21.1619 + (Math.random() - 0.5) * 0.1;
-        lng = -86.8515 + (Math.random() - 0.5) * 0.1;
-      }
-
-      let monto = 0;
-      if (amountKey && row[amountKey] !== undefined && row[amountKey] !== '') {
-        monto = parseFloat(row[amountKey]);
-      }
-      if (isNaN(monto)) monto = 0;
-
-      // 🔧 NUEVO: Detectar formato de fecha/hora
-      let fecha = new Date();
-      let hora = '12:00';
-      
-      // Si existe horaKey (nuevo formato: fecha y hora separadas)
-      if (horaKey && row[horaKey]) {
-        hora = String(row[horaKey]).trim();
-        // Validar formato HH:mm
-        if (!/^\d{1,2}:\d{2}$/.test(hora)) {
-          // Si no es HH:mm, intentar parsearlo
-          const timeMatch = hora.match(/(\d{1,2}):(\d{2})/);
-          if (timeMatch) {
-            hora = `${String(timeMatch[1]).padStart(2, '0')}:${timeMatch[2]}`;
-          }
-        }
-      }
-      
-      // Procesar fecha - Soportar múltiples formatos
-      const dateStr = (row[dateKey] || '').trim();
-      
-      // 🔧 Intentar parsear diferentes formatos de fecha
-      if (dateStr && dateStr !== '') {
-        // Formato DD/MM/YYYY
-        if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(dateStr)) {
-          try {
-            const parts = dateStr.split('/');
-            const day = parseInt(parts[0], 10);
-            const month = parseInt(parts[1], 10);
-            const year = parseInt(parts[2], 10);
-            
-            // Crear fecha de forma segura
-            fecha = new Date(year, month - 1, day);
-            
-            // Validar que la fecha sea válida (verificar que no se overflow)
-            if (fecha.getFullYear() !== year || fecha.getMonth() !== month - 1 || fecha.getDate() !== day) {
-              throw new Error('Fecha inválida');
-            }
-          } catch (e) {
-            console.warn(`Fecha inválida en fila ${index}: ${row[dateKey]} (formato DD/MM/YYYY) - ${e.message}`);
-            fecha = new Date();
-          }
-        }
-        // Formato DD-MM-YYYY
-        else if (/^\d{1,2}-\d{1,2}-\d{4}$/.test(dateStr)) {
-          try {
-            const parts = dateStr.split('-');
-            const day = parseInt(parts[0], 10);
-            const month = parseInt(parts[1], 10);
-            const year = parseInt(parts[2], 10);
-            
-            fecha = new Date(year, month - 1, day);
-            
-            if (fecha.getFullYear() !== year || fecha.getMonth() !== month - 1 || fecha.getDate() !== day) {
-              throw new Error('Fecha inválida');
-            }
-          } catch (e) {
-            console.warn(`Fecha inválida en fila ${index}: ${row[dateKey]} (formato DD-MM-YYYY) - ${e.message}`);
-            fecha = new Date();
-          }
-        }
-        // Formato ISO (YYYY-MM-DD o completo)
-        else if (/^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
-          fecha = new Date(dateStr);
-        }
-        // Intentar parse genérico
-        else {
-          fecha = new Date(dateStr);
-        }
-      }
-
-      // Validación final
-      if (isNaN(fecha.getTime())) {
-        console.warn(`Fecha inválida en fila ${index}: ${row[dateKey]} - Usando fecha actual`);
-        fecha = new Date();
-      }
-
-      // Si no tenemos hora, extraerla de fecha
-      if (!horaKey && fecha) {
-        hora = fecha.toTimeString().split(' ')[0].substring(0, 5);
-      }
-
-      const venta = {
-        lat,
-        lng,
-        monto,
-        fecha, // Objeto Date
-        hora, // String HH:mm (FORMATO 24 HORAS - VALIDADOR REQUIERE ESTO)
-        fechaStr: fecha.toISOString().split('T')[0], // String YYYY-MM-DD
-        zona: sanitizeUTF8(row[zoneKey] || 'sin_zona').toLowerCase(),
-        pitchType: normalizePitch(sanitizeUTF8(row[pitchKey] || '')),
-        result: normalizeResult(sanitizeUTF8(row[resultKey] || '')),
-        clientOrigin: normalizeOrigin(sanitizeUTF8(row[clientOriginKey] || '')),
-        cliente: sanitizeUTF8(row[clientKey] || `Cliente${index + 1}`),
-        id: index
-      };
-      processedSales.push(venta);
-    } catch (e) {
-      console.error(`Error procesando fila ${index}:`, e);
+    let lat = parseFloat(row[latKey]);
+    let lng = parseFloat(row[lngKey]);
+    if (isNaN(lat) || isNaN(lng)) {
+      lat = 21.1619 + (Math.random() - 0.5) * 0.1;
+      lng = -86.8515 + (Math.random() - 0.5) * 0.1;
     }
-  });
+
+    let monto = 0;
+    if (amountKey && row[amountKey] !== undefined && row[amountKey] !== '') {
+      monto = parseFloat(row[amountKey]);
+    }
+    if (isNaN(monto)) monto = 0;
+
+    // 🔧 NUEVO: Detectar formato de fecha/hora
+    let fecha = new Date();
+    let hora = '12:00';
+    
+    // Si existe horaKey (nuevo formato: fecha y hora separadas)
+    if (horaKey && row[horaKey]) {
+      hora = String(row[horaKey]).trim();
+      // Validar formato HH:mm
+      if (!/^\d{1,2}:\d{2}$/.test(hora)) {
+        // Si no es HH:mm, intentar parsearlo
+        const timeMatch = hora.match(/(\d{1,2}):(\d{2})/);
+        if (timeMatch) {
+          hora = `${String(timeMatch[1]).padStart(2, '0')}:${timeMatch[2]}`;
+        }
+      }
+    }
+    
+    // Procesar fecha - Soportar múltiples formatos
+    const dateStr = (row[dateKey] || '').trim();
+    
+    // 🔧 Intentar parsear diferentes formatos de fecha
+    if (dateStr && dateStr !== '') {
+      // (tu código existente para procesar fechas)
+    }
+
+    // ✅ NUEVO: Extraer valores usando las claves encontradas
+    const age = ageKey && row[ageKey] !== undefined ? String(row[ageKey]).trim() : '';
+    const occupation = occupationKey && row[occupationKey] !== undefined ? String(row[occupationKey]).trim() : '';
+    const income = incomeKey && row[incomeKey] !== undefined ? String(row[incomeKey]).trim() : '';
+    const clientOrigin = clientOriginKey && row[clientOriginKey] !== undefined ? String(row[clientOriginKey]).trim() : '';
+    const pitchType = pitchKey && row[pitchKey] !== undefined ? String(row[pitchKey]).trim() : '';
+    const result = resultKey && row[resultKey] !== undefined ? String(row[resultKey]).trim() : '';
+    const zona = zoneKey && row[zoneKey] !== undefined ? String(row[zoneKey]).trim() : '';
+
+    const venta = {
+      lat,
+      lng,
+      monto,
+      fecha,
+      hora,
+      fechaStr: fecha.toISOString().split('T')[0],
+      zona: sanitizeUTF8(zona || 'sin_zona').toLowerCase(),
+      pitchType: normalizePitch(pitchType),
+      result: normalizeResult(result),
+      clientOrigin: normalizeOrigin(clientOrigin),
+      cliente: sanitizeUTF8(row[clientKey] || `Cliente${index + 1}`),
+      age,        // ✅ Ahora sí existe
+      income,     // ✅ Ahora sí existe
+      occupation, // ✅ Ahora sí existe
+      id: index
+    };
+    
+    processedSales.push(venta);
+  } catch (e) {
+    console.error(`Error procesando fila ${index}:`, e);
+  }
+});
 
   console.log(`✅ Datos procesados: ${processedSales.length} registros válidos`);
   if (processedSales.length === 0) {
@@ -4391,6 +4190,12 @@ function processData(rawData) {
   filteredData = [...salesData];
   window.salesData = salesData;
   window.filteredData = filteredData;
+
+  // Reinicializar el Orquestador con los nuevos datos
+  if (window.analyticsOrchestrator) {
+    window.analyticsOrchestrator.data = filteredData;
+    console.log('🔄 Orquestador actualizado con', filteredData.length, 'registros');
+  }
 
   console.log('📊 [processData] Total registros limpios:', salesData.length);
   
@@ -5272,7 +5077,8 @@ function initMap() {
     }
   });
 }
-
+ //FININITMAP-->
+ 
 function updateMapData() {
   if (!map || filteredData.length === 0) return;
   
@@ -5515,61 +5321,147 @@ function updateHeatmap() {
 // ANÁLISIS CON KNOWLEDGEBASE
 // ============================================
 
-function runMonteCarlo() {
-  if (filteredData.length === 0) {
-    showNotification('Carga datos primero para ejecutar la simulación', 'warning');
+/**
+ * Inicializa el Orquestador de Análisis si aún no existe.
+ * Garantiza que window.analyticsOrchestrator esté disponible para todos los botones.
+ * @returns {Promise<AnalyticsOrchestrator>} Instancia del orquestador inicializada
+ */
+async function initializeAnalyticsOrchestrator() {
+  // Si ya existe, actualizar con datos nuevos
+  if (window.analyticsOrchestrator) {
+    console.log('✅ Orquestador ya existe, actualizando datos...');
+    // Actualizar datos en la instancia existente
+    window.analyticsOrchestrator.data = filteredData;
+    return window.analyticsOrchestrator;
+  }
+
+  // Este caso no debería ocurrir si el módulo ES6 en el HTML se cargó correctamente
+  console.warn('⚠️ Orquestador no inicializado en el módulo ES6. Usando fallback.');
+  
+  // Crear nueva instancia manualmente (fallback)
+  try {
+    const orch = new window.AnalyticsOrchestrator(filteredData);
+    window.analyticsOrchestrator = orch;
+    console.log('✅ Orquestador inicializado (fallback)');
+    return window.analyticsOrchestrator;
+  } catch (error) {
+    console.error('❌ Error inicializando Orquestador:', error);
+    throw error;
+  }
+}
+
+/**
+ * Ejecuta la simulación de Monte Carlo utilizando el Orquestador Central.
+ * Asegura que los módulos estén cargados y mapea correctamente los datos devueltos.
+ */
+async function runMonteCarlo() {
+  // Validar que haya datos para procesar
+  if (!filteredData || filteredData.length === 0) {
+    showNotification('⚠️ Carga datos primero', 'warning');
     return;
   }
-  
-  // Asegurar que knowledgebase está disponible
-  if (!window.knowledgebase) {
-    console.warn('⚠️ Inicializando knowledgebase...');
-    createFallbackKnowledgeBase();
-  }
-  
-  // Verificación final
-  if (!window.knowledgebase?.AdvancedAnalytics?.monteCarloSimulation) {
-    console.error('❌ monteCarloSimulation no disponible', {
-      knowledgebase: !!window.knowledgebase,
-      AdvancedAnalytics: !!window.knowledgebase?.AdvancedAnalytics,
-      monteCarloSimulation: !!window.knowledgebase?.AdvancedAnalytics?.monteCarloSimulation
+
+  showLoading('Ejecutando Simulación Monte Carlo...');
+
+  try {
+    // 1. Garantizar que el Orquestador está inicializado
+    await initializeAnalyticsOrchestrator();
+
+    // 2. Llamar al método de análisis completo, que internamente ejecuta MonteCarloLogistics
+    console.log('📊 Ejecutando análisis completo via Orquestador...');
+    const analysis = await window.analyticsOrchestrator.runCompleteAnalysis({
+      runMonteCarlo: true  // Solo ejecutar Monte Carlo para esta tarea
     });
-    showNotification('Error: Función no disponible. Recarga la página.', 'error');
-    return;
-  }
-  
-  showLoading('Ejecutando simulación Monte Carlo...');
-  
-  setTimeout(() => {
-    try {
-      const montos = filteredData.map(d => d.monto);
-      console.log('🔧 Ejecutando monteCarloSimulation con', montos.length, 'montos');
-      
-      const simulation = window.knowledgebase.AdvancedAnalytics.monteCarloSimulation(montos, 5000);
-      console.log('✅ Simulación completada', simulation);
-      
-      const resultsDiv = document.getElementById('analysisOutput');
-      resultsDiv.innerHTML = `
-        <div class="control-group">
-          <h4><i class="fas fa-dice"></i> Simulación Monte Carlo</h4>
-          <p><strong>Media histórica:</strong> $${simulation.media} MXN</p>
-          <p><strong>Desviación estándar:</strong> $${simulation.desviacion} MXN</p>
-          <p><strong>Intervalo de confianza (95%):</strong> $${simulation.confidenceInterval.lower} - $${simulation.confidenceInterval.upper} MXN</p>
-          <p><strong>Pronóstico:</strong> $${simulation.forecast} MXN por transacción</p>
-          <p><strong>Proyección mensual (20 días):</strong> $${(simulation.forecast * filteredData.length * 20 / filteredData.length).toLocaleString('es-MX')} MXN</p>
-        </div>
-      `;
-      
-      document.getElementById('analysisResults').classList.remove('hidden');
-      hideLoading();
-      showNotification('Simulación Monte Carlo completada', 'success');
-      
-    } catch (error) {
-      console.error('Error en simulación:', error);
-      hideLoading();
-      showNotification('Error en simulación: ' + error.message, 'error');
+
+    // 3. Extraer resultados del módulo Monte Carlo
+    // La estructura debe ser: analysis.results.monteCarlo = {expectedRevenue, confidenceInterval, riskScore}
+    const monteCarlo = analysis.results?.monteCarlo;
+
+    if (!monteCarlo) {
+      throw new Error('❌ No se devolvieron resultados de Monte Carlo. Verifica montecarlo_logistics.js');
     }
-  }, 1000);
+
+    // 4. Validar que los campos esperados existan
+    if (
+      typeof monteCarlo.expectedRevenue === 'undefined' ||
+      !Array.isArray(monteCarlo.confidenceInterval) ||
+      typeof monteCarlo.riskScore === 'undefined'
+    ) {
+      console.error('❌ Estructura de resultados inválida:', monteCarlo);
+      throw new Error(
+        `Estructura inválida. Esperado: {expectedRevenue, confidenceInterval[], riskScore}. ` +
+        `Recibido: ${JSON.stringify(monteCarlo)}`
+      );
+    }
+
+    // 5. Renderizar resultados en el DOM
+    const resultsDiv = document.getElementById('analysisOutput');
+    if (!resultsDiv) {
+      throw new Error('Elemento #analysisOutput no encontrado en el DOM');
+    }
+
+    const [minConfidence, maxConfidence] = monteCarlo.confidenceInterval;
+    const riskPercentage = (monteCarlo.riskScore * 100).toFixed(1);
+    const riskStatus = monteCarlo.riskScore < 0.3 ? 'ESTABLE' : 'VOLÁTIL';
+    const badgeClass = monteCarlo.riskScore < 0.3 ? 'bg-success' : 'bg-warning';
+
+    resultsDiv.innerHTML = `
+      <div class="control-group">
+        <h4><i class="fas fa-dice"></i> Simulación Monte Carlo Logística</h4>
+        
+        <div class="stats-grid">
+          <div class="stat-card">
+            <label>Ingreso Esperado (Media)</label>
+            <strong>$${monteCarlo.expectedRevenue.toLocaleString('es-MX', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2
+            })} MXN</strong>
+          </div>
+          
+          <div class="stat-card">
+            <label>Rango de Confianza (95%)</label>
+            <strong>$${minConfidence.toFixed(2)} - $${maxConfidence.toFixed(2)}</strong>
+            <small>(±$${((maxConfidence - minConfidence) / 2).toFixed(2)})</small>
+          </div>
+          
+          <div class="stat-card">
+            <label>Puntaje de Riesgo</label>
+            <strong><span class="badge ${badgeClass}">${riskPercentage}%</span></strong>
+            <small>${riskStatus}</small>
+          </div>
+        </div>
+        
+        <hr>
+        <p><small>
+          <i class="fas fa-info-circle"></i> Basado en 5,000 iteraciones con probabilidades bayesianas de conversión.
+          ${monteCarlo.riskScore < 0.3 
+            ? '✅ Ruta confiable y estable' 
+            : '⚠️ Alta variabilidad en resultados'}
+        </small></p>
+      </div>
+    `;
+
+    // 6. Mostrar el contenedor de resultados
+    const resultsContainer = document.getElementById('analysisResults');
+    if (resultsContainer) {
+      resultsContainer.classList.remove('hidden');
+    }
+
+    console.log('✅ Simulación Monte Carlo completada:', monteCarlo);
+    showNotification('✅ Simulación completada exitosamente', 'success');
+
+  } catch (error) {
+    console.error('❌ Error en runMonteCarlo:', error);
+    
+    // Mostrar error detallado en la consola para debugging
+    console.error('Stack:', error.stack);
+    
+    // Mostrar mensaje al usuario
+    showNotification(`❌ Error: ${error.message}`, 'error');
+
+  } finally {
+    hideLoading();
+  }
 }
 
 function calculateOptimalRoute() {
@@ -5578,18 +5470,18 @@ function calculateOptimalRoute() {
     return;
   }
   
-  // Asegurar que knowledgebase está disponible
-  if (!window.knowledgebase) {
-    console.warn('⚠️ Inicializando knowledgebase...');
-    createFallbackKnowledgeBase();
+  // Asegurar que analyticsOrchestrator está disponible
+  if (!window.analyticsOrchestrator) {
+    console.warn('⚠️ Inicializando AnalyticsOrchestrator...');
+    window.analyticsOrchestrator = new AnalyticsOrchestrator(filteredData);
   }
   
   // Verificación final
-  if (!window.knowledgebase?.AdvancedAnalytics?.optimizarRuta) {
-    console.error('❌ optimizarRuta no disponible', {
-      knowledgebase: !!window.knowledgebase,
-      AdvancedAnalytics: !!window.knowledgebase?.AdvancedAnalytics,
-      optimizarRuta: !!window.knowledgebase?.AdvancedAnalytics?.optimizarRuta
+  if (!window.analyticsOrchestrator?.modules?.GeneticRouteOptimization) {
+    console.error('❌ GeneticRouteOptimization no disponible', {
+      orchestrator: !!window.analyticsOrchestrator,
+      modules: !!window.analyticsOrchestrator?.modules,
+      GeneticRouteOptimization: !!window.analyticsOrchestrator?.modules?.GeneticRouteOptimization
     });
     showNotification('Error: Función no disponible. Recarga la página.', 'error');
     return;
@@ -5609,18 +5501,19 @@ function calculateOptimalRoute() {
       
       const origen = { x: -86.8515, y: 21.1619 }; // Centro de Cancún
       
-      const ruta = window.knowledgebase.AdvancedAnalytics.optimizarRuta(puntos, origen);
+      const genetic = new window.analyticsOrchestrator.modules.GeneticRouteOptimization(filteredData);
+      const rutaOptimization = genetic.optimize(puntos, origen);
       
       const resultsDiv = document.getElementById('analysisOutput');
       resultsDiv.innerHTML = `
         <div class="control-group">
           <h4><i class="fas fa-route"></i> Ruta Óptima Calculada</h4>
-          <p><strong>Puntos en ruta:</strong> ${ruta.length}</p>
+          <p><strong>Puntos en ruta:</strong> ${puntos.length}</p>
+          <p><strong>Fitness (eficiencia):</strong> ${(rutaOptimization.fitness * 100).toFixed(2)}%</p>
           <p><strong>Secuencia recomendada:</strong></p>
           <ol>
-            ${ruta.map(p => `<li>${p}</li>`).join('')}
+            ${puntos.map((p, i) => `<li>${p.id}</li>`).join('')}
           </ol>
-          <p><strong>Eficiencia estimada:</strong> ${window.knowledgebase.AdvancedAnalytics.calcularEficiencia(50, 120, ruta.length)}/100</p>
           <p><strong>Ingreso potencial:</strong> $${puntos.reduce((sum, p) => sum + p.prioridad * 100, 0).toFixed(2)} MXN</p>
         </div>
       `;
@@ -5643,12 +5536,15 @@ function calculateLogisticRisk() {
   setTimeout(() => {
     try {
       const horaActual = new Date().getHours();
-      const zonas = ['centro', 'hotel_zone', 'region_247', 'supermanzana', 'puerto_juares'];
+      const zonas = [...new Set(filteredData.map(d => d.zona))];
       
       let resultados = [];
       zonas.forEach(zona => {
-        const riesgo = knowledgeBase.CancunSpecificAnalytics.calculateLogisticRisk(zona, horaActual);
-        resultados.push({ zona, riesgo });
+        const zonaPitches = filteredData.filter(d => d.zona === zona);
+        const totalPitches = zonaPitches.length;
+        const successRate = zonaPitches.filter(d => d.result === 'successful').length / (totalPitches || 1);
+        const riesgo = 1 - successRate;
+        resultados.push({ zona, riesgo, successRate });
       });
       
       // Ordenar por riesgo
@@ -5700,7 +5596,9 @@ function runSeasonalAnalysis() {
   setTimeout(() => {
     try {
       const mesActual = new Date().getMonth() + 1;
-      const factor = knowledgeBase.CancunSpecificAnalytics.getSeasonFactor(mesActual);
+      const allPitches = filteredData.length;
+      const thisPitches = filteredData.filter(d => new Date(d.timestamp).getMonth() + 1 === mesActual).length;
+      const factor = allPitches > 0 ? thisPitches / allPitches : 0.5;
       
       const resultsDiv = document.getElementById('analysisOutput');
       resultsDiv.innerHTML = `
@@ -5805,7 +5703,11 @@ function calculateRouteForRoutesSection() {
       }
       
       const origen = getStartCoordinates(startPoint);
-      const ruta = knowledgeBase.AdvancedAnalytics.optimizarRuta(puntos, origen);
+      const ruta = puntos.sort((a, b) => {
+        const distA = Math.sqrt(Math.pow(a.lat - origen.lat, 2) + Math.pow(a.lng - origen.lng, 2));
+        const distB = Math.sqrt(Math.pow(b.lat - origen.lat, 2) + Math.pow(b.lng - origen.lng, 2));
+        return distA - distB;
+      });
       
       // Guardar la ruta para visualización
       currentCalculatedRoute = {
@@ -5818,7 +5720,7 @@ function calculateRouteForRoutesSection() {
       
       const totalRevenue = puntos.reduce((sum, p) => sum + p.revenue, 0);
       const estimatedTime = stops * 15;
-      const efficiency = knowledgeBase.AdvancedAnalytics.calcularEficiencia(50, estimatedTime, stops);
+      const efficiency = (totalRevenue / (estimatedTime || 1)).toFixed(2);
       
       const resultsDiv = document.getElementById('routeOutput');
       resultsDiv.innerHTML = `
@@ -6062,10 +5964,11 @@ async function generatePitch() {
   
   setTimeout(() => {
     try {
-      // Usar knowledgebase para análisis de zonas
+      // Usar filteredData para análisis de zonas
       const horaActual = new Date().getHours();
-      const zonasOptimas = knowledgeBase.CancunSpecificAnalytics.getOptimalZonesByHour(horaActual);
-      const factorTemporada = knowledgeBase.CancunSpecificAnalytics.getSeasonFactor(new Date().getMonth() + 1);
+      const pitchesHora = filteredData.filter(d => new Date(d.timestamp).getHours() === horaActual);
+      const zonasOptimas = [...new Set(pitchesHora.filter(d => d.result === 'successful').map(d => d.zona))];
+      const factorTemporada = filteredData.length > 0 ? (filteredData.filter(d => new Date(d.timestamp).getMonth() + 1 === new Date().getMonth() + 1).length / filteredData.length) : 0.5;
       
       // Generar pitch estructurado
       const pitch = `
@@ -6226,221 +6129,6 @@ function savePitchAsReport() {
   
   showView('reports');
   showNotification('Pitch guardado como reporte', 'success');
-}
-
-// ============================================
-// HERRAMIENTAS DE ANÁLISIS AVANZADO
-// ============================================
-
-function activateTool(toolName) {
-  const outputDiv = document.getElementById('toolOutput');
-  const resultsDiv = document.getElementById('toolResults');
-  
-  showLoading(`Ejecutando ${toolName}...`);
-  
-  setTimeout(() => {
-    try {
-      let results = '';
-      
-      switch(toolName) {
-        case 'bayesian':
-          results = executeBayesianAnalysis();
-          break;
-        case 'timeseries':
-          results = executeTimeSeriesAnalysis();
-          break;
-        case 'montecarlo':
-          results = executeMonteCarloAnalysis();
-          break;
-        case 'genetic':
-          results = executeGeneticAlgorithm();
-          break;
-        case 'markov':
-          results = executeMarkovAnalysis();
-          break;
-        case 'saturation':
-          results = executeMarketSaturation();
-          break;
-        case 'cannibalization':
-          results = executeCannibalizationAnalysis();
-          break;
-        case 'decisiontree':
-          results = executeDecisionTree();
-          break;
-        default:
-          results = '<p>Herramienta no disponible</p>';
-      }
-      
-      outputDiv.innerHTML = results;
-      resultsDiv.classList.remove('hidden');
-      hideLoading();
-      showNotification(`${toolName} completado exitosamente`, 'success');
-      
-    } catch (error) {
-      console.error('Error en herramienta:', error);
-      hideLoading();
-      showNotification('Error ejecutando herramienta: ' + error.message, 'error');
-    }
-  }, 800);
-}
-
-function executeBayesianAnalysis() {
-  if (filteredData.length === 0) {
-    return '<p class="warning">No hay datos para analizar. Carga datos primero.</p>';
-  }
-  
-  const zones = [...new Set(filteredData.map(d => d.zona))];
-  let html = '<h4><i class="fas fa-brain"></i> Análisis Bayesiano - Probabilidades de Conversión</h4>';
-  html += '<table class="analysis-table">';
-  html += '<tr><th>Zona</th><th>Probabilidad Posterior</th><th>Confiabilidad</th></tr>';
-  
-  zones.forEach(zone => {
-    const zoneData = filteredData.filter(d => d.zona === zone);
-    const conversions = zoneData.filter(d => d.estado === 'convertido' || d.estado === 'successful').length;
-    const probability = zoneData.length > 0 ? (conversions / zoneData.length) : 0;
-    const posterior = Math.min(0.95, Math.max(0.05, probability));
-    
-    html += `<tr>
-      <td><strong>${zone}</strong></td>
-      <td>${(posterior * 100).toFixed(2)}%</td>
-      <td>${zoneData.length > 10 ? 'Alta' : zoneData.length > 5 ? 'Media' : 'Baja'}</td>
-    </tr>`;
-  });
-  
-  html += '</table>';
-  return html;
-}
-
-function executeTimeSeriesAnalysis() {
-  if (filteredData.length === 0) {
-    return '<p class="warning">No hay datos para analizar.</p>';
-  }
-  
-  let html = '<h4><i class="fas fa-chart-line"></i> Análisis de Series Temporales</h4>';
-  html += '<p><strong>Detección de Picos Horarios:</strong></p>';
-  html += '<ul>';
-  
-  const hourGroups = {};
-  filteredData.forEach(d => {
-    const hour = d.hora ? parseInt(d.hora.split(':')[0]) : 12;
-    hourGroups[hour] = (hourGroups[hour] || 0) + 1;
-  });
-  
-  const sorted = Object.entries(hourGroups)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5);
-  
-  sorted.forEach(([hour, count]) => {
-    html += `<li><strong>${hour}:00</strong> - ${count} transacciones</li>`;
-  });
-  
-  html += '</ul>';
-  html += '<p><i class="fas fa-lightbulb"></i> <strong>Recomendación:</strong> Concentra tu fuerza de ventas en estos horarios para máxima efectividad.</p>';
-  
-  return html;
-}
-
-function executeMonteCarloAnalysis() {
-  let html = '<h4><i class="fas fa-dice"></i> Simulación Monte Carlo (10,000 iteraciones)</h4>';
-  html += '<p><strong>Análisis de Logística de Rutas:</strong></p>';
-  
-  const iterations = 10000;
-  let successCount = 0;
-  
-  for (let i = 0; i < iterations; i++) {
-    const random = Math.random();
-    if (random > 0.3) successCount++;
-  }
-  
-  const probability = (successCount / iterations) * 100;
-  
-  html += `<ul>
-    <li>Iteraciones: ${iterations}</li>
-    <li>Éxitos simulados: ${successCount}</li>
-    <li>Probabilidad de completar ruta: ${probability.toFixed(2)}%</li>
-    <li>Confianza: <strong>${probability > 70 ? 'ALTA' : probability > 50 ? 'MEDIA' : 'BAJA'}</strong></li>
-  </ul>`;
-  
-  return html;
-}
-
-function executeGeneticAlgorithm() {
-  let html = '<h4><i class="fas fa-dna"></i> Optimización Genética - TSP Solver</h4>';
-  html += '<p><strong>Algoritmo de 100 Generaciones:</strong></p>';
-  html += '<ul>';
-  html += `<li>Puntos procesados: ${Math.min(filteredData.length, 50)}</li>`;
-  html += `<li>Generaciones: 100</li>`;
-  html += `<li>Fitness inicial: ${(Math.random() * 0.5 + 0.3).toFixed(3)}</li>`;
-  html += `<li>Fitness final: ${(Math.random() * 0.9 + 0.8).toFixed(3)}</li>`;
-  html += `<li><strong>Mejora:</strong> ${(Math.random() * 40 + 20).toFixed(1)}%</strong></li>`;
-  html += '</ul>';
-  html += '<p><i class="fas fa-lightbulb"></i> <strong>Recomendación:</strong> La ruta optimizada reduce distancia total en promedio un 25-35%.</p>';
-  
-  return html;
-}
-
-function executeMarkovAnalysis() {
-  let html = '<h4><i class="fas fa-sitemap"></i> Procesos Markov - Próxima Mejor Acción</h4>';
-  html += '<p><strong>Recomendaciones basadas en estado actual:</strong></p>';
-  html += '<ul>';
-  html += '<li><strong>Estado:</strong> Cliente mostró interés en primera visita</li>';
-  html += '<li><strong>Próxima acción:</strong> Hacer seguimiento en 48 horas</li>';
-  html += '<li><strong>Probabilidad de cierre:</strong> 35-45%</li>';
-  html += '<li><strong>Pitch recomendado:</strong> Refuerzo de beneficios + oferta limitada</li>';
-  html += '</ul>';
-  
-  return html;
-}
-
-function executeMarketSaturation() {
-  if (filteredData.length === 0) {
-    return '<p class="warning">No hay datos para analizar.</p>';
-  }
-  
-  let html = '<h4><i class="fas fa-chart-area"></i> Análisis de Saturación de Mercado</h4>';
-  html += '<p><strong>Rendimientos Decrecientes por Zona:</strong></p>';
-  html += '<ul>';
-  
-  const zones = [...new Set(filteredData.map(d => d.zona))];
-  zones.forEach(zone => {
-    const zoneData = filteredData.filter(d => d.zona === zone);
-    const saturation = Math.min(100, (zoneData.length / 20) * 100);
-    const status = saturation > 80 ? 'SATURADA' : saturation > 50 ? 'EN TRANSICIÓN' : 'CON POTENCIAL';
-    
-    html += `<li><strong>${zone}</strong> - Saturación: ${saturation.toFixed(0)}% (${status})</li>`;
-  });
-  
-  html += '</ul>';
-  
-  return html;
-}
-
-function executeCannibalizationAnalysis() {
-  let html = '<h4><i class="fas fa-cut"></i> Análisis de Canibalización Cruzada</h4>';
-  html += '<p><strong>Correlaciones entre pitches y zonas:</strong></p>';
-  html += '<ul>';
-  html += '<li><strong>Nostalgia en Centro:</strong> Canibaliza -15% en Zona Hotelera</li>';
-  html += '<li><strong>Autoridad en Zona Hotelera:</strong> Sin canibalización negativa</li>';
-  html += '<li><strong>Escasez en múltiples zonas:</strong> Canibaliza -8% globalmente</li>';
-  html += '<li><strong>Comunidad en Región 237:</strong> Impulsa +12% en adyacentes</li>';
-  html += '</ul>';
-  html += '<p><i class="fas fa-lightbulb"></i> <strong>Recomendación:</strong> Segmenta pitches por zona para evitar canibalización.</p>';
-  
-  return html;
-}
-
-function executeDecisionTree() {
-  let html = '<h4><i class="fas fa-tree"></i> Árbol de Decisiones - Segmentación Jerárquica</h4>';
-  html += '<p><strong>Estructura de decisión por perfil socioeconómico:</strong></p>';
-  html += '<ul>';
-  html += '<li><strong>Nivel 1 - Ingreso:</strong> Alto / Medio / Bajo</li>';
-  html += '<li><strong>Nivel 2 - Ocupación:</strong> Profesional / Independiente / Trabajador</li>';
-  html += '<li><strong>Nivel 3 - Demográfico:</strong> Edad, Familia, Ubicación</li>';
-  html += '<li><strong>Resultado:</strong> 12-16 segmentos con pitch personalizado</li>';
-  html += '</ul>';
-  html += '<p><i class="fas fa-lightbulb"></i> <strong>Mejora esperada:</strong> +20-30% en tasa de conversión con segmentación.</p>';
-  
-  return html;
 }
 
 // ============================================
@@ -6617,11 +6305,14 @@ function generateRiskReport() {
   setTimeout(() => {
     try {
       const horaActual = new Date().getHours();
-      const zonas = ['centro', 'hotel_zone', 'region_247', 'supermanzana', 'puerto_juares'];
+      const zonas = [...new Set(filteredData.map(d => d.zona))];
       
       let riesgos = [];
       zonas.forEach(zona => {
-        const riesgo = knowledgeBase.CancunSpecificAnalytics.calculateLogisticRisk(zona, horaActual);
+        const zonaPitches = filteredData.filter(d => d.zona === zona);
+        const totalPitches = zonaPitches.length;
+        const successRate = zonaPitches.filter(d => d.result === 'successful').length / (totalPitches || 1);
+        const riesgo = 1 - successRate;
         riesgos.push({ zona, riesgo });
       });
       
@@ -7278,9 +6969,11 @@ class AnalyticsOrchestrator {
   }
   
   async loadAllModules() {
-    if (!knowledgeBase) throw new Error('Knowledgebase no disponible');
+    if (!window.analyticsOrchestrator || !window.analyticsOrchestrator.modules) {
+      throw new Error('Orquestador de análisis no disponible');
+    }
     console.log('✅ Módulos cargados');
-    return {};
+    return window.analyticsOrchestrator.modules;
   }
   
   async runCompleteAnalysis(options = {}) {
@@ -7448,9 +7141,6 @@ async function loadReferenceData() {
   
   // Configurar event listeners
   setupEventListeners();
-  
-  // Cargar knowledgebase
-  loadKnowledgeBase();
   
   // Cargar configuración guardada
   const savedApiKey = localStorage.getItem('groqApiKey');

@@ -1,0 +1,20 @@
+Plan: Fix Analytics Module Migration & index.html Integration
+Tienes un desajuste entre tu nuevo AnalyticsOrchestrator (ES6) y las llamadas antiguas en index.html. El error toLowerCase viene de datos null/undefined, pero el problema mayor es que index.html sigue esperando la estructura vieja de módulos. Necesitamos alinear todo.
+
+Steps
+Corregir referencias de módulos en AnalyticsOrchestrator (líneas ~72, 75, 76, 78 en modules_integration.js)
+
+Cambiar nombres de claves como GeneticAlgorithmOptimizer → GeneticAlgorithm para que coincidan con los exports reales
+Reemplazar llamadas loadAllModules() por loadAllAnalyticsModules() en index.html (líneas 3156, 6788)
+
+Esta es la API correcta del AnalyticsOrchestrator
+Eliminar funciones duplicate/obsoletas en index.html (líneas 7141+)
+
+executeTimeSeriesAnalysis(), executeGeneticAlgorithm(), etc. que simulan la vieja estructura
+Agregar validación null-safety a .toLowerCase() calls en index.html (líneas 3453, 3461, 3517, 3524)
+
+Cambiar normalizeOrigin(text) etc. para manejar valores undefined
+Verificar que la inicialización de AnalyticsOrchestrator suceda después de cargar datos en index.html
+
+Asegurar que window.analyticsOrchestrator se instancia solo una vez con datos válidos
+Further Considerations
